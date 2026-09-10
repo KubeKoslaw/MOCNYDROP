@@ -23,7 +23,7 @@ Podział obowiązków:
 | @KubeKoslaw | Backend i logika strony| % Inicjalizacja,Debugowanie,Factchecking%
 | @moxmar26 | Baza danych i integracja | % Naczelny Komisarz Weryfikacji Dokładności %
 | @jgpostrach | Frontend — logika w JavaScript |
-| @user4 | Frontend — UI/UX, warstwa wizualna |
+| @THOPA174 | Frontend — UI/UX, warstwa wizualna |
 
 ## Jak to działa
 
