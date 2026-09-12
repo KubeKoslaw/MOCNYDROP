@@ -25,6 +25,8 @@ Podział obowiązków:
 | @jgpostrach | JavaScript / Walidacja i interakcje |
 | @THOPA174 | Layout w HTML/CSS |
 
+> 💡 **Instrukcja dla zespołu:** Szczegółowy opis architektury backendu, schematu bazy, zadań dla poszczególnych osób oraz ściągawkę zapytań API znajdziesz w pliku [INSTRUKCJA_DLA_ZESPOLU.md](INSTRUKCJA_DLA_ZESPOLU.md).
+
 ## Jak to działa
 
 Losowanie nagrody to ważone losowanie z rozkładem prawdopodobieństwa. Szansa na wylosowanie nagrody $i$ z wagą $w_i$:
