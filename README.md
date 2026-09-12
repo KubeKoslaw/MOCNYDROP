@@ -12,7 +12,7 @@ Strona z elementami hazardu z nagrodami o różnych wartościach, oparta na wirt
 ## Wymagania
 
 - XAMPP (Apache + PHP + SQLite)
-- Dowolne IDE, np. VS Code
+- Dowolne IDE wspierające powyższe języki programowania *(Rekomendowane: VSCode, VSCodium, Apache NetBeans, PhpStorm itp.)*
 
 ## Zespół
 
