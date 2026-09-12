@@ -20,10 +20,10 @@ Podział obowiązków:
 
 | Osoba | Rola |
 |---|---|
-| @KubeKoslaw | Backend i logika strony| % Inicjalizacja,Debugowanie,Factchecking%
-| @moxmar26 | Baza danych i integracja | % Naczelny Komisarz Weryfikacji Dokładności %
-| @jgpostrach | Frontend — logika w JavaScript |
-| @THOPA174 | Frontend — UI/UX, warstwa wizualna |
+| @KubeKoslaw | Core Backend, Tech lead | 
+| @moxmar26 | Treść, dane testowe i dokumentacja | 
+| @jgpostrach | JavaScript / Walidacja i interakcje |
+| @THOPA174 | Layout w HTML/CSS |
 
 ## Jak to działa
 
