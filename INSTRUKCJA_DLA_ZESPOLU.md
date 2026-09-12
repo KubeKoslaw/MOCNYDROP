@@ -1,4 +1,4 @@
-# 📘 Instrukcja dla Zespołu — MOCNY DROP (Backend & API)
+# Instrukcja dla Zespołu — MOCNY DROP (Backend & API)
 
 1. **Co już jest gotowe w kodzie**
 2. **Jak odpalić projekt lokalnie**
