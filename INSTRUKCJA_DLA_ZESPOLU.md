@@ -1,8 +1,5 @@
 # 📘 Instrukcja dla Zespołu — MOCNY DROP (Backend & API)
 
-Cześć zespole! Na gałęzi `PHP-+-sqllite-KubeK` został przygotowany fundament backendowy: baza danych SQLite, silnik losowania, autoryzacja oraz REST API w formacie JSON.
-
-Ten dokument wyjaśnia:
 1. **Co już jest gotowe w kodzie**
 2. **Jak odpalić projekt lokalnie**
 3. **Co każda osoba ma dalej robić (podział zadań)**
@@ -25,7 +22,7 @@ Wejdź w przeglądarce pod adres: **`http://localhost:8000`**
 3. Wejdź w przeglądarce na: **`http://localhost/MOCNYDROP`**.
 
 > [!NOTE]
-> Baza danych SQLite utworzy się **automatycznie** przy pierwszym wejściu na stronę. Nie musisz niczego ręcznie importować w phpMyAdminie!
+> Baza danych SQLite utworzy się **automatycznie** przy pierwszym wejściu na stronę. Nie musisz niczego ręcznie importować w phpMyAdminie
 
 ---
 
@@ -51,8 +48,8 @@ Wejdź w przeglądarce pod adres: **`http://localhost:8000`**
 
 ## 3. Co dalej robić? (Zadania dla zespołu)
 
-### 🎨 @THOPA174 — Layout w HTML/CSS
-Twój cel to stworzenie docelowego, efektownego wyglądu strony zamiast prostego widoku z `index.php`.
+###  @THOPA174 — Layout w HTML/CSS
+
 
 **Co przygotować w HTML/CSS:**
 1. **Nawigacja (Header):**
@@ -75,8 +72,8 @@ Twój cel to stworzenie docelowego, efektownego wyglądu strony zamiast prostego
 
 ---
 
-### ⚡ @jgpostrach — JavaScript / Walidacja i interakcje
-Twój cel to ożywienie strony skryptami JS, obsługa zapytań do API oraz zrobienie animacji otwierania skrzynki.
+### @jgpostrach — JavaScript / Walidacja i interakcje
+
 
 **Co zrobić w JS:**
 1. **Zapisywanie tokena sesji:**
@@ -105,7 +102,6 @@ Twój cel to ożywienie strony skryptami JS, obsługa zapytań do API oraz zrobi
 ---
 
 ### 📝 @moxmar26 — Treść, dane testowe i dokumentacja
-Twój cel to rozbudowa bazy o ciekawe przedmioty, skrzynki i przygotowanie dokumentacji projektu.
 
 **Co zrobić:**
 1. **Rozbudowa danych w `database/seed.sql`:**
@@ -307,4 +303,4 @@ async function otworzSkrzynke(caseId) {
 }
 ```
 
-Powodzenia w pracy nad projektem! W razie pytań do kodu backendu – pytajcie @KubeKoslaw.
+*Pytać @KubeKoslaw*
