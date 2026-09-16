@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0" pages="3">
+<mxfile host="Electron" agent="Mozilla/5.0" pages="3">
   <diagram id="d_oauth_sqlite" name="1. Autoryzacja OAuth 2.0 (SQLite)">
-    <mxGraphModel dx="727" dy="895" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2050" pageHeight="1250" background="light-dark(#757575,#757575)" math="0" shadow="0">
+    <mxGraphModel dx="957" dy="583" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2050" pageHeight="1250" background="light-dark(#757575,#757575)" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -79,25 +79,25 @@
         <mxCell id="err1_1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="&amp;nbsp;Błąd: Niepoprawne dane logowania" vertex="1">
           <mxGeometry height="62" width="420" x="760" y="240" as="geometry" />
         </mxCell>
-        <mxCell id="e_exc_err1_1" edge="1" parent="1" source="st1_1" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_1" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+        <mxCell id="e_exc_err1_1" edge="1" parent="1" source="st1_1" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_1" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="err1_4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Zablokowane konto gracza w SQLite" vertex="1">
           <mxGeometry height="62" width="420" x="750" y="347" as="geometry" />
         </mxCell>
-        <mxCell id="e_exc_err1_4" edge="1" parent="1" source="st1_1" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_4" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+        <mxCell id="e_exc_err1_4" edge="1" parent="1" source="st1_1" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_4" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="err1_2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Kod autoryzacyjny wygasł&lt;br&gt;lub został już wcześniej wykorzystany" vertex="1">
           <mxGeometry height="62" width="420" x="760" y="552" as="geometry" />
         </mxCell>
-        <mxCell id="e_exc_err1_2" edge="1" parent="1" source="st1_5" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_2" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+        <mxCell id="e_exc_err1_2" edge="1" parent="1" source="st1_5" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_2" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="err1_3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Sfałszowany lub nieistniejący Bearer Token&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="62" width="420" x="760" y="786" as="geometry" />
         </mxCell>
-        <mxCell id="e_exc_err1_3" edge="1" parent="1" source="st1_9" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_3" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+        <mxCell id="e_exc_err1_3" edge="1" parent="1" source="st1_9" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_3" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="ext_refresh" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#2e1065;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=11;fontStyle=0;shadow=1;" value="Odświeżenie sesji / Nowy Access Token&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" vertex="1">
@@ -140,8 +140,9 @@
         <mxCell id="err_reg" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Login lub adres e-mail&lt;br&gt;jest już zarejestrowany w SQLite" vertex="1">
           <mxGeometry height="62" width="500" x="1440" y="540" as="geometry" />
         </mxCell>
-        <mxCell id="e_reg_err" edge="1" parent="1" source="reg_1" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err_reg" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry">
+        <mxCell id="e_reg_err" edge="1" parent="1" source="reg_1" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err_reg" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" x="0.0005" as="geometry">
+            <mxPoint as="offset" />
             <Array as="points">
               <mxPoint x="1960" y="276" />
               <mxPoint x="1960" y="571" />
@@ -152,7 +153,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="d_games_sqlite" name="2. Tryby Gry Hazardowej">
-    <mxGraphModel dx="2223" dy="1268" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2460" pageHeight="1300" background="light-dark(#FFFFFF,#757575)" math="0" shadow="0">
+    <mxGraphModel dx="957" dy="583" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2460" pageHeight="1300" background="light-dark(#FFFFFF,#757575)" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -186,7 +187,7 @@
         <mxCell id="c_err" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Brak środków&lt;br&gt;(Saldo &amp;lt; koszt skrzynki)" vertex="1">
           <mxGeometry height="52" width="175" x="415" y="427" as="geometry" />
         </mxCell>
-        <mxCell id="e_exc_c_err" edge="1" parent="1" source="c_bal" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_err" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+        <mxCell id="e_exc_c_err" edge="1" parent="1" source="c_bal" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_err" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="c_ded" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Transakcyjne pobranie opłaty z portfela gracza" vertex="1">
@@ -278,7 +279,7 @@
         <mxCell id="u_fail" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="&amp;nbsp;Porażka: Bezpowrotna&lt;br&gt;utrata przedmiotu wkładu" vertex="1">
           <mxGeometry height="52" width="175" x="1015" y="755" as="geometry" />
         </mxCell>
-        <mxCell id="e_exc_u_fail" edge="1" parent="1" source="u_roll" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="u_fail" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+        <mxCell id="e_exc_u_fail" edge="1" parent="1" source="u_roll" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="u_fail" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="u_win" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#2e1065;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=11;fontStyle=0;shadow=1;" value="Wygrana: Dodanie ulepszonego&lt;br&gt;przedmiotu do bazy SQLite" vertex="1">
@@ -320,7 +321,7 @@
         <mxCell id="f_fail" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Porażka: Zerwanie żyłki&lt;br&gt;przy błędzie timingu QTE" vertex="1">
           <mxGeometry height="52" width="175" x="1615" y="571" as="geometry" />
         </mxCell>
-        <mxCell id="e_exc_f_fail" edge="1" parent="1" source="f_qte" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="f_fail" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+        <mxCell id="e_exc_f_fail" edge="1" parent="1" source="f_qte" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="f_fail" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="f_roll" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Ważone losowanie rzadkości wyłowionej ryby/dropu" vertex="1">
@@ -368,7 +369,7 @@
         <mxCell id="t_fail" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Odrzucenie: Łączna wartość&lt;br&gt;wkładu poniżej limitu" vertex="1">
           <mxGeometry height="52" width="175" x="2215" y="571" as="geometry" />
         </mxCell>
-        <mxCell id="e_exc_t_fail" edge="1" parent="1" source="t_chk" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="t_fail" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+        <mxCell id="e_exc_t_fail" edge="1" parent="1" source="t_chk" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="t_fail" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="t_burn" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Trwałe usunięcie (spalenie) wybranych przedmiotów" vertex="1">
@@ -393,7 +394,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="d_admin_sqlite" name="3. Panel Administratora">
-    <mxGraphModel dx="2668" dy="1522" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2180" pageHeight="1180" background="light-dark(#FFFFFF,#757575)" math="0" shadow="0">
+    <mxGraphModel dx="1388" dy="846" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2180" pageHeight="1180" background="light-dark(#FFFFFF,#757575)" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -433,7 +434,7 @@
         <mxCell id="ac_err" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Odrzucenie: Błędne wagi lub ujemna cena" vertex="1">
           <mxGeometry height="58" width="215" x="475" y="519" as="geometry" />
         </mxCell>
-        <mxCell id="e_br_ac_err" edge="1" parent="1" source="ac_3" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="ac_err" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+        <mxCell id="e_br_ac_err" edge="1" parent="1" source="ac_3" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="ac_err" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="ac_4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Transakcyjny zapis zmian w tabelach SQLite" vertex="1">
@@ -483,7 +484,7 @@
         <mxCell id="au_err" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Próba zablokowania&lt;br&gt;Głównego Administratora" vertex="1">
           <mxGeometry height="58" width="215" x="1175" y="601" as="geometry" />
         </mxCell>
-        <mxCell id="e_br_au_err" edge="1" parent="1" source="au_4" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="au_err" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+        <mxCell id="e_br_au_err" edge="1" parent="1" source="au_4" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="au_err" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="adm_a_main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="&lt;div&gt;Monitoring Aktywności&lt;/div&gt;" vertex="1">
