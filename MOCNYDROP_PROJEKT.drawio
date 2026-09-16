@@ -1,0 +1,537 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0" pages="3">
+  <diagram id="d_oauth_sqlite" name="1. Autoryzacja OAuth 2.0 (SQLite)">
+    <mxGraphModel dx="727" dy="895" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2050" pageHeight="1250" background="light-dark(#757575,#757575)" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="act_u1" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontColor=#f8fafc;strokeColor=#38bdf8;fillColor=#1e293b;fontSize=12;fontStyle=1;" value="Użytkownik / Gracz&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="55" x="75" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="act_p1" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontColor=#f8fafc;strokeColor=#38bdf8;fillColor=#1e293b;fontSize=12;fontStyle=1;" value="Zalogowany Gracz" vertex="1">
+          <mxGeometry height="90" width="55" x="75" y="780" as="geometry" />
+        </mxCell>
+        <mxCell id="e_u_p1" edge="1" parent="1" source="act_p1" style="endArrow=block;endFill=0;dashed=1;html=1;strokeColor=#64748b;fontColor=#94a3b8;fontSize=10;labelBackgroundColor=#090d16;" target="act_u1" value="&amp;lt;&amp;lt;dziedziczy&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_oa_main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Uwierzytelnienie i Pobranie Bearer Tokena&#xa;(Formularz logowania i wymiana kodu)" vertex="1">
+          <mxGeometry height="75" width="360" x="230" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="e_act_oa" edge="1" parent="1" source="act_u1" style="endArrow=none;html=1;strokeColor=#64748b;strokeWidth=1.5;" target="uc_oa_main" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="st1_1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="1. Weryfikacja loginu i hasła w tabeli &#39;uzytkownicy&#39;&#xa;(SELECT haslo_hash FROM uzytkownicy WHERE login=?)" vertex="1">
+          <mxGeometry height="62" width="380" x="230" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_st1_1" edge="1" parent="1" source="uc_oa_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="st1_1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="st1_2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="2. Wygenerowanie unikalnego kodu autoryzacji CSPRNG&#xa;(Authz Code o ważności np. 5 minut)" vertex="1">
+          <mxGeometry height="62" width="380" x="230" y="318" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_st1_2" edge="1" parent="1" source="st1_1" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="st1_2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="st1_3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="3. Zapis kodu w tabeli &#39;oauth_kody&#39; w bazie SQLite&#xa;(INSERT INTO oauth_kody: kod, user_id, expires_at)" vertex="1">
+          <mxGeometry height="62" width="380" x="230" y="396" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_st1_3" edge="1" parent="1" source="st1_2" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="st1_3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="st1_4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="4. Zwrócenie kodu autoryzacji do klienta frontendowego&#xa;(Redirect callback: ?code=AUTHZ_CODE)" vertex="1">
+          <mxGeometry height="62" width="380" x="230" y="474" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_st1_4" edge="1" parent="1" source="st1_3" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="st1_4" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="st1_5" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="5. Wymiana kodu na Access Token (POST /api/token.php)&#xa;z weryfikacją poprawności i ważności kodu" vertex="1">
+          <mxGeometry height="62" width="380" x="230" y="552" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_st1_5" edge="1" parent="1" source="st1_4" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="st1_5" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="st1_6" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="6. Unieważnienie zużytego kodu w tabeli &#39;oauth_kody&#39;&#xa;(UPDATE oauth_kody SET czy_zuzyty=1 WHERE kod=?)" vertex="1">
+          <mxGeometry height="62" width="380" x="230" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_st1_6" edge="1" parent="1" source="st1_5" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="st1_6" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="st1_7" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="7. Wygenerowanie i zapis Bearer Access Tokena w SQLite&#xa;(INSERT INTO oauth_tokeny: token, user_id, expires_at)" vertex="1">
+          <mxGeometry height="62" width="380" x="230" y="708" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_st1_7" edge="1" parent="1" source="st1_6" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="st1_7" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="st1_8" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="8. Zwrot Access Tokena w JSON do pamięci przeglądarki&#xa;({access_token: &#39;...&#39;, token_type: &#39;Bearer&#39;, expires_in: 3600})" vertex="1">
+          <mxGeometry height="62" width="380" x="230" y="786" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_st1_8" edge="1" parent="1" source="st1_7" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="st1_8" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="st1_9" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="9. Autoryzacja kolejnych żądań API (Drop, Upgrader itd.)&#xa;poprzez nagłówek &#39;Authorization: Bearer &amp;lt;token&amp;gt;&#39;" vertex="1">
+          <mxGeometry height="62" width="380" x="230" y="864" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_st1_9" edge="1" parent="1" source="st1_8" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="st1_9" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_act_bearer" edge="1" parent="1" source="act_p1" style="endArrow=none;html=1;strokeColor=#64748b;strokeWidth=1.5;" target="st1_9" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="err1_1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="&amp;nbsp;Błąd: Niepoprawne dane logowania" vertex="1">
+          <mxGeometry height="62" width="420" x="760" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="e_exc_err1_1" edge="1" parent="1" source="st1_1" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_1" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="err1_4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Zablokowane konto gracza w SQLite" vertex="1">
+          <mxGeometry height="62" width="420" x="750" y="347" as="geometry" />
+        </mxCell>
+        <mxCell id="e_exc_err1_4" edge="1" parent="1" source="st1_1" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_4" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="err1_2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Kod autoryzacyjny wygasł&lt;br&gt;lub został już wcześniej wykorzystany" vertex="1">
+          <mxGeometry height="62" width="420" x="760" y="552" as="geometry" />
+        </mxCell>
+        <mxCell id="e_exc_err1_2" edge="1" parent="1" source="st1_5" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_2" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="err1_3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Sfałszowany lub nieistniejący Bearer Token&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="62" width="420" x="760" y="786" as="geometry" />
+        </mxCell>
+        <mxCell id="e_exc_err1_3" edge="1" parent="1" source="st1_9" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err1_3" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_refresh" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#2e1065;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=11;fontStyle=0;shadow=1;" value="Odświeżenie sesji / Nowy Access Token&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="62" width="420" x="760" y="864" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ext_refresh" edge="1" parent="1" source="st1_9" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#a855f7;fontColor=#c084fc;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="ext_refresh" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_reg_main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Rejestracja Nowego Gracza&#xa;(Formularz zakładania konta)" vertex="1">
+          <mxGeometry height="75" width="500" x="1440" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="e_act_reg" edge="1" parent="1" source="act_u1" style="endArrow=none;html=1;strokeColor=#64748b;strokeWidth=1.5;" target="uc_reg_main" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="110" y="75" />
+              <mxPoint x="1380" y="75" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="reg_1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Walidacja danych: poprawny format emaila,&#xa;login min. 3 znaki, hasło min. 8 znaków" vertex="1">
+          <mxGeometry height="62" width="500" x="1440" y="245" as="geometry" />
+        </mxCell>
+        <mxCell id="e_reg_reg_1" edge="1" parent="1" source="uc_reg_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="reg_1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" x="-0.0095" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="reg_2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Zabezpieczenie hasła algorytmem BCRYPT&#xa;z solą przed zapisem do bazy" vertex="1">
+          <mxGeometry height="62" width="500" x="1440" y="327" as="geometry" />
+        </mxCell>
+        <mxCell id="e_reg_reg_2" edge="1" parent="1" source="reg_1" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="reg_2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="reg_3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Inicjalizacja rekordu konta i portfela w SQLite&#xa;(Darmowe saldo powitalne: 50.00 monet)" vertex="1">
+          <mxGeometry height="62" width="500" x="1440" y="409" as="geometry" />
+        </mxCell>
+        <mxCell id="e_reg_reg_3" edge="1" parent="1" source="reg_2" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="reg_3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="err_reg" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Login lub adres e-mail&lt;br&gt;jest już zarejestrowany w SQLite" vertex="1">
+          <mxGeometry height="62" width="500" x="1440" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="e_reg_err" edge="1" parent="1" source="reg_1" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="err_reg" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1960" y="276" />
+              <mxPoint x="1960" y="571" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="d_games_sqlite" name="2. Tryby Gry Hazardowej">
+    <mxGraphModel dx="2223" dy="1268" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2460" pageHeight="1300" background="light-dark(#FFFFFF,#757575)" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="act_p2" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontColor=#f8fafc;strokeColor=#38bdf8;fillColor=#1e293b;fontSize=12;fontStyle=1;" value="Zalogowany Gracz" vertex="1">
+          <mxGeometry height="90" width="55" x="90" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="hub_main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="&lt;div&gt;Strona startowa&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="75" width="550" x="955" y="102.5" as="geometry" />
+        </mxCell>
+        <mxCell id="e_act_hub" edge="1" parent="1" source="act_p2" style="endArrow=none;html=1;strokeColor=#64748b;strokeWidth=1.5;" target="hub_main" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c_main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Otwarcie Skrzynki (POST /api/open_case.php)" vertex="1">
+          <mxGeometry height="65" width="510" x="75" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hub_c_main" edge="1" parent="1" source="hub_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_main" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c_auth" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Autoryzacja zapytania w SQLite wg Access Tokena" vertex="1">
+          <mxGeometry height="54" width="260" x="70" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_c_auth" edge="1" parent="1" source="c_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_auth" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c_bal" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Weryfikacja salda gracza w SQLite (S &gt;= koszt)" vertex="1">
+          <mxGeometry height="54" width="260" x="70" y="427" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_c_bal" edge="1" parent="1" source="c_auth" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_bal" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c_err" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Brak środków&lt;br&gt;(Saldo &amp;lt; koszt skrzynki)" vertex="1">
+          <mxGeometry height="52" width="175" x="415" y="427" as="geometry" />
+        </mxCell>
+        <mxCell id="e_exc_c_err" edge="1" parent="1" source="c_bal" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_err" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c_ded" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Transakcyjne pobranie opłaty z portfela gracza" vertex="1">
+          <mxGeometry height="54" width="260" x="70" y="499" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_c_ded" edge="1" parent="1" source="c_bal" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_ded" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c_prob" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Pobranie puli dropu i wag z tabeli skrzynka_przedmioty" vertex="1">
+          <mxGeometry height="54" width="260" x="70" y="571" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_c_prob" edge="1" parent="1" source="c_ded" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_prob" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c_roll" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Ważone losowanie nagrody CSPRNG wg dystrybuanty" vertex="1">
+          <mxGeometry height="54" width="260" x="70" y="643" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_c_roll" edge="1" parent="1" source="c_prob" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_roll" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c_log" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Zapis zdarzenia w tabeli historia_losowan" vertex="1">
+          <mxGeometry height="54" width="260" x="70" y="715" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_c_log" edge="1" parent="1" source="c_roll" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_log" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c_inv" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Dodanie wygranego przedmiotu do tabeli ekwipunek" vertex="1">
+          <mxGeometry height="54" width="260" x="70" y="787" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_c_inv" edge="1" parent="1" source="c_log" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_inv" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c_sell" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#2e1065;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=11;fontStyle=0;shadow=1;" value="Opcjonalna natychmiastowa&lt;br&gt;sprzedaż wygranej za walutę" vertex="1">
+          <mxGeometry height="52" width="175" x="415" y="787" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ext_c_sell" edge="1" parent="1" source="c_inv" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#a855f7;fontColor=#c084fc;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_sell" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c_ret" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Wysłanie wyniku JSON i animacja ruletki w przeglądarce" vertex="1">
+          <mxGeometry height="54" width="260" x="70" y="859" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_c_ret" edge="1" parent="1" source="c_inv" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="c_ret" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u_main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Ulepszanie w Upgraderze (POST /api/upgrade.php)" vertex="1">
+          <mxGeometry height="65" width="510" x="675" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hub_u_main" edge="1" parent="1" source="hub_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="u_main" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u_auth" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Autoryzacja zapytania w SQLite wg Access Tokena" vertex="1">
+          <mxGeometry height="54" width="260" x="670" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_u_auth" edge="1" parent="1" source="u_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="u_auth" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" x="0.0043" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="u_sel" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Wybór przedmiotu wkładu ze swojego ekwipunku" vertex="1">
+          <mxGeometry height="54" width="260" x="670" y="427" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_u_sel" edge="1" parent="1" source="u_auth" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="u_sel" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u_tgt" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Wybór pożądanego przedmiotu celu z katalogu" vertex="1">
+          <mxGeometry height="54" width="260" x="670" y="499" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_u_tgt" edge="1" parent="1" source="u_sel" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="u_tgt" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u_math" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Kalkulacja szansy % = (W_wkład / W_cel) * (1-marża)" vertex="1">
+          <mxGeometry height="54" width="260" x="670" y="571" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_u_math" edge="1" parent="1" source="u_tgt" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="u_math" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u_del" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Zablokowanie i trwałe usunięcie wkładu z SQLite" vertex="1">
+          <mxGeometry height="54" width="260" x="670" y="643" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_u_del" edge="1" parent="1" source="u_math" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="u_del" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u_roll" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Losowanie liczby wirtualnego koła (0.00% - 100.00%)" vertex="1">
+          <mxGeometry height="54" width="260" x="670" y="715" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_u_roll" edge="1" parent="1" source="u_del" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="u_roll" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u_fail" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="&amp;nbsp;Porażka: Bezpowrotna&lt;br&gt;utrata przedmiotu wkładu" vertex="1">
+          <mxGeometry height="52" width="175" x="1015" y="755" as="geometry" />
+        </mxCell>
+        <mxCell id="e_exc_u_fail" edge="1" parent="1" source="u_roll" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="u_fail" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="u_win" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#2e1065;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=11;fontStyle=0;shadow=1;" value="Wygrana: Dodanie ulepszonego&lt;br&gt;przedmiotu do bazy SQLite" vertex="1">
+          <mxGeometry height="52" width="175" x="1015" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ext_u_win" edge="1" parent="1" source="u_roll" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#a855f7;fontColor=#c084fc;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="u_win" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Rzut wędką w łowisku (POST /api/fish.php)" vertex="1">
+          <mxGeometry height="65" width="510" x="1275" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hub_f_main" edge="1" parent="1" source="hub_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="f_main" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_auth" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Autoryzacja zapytania w SQLite wg Access Tokena" vertex="1">
+          <mxGeometry height="54" width="260" x="1270" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_f_auth" edge="1" parent="1" source="f_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="f_auth" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_buy" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Wybór wędki i przynęty (Pobranie opłaty z portfela)" vertex="1">
+          <mxGeometry height="54" width="260" x="1270" y="427" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_f_buy" edge="1" parent="1" source="f_auth" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="f_buy" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_wait" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Losowy czas oczekiwania na branie ryby" vertex="1">
+          <mxGeometry height="54" width="260" x="1270" y="499" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_f_wait" edge="1" parent="1" source="f_buy" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="f_wait" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_qte" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Interaktywny test zręczności QTE (Zielone pole)" vertex="1">
+          <mxGeometry height="54" width="260" x="1270" y="571" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_f_qte" edge="1" parent="1" source="f_wait" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="f_qte" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_fail" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Porażka: Zerwanie żyłki&lt;br&gt;przy błędzie timingu QTE" vertex="1">
+          <mxGeometry height="52" width="175" x="1615" y="571" as="geometry" />
+        </mxCell>
+        <mxCell id="e_exc_f_fail" edge="1" parent="1" source="f_qte" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="f_fail" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_roll" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Ważone losowanie rzadkości wyłowionej ryby/dropu" vertex="1">
+          <mxGeometry height="54" width="260" x="1270" y="643" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_f_roll" edge="1" parent="1" source="f_qte" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="f_roll" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_win" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#2e1065;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=11;fontStyle=0;shadow=1;" value="Złowienie cennego dropu&lt;br&gt;i zapis do bazy SQLite" vertex="1">
+          <mxGeometry height="52" width="175" x="1615" y="643" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ext_f_win" edge="1" parent="1" source="f_roll" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#a855f7;fontColor=#c084fc;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="f_win" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t_main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Wymiana w Traderze (POST /api/trade_up.php)" vertex="1">
+          <mxGeometry height="65" width="510" x="1875" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hub_t_main" edge="1" parent="1" source="hub_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="t_main" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t_auth" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Autoryzacja zapytania w SQLite wg Access Tokena" vertex="1">
+          <mxGeometry height="54" width="260" x="1870" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_t_auth" edge="1" parent="1" source="t_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="t_auth" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t_pick" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Wybór od 3 do 10 przedmiotów ze swojego ekwipunku" vertex="1">
+          <mxGeometry height="54" width="260" x="1870" y="427" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_t_pick" edge="1" parent="1" source="t_auth" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="t_pick" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t_sum" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Zsumowanie łącznej wartości rynkowej wkładu" vertex="1">
+          <mxGeometry height="54" width="260" x="1870" y="499" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_t_sum" edge="1" parent="1" source="t_pick" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="t_sum" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t_chk" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Weryfikacja minimalnego progu wartości kontraktu" vertex="1">
+          <mxGeometry height="54" width="260" x="1870" y="571" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_t_chk" edge="1" parent="1" source="t_sum" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="t_chk" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t_fail" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Odrzucenie: Łączna wartość&lt;br&gt;wkładu poniżej limitu" vertex="1">
+          <mxGeometry height="52" width="175" x="2215" y="571" as="geometry" />
+        </mxCell>
+        <mxCell id="e_exc_t_fail" edge="1" parent="1" source="t_chk" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="t_fail" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t_burn" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Trwałe usunięcie (spalenie) wybranych przedmiotów" vertex="1">
+          <mxGeometry height="54" width="260" x="1870" y="643" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_t_burn" edge="1" parent="1" source="t_chk" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="t_burn" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t_roll" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Losowanie 1 nagrody z wyższej puli rzadkości" vertex="1">
+          <mxGeometry height="54" width="260" x="1870" y="715" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_t_roll" edge="1" parent="1" source="t_burn" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="t_roll" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t_save" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Zapis nowego wygenerowanego przedmiotu do bazy" vertex="1">
+          <mxGeometry height="54" width="260" x="1870" y="787" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_t_save" edge="1" parent="1" source="t_roll" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="t_save" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="d_admin_sqlite" name="3. Panel Administratora">
+    <mxGraphModel dx="2668" dy="1522" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2180" pageHeight="1180" background="light-dark(#FFFFFF,#757575)" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="act_adm" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontColor=#fef08a;strokeColor=#eab308;fillColor=#1e293b;fontSize=12;fontStyle=1;" value="Administrator" vertex="1">
+          <mxGeometry height="90" width="55" x="90" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="adm_gate" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Admin Dashboard" vertex="1">
+          <mxGeometry height="75" width="490" x="845" y="102.5" as="geometry" />
+        </mxCell>
+        <mxCell id="e_act_gate" edge="1" parent="1" source="act_adm" style="endArrow=none;html=1;strokeColor=#64748b;strokeWidth=1.5;" target="adm_gate" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="adm_c_main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Kreator i Edytor Skrzynek (Konfiguracja w sklepie)" vertex="1">
+          <mxGeometry height="65" width="600" x="80" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gate_adm_c_main" edge="1" parent="1" source="adm_gate" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="adm_c_main" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Weryfikacja uprawnień admina w SQLite wg tokenu" vertex="1">
+          <mxGeometry height="58" width="310" x="75" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_ac_1" edge="1" parent="1" source="adm_c_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="ac_1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Definiowanie parametrów skrzynki (cena, nazwa, ikona)" vertex="1">
+          <mxGeometry height="58" width="310" x="75" y="437" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_ac_2" edge="1" parent="1" source="ac_1" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="ac_2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Przypisanie dropów i wag (skrzynka_przedmioty)" vertex="1">
+          <mxGeometry height="58" width="310" x="75" y="519" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_ac_3" edge="1" parent="1" source="ac_2" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="ac_3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_err" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Odrzucenie: Błędne wagi lub ujemna cena" vertex="1">
+          <mxGeometry height="58" width="215" x="475" y="519" as="geometry" />
+        </mxCell>
+        <mxCell id="e_br_ac_err" edge="1" parent="1" source="ac_3" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="ac_err" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Transakcyjny zapis zmian w tabelach SQLite" vertex="1">
+          <mxGeometry height="58" width="310" x="75" y="601" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_ac_4" edge="1" parent="1" source="ac_3" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="ac_4" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ac_5" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Włączenie / Wyłączenie skrzynki (aktywna = 0/1)" vertex="1">
+          <mxGeometry height="58" width="310" x="75" y="683" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_ac_5" edge="1" parent="1" source="ac_4" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="ac_5" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="adm_u_main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Panel Zarządzania Użytkownikami (Wyszukiwanie i edycja)" vertex="1">
+          <mxGeometry height="65" width="600" x="780" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gate_adm_u_main" edge="1" parent="1" source="adm_gate" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="adm_u_main" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="au_1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Weryfikacja uprawnień admina w SQLite wg tokenu" vertex="1">
+          <mxGeometry height="58" width="310" x="775" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_au_1" edge="1" parent="1" source="adm_u_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="au_1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="au_2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Wyszukiwanie konta w SQLite po ID, loginie lub emailu" vertex="1">
+          <mxGeometry height="58" width="310" x="775" y="437" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_au_2" edge="1" parent="1" source="au_1" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="au_2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="au_3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Ręczna korekta salda wirtualnego (UPDATE uzytkownicy)" vertex="1">
+          <mxGeometry height="58" width="310" x="775" y="519" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_au_3" edge="1" parent="1" source="au_2" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="au_3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="au_4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Blokada konta (Ban) i unieważnienie tokenów" vertex="1">
+          <mxGeometry height="58" width="310" x="775" y="601" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_au_4" edge="1" parent="1" source="au_3" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="au_4" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" x="-0.0079" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="au_err" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=11;fontStyle=0;strokeDashed=1;shadow=1;" value="Błąd: Próba zablokowania&lt;br&gt;Głównego Administratora" vertex="1">
+          <mxGeometry height="58" width="215" x="1175" y="601" as="geometry" />
+        </mxCell>
+        <mxCell id="e_br_au_err" edge="1" parent="1" source="au_4" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="au_err" value="&amp;lt;&amp;lt;exclude&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="adm_a_main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="&lt;div&gt;Monitoring Aktywności&lt;/div&gt;" vertex="1">
+          <mxGeometry height="65" width="600" x="1480" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gate_adm_a_main" edge="1" parent="1" source="adm_gate" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="adm_a_main" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aa_1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Weryfikacja uprawnień admina w SQLite wg tokenu" vertex="1">
+          <mxGeometry height="58" width="310" x="1475" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_aa_1" edge="1" parent="1" source="adm_a_main" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="aa_1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aa_2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Wyliczenie wskaźnika RTP z tabeli historia_losowan" vertex="1">
+          <mxGeometry height="58" width="310" x="1475" y="437" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_aa_2" edge="1" parent="1" source="aa_1" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="aa_2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aa_alert" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#2e1065;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=11;fontStyle=0;shadow=1;" value="Alert: Wykrycie anomalii&lt;br&gt;i podejrzanej serii wygranych" vertex="1">
+          <mxGeometry height="58" width="215" x="1875" y="437" as="geometry" />
+        </mxCell>
+        <mxCell id="e_br_aa_alert" edge="1" parent="1" source="aa_2" style="endArrow=open;dashed=1;endSize=7;html=1;strokeColor=#a855f7;fontColor=#c084fc;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="aa_alert" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aa_3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Przegląd pełnego dziennika audytowego w SQLite" vertex="1">
+          <mxGeometry height="58" width="310" x="1475" y="519" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_aa_3" edge="1" parent="1" source="aa_2" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="aa_3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aa_4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=11;fontStyle=0;shadow=1;" value="Eksport raportu finansowego platformy do CSV/JSON" vertex="1">
+          <mxGeometry height="58" width="310" x="1475" y="601" as="geometry" />
+        </mxCell>
+        <mxCell id="e_inc_aa_4" edge="1" parent="1" source="aa_3" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;" target="aa_4" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="leT-XSq8rFICYU-L9wOo-1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#647687;strokeColor=#314354;strokeWidth=1.5;fontColor=#ffffff;fontSize=11;fontStyle=0;shadow=1;" value="Zmniejszenie szansy wygranej(żeby za dobrze nie było)" vertex="1">
+          <mxGeometry height="58" width="237.5" x="1863.75" y="532" as="geometry" />
+        </mxCell>
+        <mxCell id="leT-XSq8rFICYU-L9wOo-2" edge="1" parent="1" source="aa_alert" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=10.5;labelBackgroundColor=#090d16;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="leT-XSq8rFICYU-L9wOo-1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1880" y="500" as="sourcePoint" />
+            <mxPoint x="1990" y="510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
