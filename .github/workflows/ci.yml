@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Lint PHP (php -l)
+        run: |
+          err=0
+          while IFS= read -r -d '' f; do
+            php -l "$f" || err=1
+          done < <(git ls-files -z '*.php')
+          exit $err
+
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Składnia JS (node --check)
+        run: |
+          err=0
+          while IFS= read -r f; do
+            node --check "$f" || err=1
+          done < <(git ls-files 'public/assets/js/*.js')
+          exit $err
+
+      - name: Schema SQL importuje się do SQLite
+        run: |
+          if [ -f database/schema.sql ]; then
+            sqlite3 :memory: < database/schema.sql
+          fi
+
+      - name: Seed CSV ma równą liczbę kolumn w każdym wierszu
+        run: |
+          err=0
+          for f in database/seed/*.csv; do
+            [ -e "$f" ] || break
+            n=$(awk -F, 'NR>1{print NF}' "$f" | sort -u | wc -l)
+            if [ "$n" -gt 1 ]; then echo "::error file=$f::Nierowna liczba kolumn w wierszach CSV"; err=1; fi
+          done
+          exit $err

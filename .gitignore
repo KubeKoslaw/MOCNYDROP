@@ -1,0 +1,14 @@
+database/*.sqlite
+database/*.sqlite-journal
+database/*.db
+
+*.md
+!README.md
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+*.log
+vendor/
+node_modules/
