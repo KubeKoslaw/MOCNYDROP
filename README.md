@@ -37,7 +37,8 @@ Przykładowe wagi (rzadkość nagrody rośnie → waga maleje):
 | Zwykła | $50$ | $50\%$ |
 | Rzadka | $30$ | $30\%$ |
 | Epicka | $15$ | $15\%$ |
-| Legendarna | $5$ | $5\%$ |
+| Legendarna | $4$ | $4\%$ |
+| Mityczna | $1$ | $1\%$ |
 
 
 ## Plan działania
