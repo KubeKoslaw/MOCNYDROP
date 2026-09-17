@@ -34,11 +34,11 @@ Przykładowe wagi (rzadkość nagrody rośnie → waga maleje):
 
 | Rzadkość | Waga $w_i$ | Szansa $P(i)$ |
 |---|---|---|
-| Zwykła | $50$ | $50\%$ |
-| Rzadka | $30$ | $30\%$ |
-| Epicka | $15$ | $15\%$ |
-| Legendarna | $4$ | $4\%$ |
-| Mityczna | $1$ | $1\%$ |
+| Pospolita | $50$ | $50\%$ |
+| Przeciętna | $30$ | $30\%$ |
+| Niezła | $15$ | $15\%$ |
+| Mityczna | $4$ | $4\%$ |
+| Niesamowita | $1$ | $1\%$ |
 
 
 ## Plan działania
@@ -46,7 +46,7 @@ Przykładowe wagi (rzadkość nagrody rośnie → waga maleje):
 - [x] 1. Ustalenie schematu barwnego, działania i wyglądu strony (słownictwo, przyciski itd.).
 - [ ] 2. Fundamenty strony — prosty statyczny wygląd, pozycjonowanie kart zgodnie z projektem, połączenie z PHP, prototyp animacji w JavaScript.
 - [ ] 3. Implementacja algorytmu losowania, aktualizacja stanu strony (konta), wyświetlanie zapytań, styl losowanych przycisków.
-- [ ] 4. Testy, merytoryka i ewentalna naprawa błędów.
+- [ ] 4. Testy, merytoryka i ewentualna naprawa błędów.
 
 PROJEKT W PEŁNI LEGALNY BO BEZ PRAWDZIWEJ WALUTY POZDRAWIAM *cytat moxmar*
 
