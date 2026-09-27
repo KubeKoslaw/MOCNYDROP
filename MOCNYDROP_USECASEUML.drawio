@@ -1,0 +1,177 @@
+<mxfile host="app.diagrams.net" agent="ZCode">
+  <diagram id="d_mocnydrop_usecase" name="Diagram przypadków użycia">
+    <mxGraphModel dx="2240" dy="1183" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1750" background="#0d1424" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#f1f5f9;fontSize=20;fontStyle=1;" value="MOCNYDROP — diagram przypadków użycia (UML)" vertex="1">
+          <mxGeometry height="32" width="900" x="380" y="6" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#475569;strokeWidth=2;fontColor=#e2e8f0;fontSize=16;fontStyle=1;verticalAlign=top;align=left;spacingLeft=14;spacingTop=10;" value=" " vertex="1">
+          <mxGeometry height="1540" width="1700" x="380" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="act_guest" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontColor=#f8fafc;strokeColor=#38bdf8;fillColor=#1e293b;fontSize=12;fontStyle=1;" value="Użytkownik (Gość)" vertex="1">
+          <mxGeometry height="90" width="55" x="140" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="act_player" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontColor=#f8fafc;strokeColor=#38bdf8;fillColor=#1e293b;fontSize=12;fontStyle=1;" value="Zalogowany Gracz" vertex="1">
+          <mxGeometry height="90" width="55" x="140" y="990" as="geometry" />
+        </mxCell>
+        <mxCell id="act_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontColor=#fef08a;strokeColor=#eab308;fillColor=#1e293b;fontSize=12;fontStyle=1;" value="Administrator" vertex="1">
+          <mxGeometry height="90" width="55" x="2160" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="gen_player_guest" edge="1" parent="1" source="act_player" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=0;endSize=14;html=1;strokeColor=#94a3b8;strokeWidth=2;fontSize=12;fontColor=#94a3b8;labelBackgroundColor=#0d1424;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="act_guest" value="&amp;lt;&amp;lt;dziedziczy&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="95" y="1035" />
+              <mxPoint x="95" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="as_guest_reg" edge="1" parent="1" source="act_guest" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_REG">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_guest_login" edge="1" parent="1" source="act_guest" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_LOGIN">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_player_case" edge="1" parent="1" source="act_player" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_CASE">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_player_upgrade" edge="1" parent="1" source="act_player" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_UPGRADE">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_player_fish" edge="1" parent="1" source="act_player" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_FISH">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_player_trade" edge="1" parent="1" source="act_player" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_TRADE">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_admin_1" edge="1" parent="1" source="act_admin" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="UC_ADM1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_admin_2" edge="1" parent="1" source="act_admin" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="UC_ADM2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="as_admin_3" edge="1" parent="1" source="act_admin" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="UC_ADM3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_REG" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Rejestracja konta" vertex="1">
+          <mxGeometry height="70" width="280" x="430" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="REG_ACC" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=12;shadow=1;" value="Przyznanie bonusu powitalnego (50 monet)" vertex="1">
+          <mxGeometry height="60" width="280" x="820" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="REG_ERR" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Login lub e-mail już zajęty" vertex="1">
+          <mxGeometry height="56" width="240" x="820" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_LOGIN" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Zalogowanie do systemu" vertex="1">
+          <mxGeometry height="80" width="300" x="430" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="ERR_BADLOGIN" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Niepoprawne dane logowania" vertex="1">
+          <mxGeometry height="56" width="240" x="820" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="ERR_BANNED" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Konto zablokowane" vertex="1">
+          <mxGeometry height="56" width="240" x="820" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_CASE" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Otwarcie skrzynki" vertex="1">
+          <mxGeometry height="70" width="260" x="430" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="CASE_ERR" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Brak środków" vertex="1">
+          <mxGeometry height="54" width="210" x="820" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="CASE_SELL" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#2e1065;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=12;strokeDashed=1;shadow=1;" value="Natychmiastowa sprzedaż wygranej" vertex="1">
+          <mxGeometry height="60" width="250" x="820" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_UPGRADE" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Ulepszenie przedmiotu (Upgrader)" vertex="1">
+          <mxGeometry height="70" width="280" x="430" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_FISH" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Łowienie ryb (łowisko)" vertex="1">
+          <mxGeometry height="70" width="260" x="430" y="1200" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_TRADE" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Wymiana przedmiotów (Trader)" vertex="1">
+          <mxGeometry height="70" width="280" x="430" y="1400" as="geometry" />
+        </mxCell>
+        <mxCell id="TRADE_ERR" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Odrzucenie: za niska wartość" vertex="1">
+          <mxGeometry height="60" width="240" x="820" y="1400" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_ADM1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Zarządzanie skrzynkami" vertex="1">
+          <mxGeometry height="64" width="300" x="1150" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="ADM1_ERR" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Błędne wagi lub ujemna cena" vertex="1">
+          <mxGeometry height="54" width="250" x="1200" y="194" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_ADM2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Zarządzanie użytkownikami" vertex="1">
+          <mxGeometry height="64" width="300" x="1150" y="352" as="geometry" />
+        </mxCell>
+        <mxCell id="ADM2_S2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=12;shadow=1;" value="Zmiana salda gracza" vertex="1">
+          <mxGeometry height="58" width="230" x="1080" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="ADM2_S3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=12;shadow=1;" value="Zablokowanie konta" vertex="1">
+          <mxGeometry height="58" width="240" x="1340" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="ADM2_ERR" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Próba zablokowania głównego administratora" vertex="1">
+          <mxGeometry height="64" width="240" x="1340" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_ADM3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Monitoring aktywności" vertex="1">
+          <mxGeometry height="64" width="300" x="1150" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="ADM3_S1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=12;shadow=1;" value="Przegląd statystyk wygranych" vertex="1">
+          <mxGeometry height="58" width="220" x="1090" y="830" as="geometry" />
+        </mxCell>
+        <mxCell id="ADM3_S3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=12;shadow=1;" value="Eksport raportu" vertex="1">
+          <mxGeometry height="58" width="220" x="1340" y="830" as="geometry" />
+        </mxCell>
+        <mxCell id="ADM3_EXT" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#2e1065;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=12;strokeDashed=1;shadow=1;" value="Alert: podejrzane serie wygranych" vertex="1">
+          <mxGeometry height="64" width="250" x="1090" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="pad_right" parent="1" style="ellipse;html=1;fillColor=none;strokeColor=none;opacity=0;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="2300" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="pad_left" parent="1" style="ellipse;html=1;fillColor=none;strokeColor=none;opacity=0;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="10" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="e_reg_acc" edge="1" parent="1" source="UC_REG" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="REG_ACC" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_reg_err" edge="1" parent="1" source="REG_ERR" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_REG" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_err_badlogin" edge="1" parent="1" source="ERR_BADLOGIN" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_LOGIN" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_err_banned" edge="1" parent="1" source="ERR_BANNED" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_LOGIN" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_case_err" edge="1" parent="1" source="CASE_ERR" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_CASE" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_case_sell" edge="1" parent="1" source="CASE_SELL" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#a855f7;fontColor=#c084fc;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_CASE" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_trade_err" edge="1" parent="1" source="TRADE_ERR" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_TRADE" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_adm1_err" edge="1" parent="1" source="ADM1_ERR" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_ADM1" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_adm2_s2" edge="1" parent="1" source="UC_ADM2" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM2_S2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_adm2_s3" edge="1" parent="1" source="UC_ADM2" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM2_S3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_adm2_err" edge="1" parent="1" source="ADM2_ERR" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM2_S3" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_adm3_s1" edge="1" parent="1" source="UC_ADM3" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM3_S1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_adm3_s3" edge="1" parent="1" source="UC_ADM3" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM3_S3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_adm3_ext" edge="1" parent="1" source="ADM3_EXT" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#a855f7;fontColor=#c084fc;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM3_S1" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
