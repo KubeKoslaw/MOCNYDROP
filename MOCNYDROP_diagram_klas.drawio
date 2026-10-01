@@ -1,6 +1,6 @@
-<mxfile host="Electron" agent="Hermes">
+<mxfile host="app.diagrams.net" agent="Hermes">
   <diagram id="mocnydrop-classes" name="Diagram klas - MOCNYDROP">
-    <mxGraphModel dx="960" dy="1209" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1400" background="#0f172a" math="0" shadow="0">
+    <mxGraphModel dx="2836" dy="1404" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1400" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -348,18 +348,18 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e5_ms" connectable="0" parent="e5" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="1" vertex="1">
+        <mxCell id="e5_ms" connectable="0" parent="e5" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="*" vertex="1">
           <mxGeometry relative="1" x="-0.85" as="geometry" />
         </mxCell>
-        <mxCell id="e5_md" connectable="0" parent="e5" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="1..*" vertex="1">
+        <mxCell id="e5_md" connectable="0" parent="e5" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="*" vertex="1">
           <mxGeometry relative="1" x="0.88" as="geometry" />
         </mxCell>
         <mxCell id="e6" edge="1" parent="1" source="Uzytkownik" style="edgeStyle=orthogonalEdgeStyle;rounded=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#6ee7b7;fontColor=#6ee7b7;fontSize=10;startArrow=diamondThin;startFill=0;startSize=12;endArrow=none;" target="OauthKod" value=" ">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="645" y="640" />
-              <mxPoint x="1720" y="640" />
-              <mxPoint x="1720" y="260" />
+              <mxPoint x="710" y="650" />
+              <mxPoint x="1720" y="650" />
+              <mxPoint x="1720" y="230" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -369,20 +369,25 @@
         <mxCell id="e6_md" connectable="0" parent="e6" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="0..*" vertex="1">
           <mxGeometry relative="1" x="0.88" as="geometry" />
         </mxCell>
+        <mxCell id="ZCyvuwiD2Jij2xAX2fpE-1" connectable="0" parent="e6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Text" vertex="1">
+          <mxGeometry relative="1" x="-0.7409" y="-6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="e7" edge="1" parent="1" source="Uzytkownik" style="edgeStyle=orthogonalEdgeStyle;rounded=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#64748b;fontColor=#64748b;fontSize=10;endArrow=none;" target="Losowanie" value="historia">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e7_ms" connectable="0" parent="e7" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="1" vertex="1">
+        <mxCell id="e7_ms" connectable="0" parent="e7" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="0" vertex="1">
           <mxGeometry relative="1" x="-0.85" as="geometry" />
         </mxCell>
-        <mxCell id="e7_md" connectable="0" parent="e7" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="1..*" vertex="1">
+        <mxCell id="e7_md" connectable="0" parent="e7" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="*" vertex="1">
           <mxGeometry relative="1" x="0.88" as="geometry" />
         </mxCell>
         <mxCell id="e8" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#64748b;fontColor=#64748b;fontSize=10;endArrow=none;" value="">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1080" y="660" />
-              <mxPoint x="1080" y="660" />
+              <mxPoint x="1080.04" y="670" />
+              <mxPoint x="1080.04" y="670" />
             </Array>
             <mxPoint x="1080" y="602.0000000000002" as="sourcePoint" />
             <mxPoint x="1080" y="730" as="targetPoint" />
@@ -391,7 +396,7 @@
         <mxCell id="e8_ms" connectable="0" parent="e8" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="*" vertex="1">
           <mxGeometry relative="1" x="-0.85" as="geometry" />
         </mxCell>
-        <mxCell id="e8_md" connectable="0" parent="e8" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="1" vertex="1">
+        <mxCell id="e8_md" connectable="0" parent="e8" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#e2e8f0;labelBackgroundColor=#0f172a;" value="*" vertex="1">
           <mxGeometry relative="1" x="0.88" as="geometry" />
         </mxCell>
         <mxCell id="e9" edge="1" parent="1" source="Losowanie" style="edgeStyle=orthogonalEdgeStyle;rounded=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#64748b;fontColor=#64748b;fontSize=10;endArrow=none;" target="Przedmiot" value="wynik">
@@ -450,8 +455,8 @@
         <mxCell id="e14" edge="1" parent="1" source="SkrzynkaPrzedmiot" style="edgeStyle=orthogonalEdgeStyle;rounded=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#a855f7;fontColor=#a855f7;fontSize=10;endArrow=block;endFill=0;dashed=1;" target="ILosujacy" value="">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1290" y="1090" />
-              <mxPoint x="1290" y="1058" />
+              <mxPoint x="1290.05" y="1090.05" />
+              <mxPoint x="1290.05" y="1070.05" />
             </Array>
           </mxGeometry>
         </mxCell>
