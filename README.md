@@ -39,6 +39,7 @@ Przykładowe wagi (rzadkość nagrody rośnie → waga maleje):
 | Niezła | $15$ | $15\%$ |
 | Mityczna | $4$ | $4\%$ |
 | Niesamowita | $1$ | $1\%$ |
+|  *ULTRA MEGA NIESAMOWITA* | $0.001$ | $0.001\%$ |
 
 
 ## Plan działania
