@@ -1,14 +1,14 @@
+# Pliki runtime bazy SQLite (baza tworzy sie lokalnie, nie commitujemy jej)
 database/*.sqlite
 database/*.sqlite-journal
 database/*.db
 
-*.md
-!README.md
-
+# System
 .DS_Store
 Thumbs.db
 desktop.ini
 
+# Logi i zaleznosci
 *.log
 vendor/
 node_modules/

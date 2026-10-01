@@ -1,5 +1,9 @@
 name: CI
 
+# Repo na etapie dokumentacji i diagramow: nie ma jeszcze kodu aplikacji.
+# Kroki ponizej przechodza takze wtedy, gdy plikow PHP/JS jeszcze nie ma,
+# a zaczna realnie sprawdzac kod, gdy tylko pojawi sie w repo.
+
 on:
   pull_request:
   push:
@@ -20,9 +24,10 @@ jobs:
       - name: Lint PHP (php -l)
         run: |
           err=0
-          while IFS= read -r -d '' f; do
+          while IFS= read -r f; do
+            [ -n "$f" ] || continue
             php -l "$f" || err=1
-          done < <(git ls-files -z '*.php')
+          done < <(git ls-files '*.php')
           exit $err
 
       - name: Node 20
@@ -30,26 +35,34 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Składnia JS (node --check)
+      - name: Skladnia JS (node --check)
         run: |
           err=0
           while IFS= read -r f; do
+            [ -n "$f" ] || continue
             node --check "$f" || err=1
-          done < <(git ls-files 'public/assets/js/*.js')
+          done < <(git ls-files '*.js')
           exit $err
 
-      - name: Schema SQL importuje się do SQLite
+      - name: Schema SQL importuje sie do SQLite
         run: |
-          if [ -f database/schema.sql ]; then
+          if [ ! -f database/schema.sql ]; then
+            echo "Brak database/schema.sql - krok pominiety."
+          elif ! command -v sqlite3 >/dev/null 2>&1; then
+            echo "Brak sqlite3 na runnerze - krok pominiety (doinstaluj w workflow, gdy pojawi sie schemat)."
+          else
             sqlite3 :memory: < database/schema.sql
           fi
 
-      - name: Seed CSV ma równą liczbę kolumn w każdym wierszu
+      - name: Seed CSV ma rowna liczbe kolumn w kazdym wierszu
         run: |
           err=0
+          found=0
           for f in database/seed/*.csv; do
-            [ -e "$f" ] || break
+            [ -e "$f" ] || continue
+            found=1
             n=$(awk -F, 'NR>1{print NF}' "$f" | sort -u | wc -l)
             if [ "$n" -gt 1 ]; then echo "::error file=$f::Nierowna liczba kolumn w wierszach CSV"; err=1; fi
           done
+          [ "$found" -eq 1 ] || echo "Brak database/seed/*.csv - krok pominiety."
           exit $err
