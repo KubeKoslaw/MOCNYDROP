@@ -147,6 +147,114 @@ final class Przedmiot
         );
     }
 
+    /**
+     * Pula przedmiotów rzadszych niż podany poziom — nagrody w kontrakcie
+     * tradera («Losowanie 1 nagrody z wyższej puli rzadkości», strona 2
+     * diagramu PROJEKT).
+     *
+     * Wagi bierzemy z `rzadkosci.waga_domyslna`, więc rozkład P(i) = w_i/suma(w)
+     * jest dokładnie ten sam, co w README.md — tylko ograniczony do poziomów
+     * powyżej wkładu gracza.
+     *
+     * Kształt wiersza jest IDENTYCZNY jak Wedka::pula() i Skrzynka::pula(),
+     * dzięki czemu działa na nim ten sam WeightedRoller i ten sam Reel.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function pulaRzadszych(int $minKolejnosc, ?PDO $pdo = null): array
+    {
+        $db = $pdo ?? Database::connection();
+
+        $stmt = $db->prepare(
+            'SELECT p.id AS przedmiot_id, p.nazwa, p.wartosc, p.ikona, p.opis,
+                    z.kod           AS rzadkosc_kod,
+                    z.nazwa         AS rzadkosc_nazwa,
+                    z.mnoznik       AS mnoznik,
+                    z.waga_domyslna AS waga_domyslna,
+                    z.kolor         AS kolor,
+                    z.kolejnosc     AS rzadkosc_kolejnosc,
+                    z.waga_domyslna AS waga
+             FROM przedmioty p
+             JOIN rzadkosci z ON z.kod = p.rzadkosc_kod
+             WHERE p.czy_aktywny = 1 AND z.kolejnosc > ?
+             ORDER BY z.kolejnosc ASC, p.wartosc ASC, p.id ASC'
+        );
+        $stmt->execute([$minKolejnosc]);
+
+        $items = [];
+
+        foreach ($stmt->fetchAll() as $row) {
+            $items[] = self::wierszPuli($row);
+        }
+
+        $chances = WeightedRoller::chances($items);
+
+        foreach ($items as $i => $item) {
+            $items[$i]['szansa_procent'] = $chances[$i];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Katalog wszystkich aktywnych przedmiotów — api/katalog.php.
+     *
+     * Upgrader potrzebuje go do «Wyboru pożądanego przedmiotu celu z katalogu»,
+     * a frontend do wyszukiwarki celów.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function katalog(?PDO $pdo = null): array
+    {
+        $db = $pdo ?? Database::connection();
+
+        $rows = $db->query(
+            'SELECT p.id AS przedmiot_id, p.nazwa, p.wartosc, p.ikona, p.opis,
+                    z.kod           AS rzadkosc_kod,
+                    z.nazwa         AS rzadkosc_nazwa,
+                    z.mnoznik       AS mnoznik,
+                    z.waga_domyslna AS waga_domyslna,
+                    z.kolor         AS kolor,
+                    z.kolejnosc     AS rzadkosc_kolejnosc,
+                    z.waga_domyslna AS waga
+             FROM przedmioty p
+             JOIN rzadkosci z ON z.kod = p.rzadkosc_kod
+             WHERE p.czy_aktywny = 1
+             ORDER BY z.kolejnosc ASC, p.wartosc ASC, p.id ASC'
+        )->fetchAll();
+
+        return array_map(static fn (array $row): array => self::wierszPuli($row), $rows);
+    }
+
+    /**
+     * Mapowanie wiersza SQL na kształt puli używany przez WeightedRoller/Reel.
+     *
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    public static function wierszPuli(array $row): array
+    {
+        $ikona = (string) ($row['ikona'] ?? '');
+
+        return [
+            'przedmiot_id' => (int) ($row['przedmiot_id'] ?? $row['id'] ?? 0),
+            'nazwa' => (string) ($row['nazwa'] ?? ''),
+            'rzadkosc_kod' => (string) ($row['rzadkosc_kod'] ?? ''),
+            'rzadkosc_nazwa' => (string) ($row['rzadkosc_nazwa'] ?? ''),
+            'rzadkosc_kolejnosc' => (int) ($row['rzadkosc_kolejnosc'] ?? 0),
+            'mnoznik' => (float) ($row['mnoznik'] ?? 1.0),
+            'waga_domyslna' => (float) ($row['waga_domyslna'] ?? 0.0),
+            'kolor' => (string) ($row['kolor'] ?? ''),
+            'wartosc' => (float) ($row['wartosc'] ?? 0.0),
+            'ikona' => $ikona,
+            'ikona_url' => Config::iconUrl($ikona),
+            'ikona_istnieje' => Config::iconExists($ikona),
+            'opis' => (string) ($row['opis'] ?? ''),
+            'waga' => (float) ($row['waga'] ?? $row['waga_domyslna'] ?? 0.0),
+            'szansa_procent' => 0.0,
+        ];
+    }
+
     /** Kształt zwracany przez API. @return array<string, mixed> */
     public function doApi(): array
     {

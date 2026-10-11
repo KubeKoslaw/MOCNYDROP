@@ -229,6 +229,190 @@ final class Ekwipunek
         ];
     }
 
+    /**
+     * Jeden wpis ekwipunku gracza — z przedmiotem i zamrożoną wartością.
+     *
+     * Rzuca 404, gdy wpisu nie ma albo należy do innego gracza, i 409, gdy jest
+     * już sprzedany (nie da się go wtedy ulepszyć ani wymienić).
+     *
+     * @return array<string, mixed>
+     */
+    public function wpis(int $ekwipunekId): array
+    {
+        $db = $this->polaczenie();
+
+        $stmt = $db->prepare(
+            'SELECT e.id AS ekwipunek_id, e.przedmiot_id, e.wartosc, e.data_nabycia, e.sprzedany,
+                    p.nazwa, p.ikona, p.opis,
+                    z.kod AS rzadkosc_kod, z.nazwa AS rzadkosc_nazwa, z.kolor, z.kolejnosc, z.mnoznik
+             FROM ekwipunek e
+             JOIN przedmioty p ON p.id = e.przedmiot_id
+             JOIN rzadkosci z  ON z.kod = p.rzadkosc_kod
+             WHERE e.id = ? AND e.user_id = ?'
+        );
+        $stmt->execute([$ekwipunekId, $this->uzytkownikId]);
+
+        $row = $stmt->fetch();
+
+        if ($row === false) {
+            throw ApiException::notFound('Nie masz takiego przedmiotu w ekwipunku.', 'item_not_found');
+        }
+
+        if ((int) $row['sprzedany'] === 1) {
+            throw ApiException::conflict('Ten przedmiot został już sprzedany.', 'already_sold');
+        }
+
+        return self::mapujWpis($row);
+    }
+
+    /**
+     * Wiele wpisów naraz — tyle, ile potrzebuje Trader (kontrakt 3–10 sztuk).
+     *
+     * @param list<int> $ekwipunekIds
+     * @return list<array<string, mixed>> w tej samej kolejności co $ekwipunekIds
+     */
+    public function wpisy(array $ekwipunekIds): array
+    {
+        $unikalne = array_values(array_unique(array_map('intval', $ekwipunekIds)));
+
+        if ($unikalne !== array_values($ekwipunekIds)) {
+            throw ApiException::badRequest('Ten sam przedmiot jest wybrany dwa razy.', 'duplicate_entry');
+        }
+
+        $out = [];
+
+        foreach ($unikalne as $id) {
+            $out[] = $this->wpis($id);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Trwałe usunięcie wpisu z bazy («spalenie»).
+     *
+     * To jest krok „Zablokowanie i trwałe usunięcie wkładu" z upgradera oraz
+     * „Trwałe usunięcie (spalenie) wybranych przedmiotów" z tradera. Wpis znika
+     * z tabeli `ekwipunek` — nie da się go sprzedać ani odzyskać.
+     *
+     * @return array<string, mixed> usunięty wpis (ten sam kształt co wpis())
+     */
+    public function spalWpis(int $ekwipunekId): array
+    {
+        $wpis = $this->wpis($ekwipunekId);
+
+        $db = $this->polaczenie();
+        $wlasna = !$db->inTransaction();
+
+        if ($wlasna) {
+            $db->beginTransaction();
+        }
+
+        try {
+            $stmt = $db->prepare('DELETE FROM ekwipunek WHERE id = ? AND user_id = ? AND sprzedany = 0');
+            $stmt->execute([$ekwipunekId, $this->uzytkownikId]);
+
+            // rowCount 0 = wpis zniknął między naszym SELECT a DELETE (np. gracz
+            // kliknął „Sprzedaj" w drugiej karcie).
+            if ($stmt->rowCount() === 0) {
+                throw ApiException::conflict('Ten przedmiot został już sprzedany.', 'already_sold');
+            }
+
+            if ($wlasna) {
+                $db->commit();
+            }
+        } catch (Throwable $e) {
+            if ($wlasna && $db->inTransaction()) {
+                $db->rollBack();
+            }
+
+            throw $e;
+        }
+
+        return $wpis;
+    }
+
+    /**
+     * Spalenie wielu wpisów w JEDNEJ transakcji — albo wszystkie, albo żadne.
+     *
+     * @param list<int> $ekwipunekIds
+     * @return list<array<string, mixed>>
+     */
+    public function spalWpisy(array $ekwipunekIds): array
+    {
+        // Walidacja wszystkich wpisów PRZED transakcją: trader nie może spalić
+        // trzech ryb i wywalić się na czwartej.
+        $wpisy = $this->wpisy($ekwipunekIds);
+
+        $db = $this->polaczenie();
+        $wlasna = !$db->inTransaction();
+
+        if ($wlasna) {
+            $db->beginTransaction();
+        }
+
+        try {
+            $stmt = $db->prepare('DELETE FROM ekwipunek WHERE id = ? AND user_id = ? AND sprzedany = 0');
+
+            foreach ($wpisy as $wpis) {
+                $stmt->execute([(int) $wpis['ekwipunek_id'], $this->uzytkownikId]);
+
+                if ($stmt->rowCount() === 0) {
+                    throw ApiException::conflict(
+                        'Przedmiot „' . $wpis['nazwa'] . '" został już sprzedany.',
+                        'already_sold'
+                    );
+                }
+            }
+
+            if ($wlasna) {
+                $db->commit();
+            }
+        } catch (Throwable $e) {
+            if ($wlasna && $db->inTransaction()) {
+                $db->rollBack();
+            }
+
+            throw $e;
+        }
+
+        return $wpisy;
+    }
+
+    /**
+     * Łączna zamrożona wartość wpisów — «Zsumowanie łącznej wartości rynkowej
+     * wkładu» z kontraktu tradera.
+     *
+     * @param list<array<string, mixed>> $wpisy
+     */
+    public static function sumaWartosci(array $wpisy): float
+    {
+        $suma = 0.0;
+
+        foreach ($wpisy as $wpis) {
+            $suma += (float) ($wpis['wartosc'] ?? 0.0);
+        }
+
+        return round($suma, 2);
+    }
+
+    /** @param array<string, mixed> $row wiersz z JOIN-a ekwipunek + przedmioty + rzadkosci */
+    private static function mapujWpis(array $row): array
+    {
+        return [
+            'ekwipunek_id' => (int) $row['ekwipunek_id'],
+            'przedmiot_id' => (int) $row['przedmiot_id'],
+            'nazwa' => (string) $row['nazwa'],
+            'rzadkosc' => (string) $row['rzadkosc_nazwa'],
+            'rzadkosc_kod' => (string) $row['rzadkosc_kod'],
+            'rzadkosc_kolejnosc' => (int) $row['kolejnosc'],
+            'kolor' => (string) $row['kolor'],
+            'wartosc' => round((float) $row['wartosc'], 2),
+            'ikona' => Config::iconUrl((string) $row['ikona']),
+            'data_nabycia' => (string) $row['data_nabycia'],
+        ];
+    }
+
     /** Najstarszy niesprzedany wpis z tym przedmiotem (FIFO). @return array<string, mixed>|null */
     private function najstarszyWpis(int $przedmiotId): ?array
     {
