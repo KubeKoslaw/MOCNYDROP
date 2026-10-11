@@ -212,6 +212,75 @@ class Uzytkownik
         return $row === false ? null : static::zWiersza($row, $db);
     }
 
+    /**
+     * Wyszukiwarka kont dla panelu administratora (UC_ADM2: „Wyszukiwanie konta
+     * po ID, loginie lub emailu").
+     *
+     * Zwraca od razu saldo, rolę, blokadę i aktywność gracza, żeby panel nie
+     * musiał robić N+1 zapytań na liście.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function szukajDlaAdmina(string $fraza = '', int $limit = 50, ?PDO $pdo = null): array
+    {
+        $db = $pdo ?? Database::connection();
+
+        $limit = max(1, min(200, $limit));
+
+        $sql = 'SELECT u.id, u.login, u.email, u.rola, u.zablokowany, u.created_at,
+                       COALESCE(p.saldo, 0) AS saldo,
+                       COALESCE(p.waluta, \'\') AS waluta,
+                       (SELECT COUNT(*) FROM historia_losowan h WHERE h.user_id = u.id) AS liczba_losowan,
+                       (SELECT MAX(czas) FROM historia_losowan h WHERE h.user_id = u.id) AS ostatnia_aktywnosc,
+                       (SELECT COUNT(*) FROM ekwipunek e WHERE e.user_id = u.id AND e.sprzedany = 0) AS przedmioty
+                FROM uzytkownicy u
+                LEFT JOIN portfele p ON p.user_id = u.id';
+
+        $parametry = [];
+        $fraza = trim($fraza);
+
+        if ($fraza !== '') {
+            // Czyste liczbowe id traktujemy też jako trafienie w id — panel
+            // pozwala szukać po ID, loginie albo e-mailu.
+            //
+            // ESCAPE '\' jest konieczne: bez niego SQLite nie zna backslasha
+            // jako znaku ucieczki i traktowałby \_ dosłownie, więc login
+            // „anna_nowak" nigdy by się nie znalazł.
+            $sql .= " WHERE u.login LIKE ? ESCAPE '\\' OR u.email LIKE ? ESCAPE '\\' OR CAST(u.id AS TEXT) = ?";
+
+            $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $fraza) . '%';
+            $parametry = [$like, $like, $fraza];
+        }
+
+        $sql .= ' ORDER BY u.id ASC LIMIT ' . $limit;
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($parametry);
+
+        $out = [];
+
+        foreach ($stmt->fetchAll() as $row) {
+            $userId = (int) $row['id'];
+
+            $out[] = [
+                'id' => $userId,
+                'login' => (string) $row['login'],
+                'email' => (string) $row['email'],
+                'rola' => (string) $row['rola'],
+                'zablokowany' => (int) $row['zablokowany'] === 1,
+                'created_at' => (string) $row['created_at'],
+                'saldo' => round((float) $row['saldo'], 2),
+                'waluta' => (string) $row['waluta'],
+                'liczba_losowan' => (int) $row['liczba_losowan'],
+                'przedmioty' => (int) $row['przedmioty'],
+                'ostatnia_aktywnosc' => $row['ostatnia_aktywnosc'] === null ? null : (string) $row['ostatnia_aktywnosc'],
+                'rtp' => Losowanie::rtpGracza($userId, $db),
+            ];
+        }
+
+        return $out;
+    }
+
     /** @param array<string, mixed> $row wiersz z tabeli `uzytkownicy` */
     public static function zWiersza(array $row, ?PDO $pdo = null): static
     {

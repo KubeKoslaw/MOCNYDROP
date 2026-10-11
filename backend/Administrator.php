@@ -23,8 +23,10 @@ use Throwable;
  * osobnej tabeli, dokładnie tak jak na diagramie. Stąd dziedziczenie po
  * Uzytkownik zamiast osobnej encji.
  *
- * Endpointy panelu administratora (strona 3 diagramu PROJEKT) nie są jeszcze
- * zbudowane — ta klasa jest domeną, którą te endpointy tylko wywołają.
+ * Endpointy panelu administratora (strona 3 diagramu PROJEKT) wywołują dokładnie
+ * te cztery metody z diagramu: api/admin/skrzynki.php (edytujSkrzynke),
+ * api/admin/uzytkownicy.php (zbanuj / odbanuj / korygujSaldo) i
+ * api/admin/monitoring.php oraz api/admin/raport.php (eksportujRaport).
  *
  * Właściciel: @KubeKoslaw (Core Backend)
  */
@@ -127,17 +129,174 @@ final class Administrator extends Uzytkownik
     /**
      * Metoda z diagramu: `+ edytujSkrzynke(s : Skrzynka)`.
      *
-     * Klasa Skrzynka (tryb skrzynek, POST /api/open_case.php) nie jest jeszcze
-     * zaimplementowana, więc parametr nie może być nią typowany — sygnatura
-     * z diagramu jest zachowana, a wywołanie uczciwie zgłasza 501 zamiast
-     * udawać, że coś edytuje.
+     * «Kreator i Edytor Skrzynek» ze strony 3 diagramu PROJEKT — ta sama metoda
+     * zakłada nową skrzynkę (id = 0) i aktualizuje istniejącą (id > 0).
+     *
+     * Zapis jest JEDEN i transakcyjny („Transakcyjny zapis zmian w tabelach
+     * SQLite"): parametry skrzynki oraz przypisane dropy i wagi
+     * (SkrzynkaPrzedmiot, tabela skrzynka_przedmioty) lądują w bazie razem
+     * albo wcale.
+     *
+     * Przypadek rozszerzający ADM1_ERR — «Błędne wagi lub ujemna cena» — jest
+     * odrzucany PRZED jakimkolwiek zapisem (kody invalid_price / invalid_weight).
      */
-    public function edytujSkrzynke(mixed $skrzynka): void
+    public function edytujSkrzynke(Skrzynka $s): void
     {
-        throw ApiException::notImplemented(
-            'Tryb skrzynek (klasa Skrzynka z diagramu klas) nie jest jeszcze zaimplementowany.',
-            'cases_not_implemented'
-        );
+        self::walidujSkrzynke($s);
+
+        $db = $this->polaczenie();
+
+        // Nazwa jest UNIQUE w schemacie — sprawdzamy ją sami, żeby zwrócić 409
+        // zamiast surowego PDOException (które _bootstrap zamieniłby na 500).
+        $stmt = $db->prepare('SELECT COUNT(*) FROM skrzynki WHERE nazwa = ? AND id != ?');
+        $stmt->execute([$s->nazwa, $s->id]);
+
+        if ((int) $stmt->fetchColumn() > 0) {
+            throw ApiException::conflict('Skrzynka o tej nazwie już istnieje.', 'case_name_taken');
+        }
+
+        $tworzenie = $s->id <= 0;
+
+        if (!$tworzenie) {
+            $stmt = $db->prepare('SELECT COUNT(*) FROM skrzynki WHERE id = ?');
+            $stmt->execute([$s->id]);
+
+            if ((int) $stmt->fetchColumn() === 0) {
+                throw ApiException::notFound('Nie ma skrzynki o id ' . $s->id . '.', 'case_not_found');
+            }
+        }
+
+        // Walidacja wag (druga część ADM1_ERR) też musi się zdarzyć przed zapisem
+        // — ustawPule() sprawdza wszystko, zanim cokolwiek skasuje.
+        $wlasna = !$db->inTransaction();
+
+        if ($wlasna) {
+            $db->beginTransaction();
+        }
+
+        try {
+            if ($tworzenie) {
+                $stmt = $db->prepare(
+                    'INSERT INTO skrzynki (nazwa, opis, cena, ikona, aktywna, kolejnosc)
+                     VALUES (?, ?, ?, ?, ?, ?)'
+                );
+                $stmt->execute([
+                    $s->nazwa,
+                    $s->opis,
+                    $s->cena,
+                    $s->ikona,
+                    $s->aktywna ? 1 : 0,
+                    $s->kolejnosc,
+                ]);
+
+                $s->id = (int) $db->lastInsertId();
+            } else {
+                $stmt = $db->prepare(
+                    'UPDATE skrzynki
+                     SET nazwa = ?, opis = ?, cena = ?, ikona = ?, aktywna = ?, kolejnosc = ?
+                     WHERE id = ?'
+                );
+                $stmt->execute([
+                    $s->nazwa,
+                    $s->opis,
+                    $s->cena,
+                    $s->ikona,
+                    $s->aktywna ? 1 : 0,
+                    $s->kolejnosc,
+                    $s->id,
+                ]);
+            }
+
+            $wpisow = 0;
+
+            // null = „nie ruszaj puli" (np. samo przełączenie aktywna = 0/1).
+            if ($s->pulaDoZapisu !== null) {
+                $wpisow = SkrzynkaPrzedmiot::ustawPule($s->id, $s->pulaDoZapisu, $db);
+            }
+
+            LogAudytowy::wpis(
+                $tworzenie ? 'skrzynka_utworzona' : 'skrzynka_edycja',
+                $this->id,
+                sprintf(
+                    'skrzynka_id=%d nazwa=%s cena=%.2f aktywna=%d wpisy_puli=%d',
+                    $s->id,
+                    $s->nazwa,
+                    $s->cena,
+                    $s->aktywna ? 1 : 0,
+                    $wpisow
+                ),
+                $db
+            );
+
+            if ($wlasna) {
+                $db->commit();
+            }
+        } catch (Throwable $e) {
+            if ($wlasna && $db->inTransaction()) {
+                $db->rollBack();
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Walidacja parametrów skrzynki — «Błędne wagi lub ujemna cena» (ADM1_ERR).
+     * Schemat ma CHECK (cena >= 0), ale odrzucamy to wcześniej i po polsku.
+     */
+    private static function walidujSkrzynke(Skrzynka $s): void
+    {
+        if (trim($s->nazwa) === '' || mb_strlen($s->nazwa) > 100) {
+            throw ApiException::badRequest('Nazwa skrzynki musi mieć od 1 do 100 znaków.', 'invalid_case_name');
+        }
+
+        if (!is_finite($s->cena) || $s->cena < 0) {
+            throw ApiException::badRequest('Cena skrzynki nie może być ujemna.', 'invalid_price');
+        }
+
+        if (mb_strlen($s->opis) > 500) {
+            throw ApiException::badRequest('Opis skrzynki może mieć maksymalnie 500 znaków.', 'invalid_case_description');
+        }
+
+        if ($s->kolejnosc < 0) {
+            throw ApiException::badRequest('Kolejność wyświetlania nie może być ujemna.', 'invalid_case_order');
+        }
+    }
+
+    /**
+     * Zdjęcie blokady z konta — odwrotność zbanuj() z diagramu.
+     *
+     * Panel administratora musi umieć cofnąć bana («Zablokowanie konta» jest
+     * przełącznikiem, nie operacją jednokierunkową). Tokeny po banie są
+     * usunięte, więc gracz loguje się od nowa.
+     */
+    public function odbanuj(Uzytkownik $u): void
+    {
+        $db = $this->polaczenie();
+
+        $db->beginTransaction();
+
+        try {
+            $stmt = $db->prepare('UPDATE uzytkownicy SET zablokowany = 0 WHERE id = ?');
+            $stmt->execute([$u->id]);
+
+            LogAudytowy::wpis(
+                'odblokowanie',
+                $this->id,
+                sprintf('user_id=%d login=%s', $u->id, $u->login),
+                $db
+            );
+
+            $db->commit();
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+
+            throw $e;
+        }
+
+        $u->zablokowany = false;
     }
 
     /**
