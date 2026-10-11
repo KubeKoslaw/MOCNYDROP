@@ -72,8 +72,10 @@ foreach ($warnings as $warning) {
 // więc warto to zobaczyć od razu, a nie dopiero w przeglądarce.
 $counts = [
     'wędki' => (int) $db->query('SELECT COUNT(*) FROM wedki')->fetchColumn(),
+    'skrzynki' => (int) $db->query('SELECT COUNT(*) FROM skrzynki')->fetchColumn(),
     'przedmioty' => (int) $db->query('SELECT COUNT(*) FROM przedmioty')->fetchColumn(),
     'połączenia wędka-przedmiot' => (int) $db->query('SELECT COUNT(*) FROM wedka_przedmioty')->fetchColumn(),
+    'połączenia skrzynka-przedmiot' => (int) $db->query('SELECT COUNT(*) FROM skrzynka_przedmioty')->fetchColumn(),
     'użytkownicy' => (int) $db->query('SELECT COUNT(*) FROM uzytkownicy')->fetchColumn(),
 ];
 
@@ -94,6 +96,19 @@ $wedkiBezPuli = (int) $db->query(
 if ($wedkiBezPuli > 0) {
     echo PHP_EOL . '  UWAGA: ' . $wedkiBezPuli . ' aktywnych wędek nie ma ani jednego przedmiotu.'
         . ' Zarzut zwróci błąd "rod_empty".' . PHP_EOL;
+}
+
+$skrzynkiBezPuli = (int) $db->query(
+    'SELECT COUNT(*) FROM skrzynki s
+     WHERE s.aktywna = 1
+       AND NOT EXISTS (SELECT 1 FROM skrzynka_przedmioty sp
+                       JOIN przedmioty p ON p.id = sp.przedmiot_id AND p.czy_aktywny = 1
+                       WHERE sp.skrzynka_id = s.id)'
+)->fetchColumn();
+
+if ($skrzynkiBezPuli > 0) {
+    echo PHP_EOL . '  UWAGA: ' . $skrzynkiBezPuli . ' aktywnych skrzynek nie ma ani jednego dropu.'
+        . ' Otwarcie zwróci błąd "case_empty".' . PHP_EOL;
 }
 
 $brakIkony = (int) $db->query(

@@ -21,6 +21,8 @@
 --   Przedmiot         przedmioty         nazwa, wartosc, rzadkosc
 --   Wedka             wedki              nazwa, kosztUzycia
 --   Ekwipunek         ekwipunek          data_nabycia, sprzedany
+--   Skrzynka          skrzynki           nazwa, cena, ikona, aktywna
+--   SkrzynkaPrzedmiot skrzynka_przedmioty waga
 --   Losowanie         historia_losowan   czas, typ, wynik
 --   LogAudytowy       log_audytowy       akcja, czas
 --
@@ -32,6 +34,9 @@
 --   Losowanie —wynik→ Przedmiot (*:1) historia_losowan.wynik_id
 --   Przedmiot — Rzadkosc (*:1)        przedmioty.rzadkosc_kod
 --   Administrator —|> Uzytkownik      uzytkownicy.rola = 'admin'
+--   Skrzynka — Losowanie (*:1)        historia_losowan.skrzynka_id
+--   Skrzynka — SkrzynkaPrzedmiot (*)  skrzynka_przedmioty.skrzynka_id
+--   SkrzynkaPrzedmiot — Przedmiot     skrzynka_przedmioty.przedmiot_id
 -- ============================================================================
 
 PRAGMA foreign_keys = ON;
@@ -156,6 +161,44 @@ CREATE TABLE IF NOT EXISTS wedka_przedmioty (
 CREATE INDEX IF NOT EXISTS idx_wedka_przedmioty_wedka ON wedka_przedmioty (wedka_id);
 
 -- ----------------------------------------------------------------------------
+-- 7b. skrzynki — klasa Skrzynka (nazwa, cena, ikona, aktywna).
+--     Tryb «Otwarcie skrzynki» z diagramu use case (UC_CASE) i ze strony 2
+--     diagramu PROJEKT (POST /api/open_case.php).
+--
+--     Kolumna nazywa się `aktywna` (nie `czy_aktywna` jak w wedki), bo tak
+--     brzmi atrybut na diagramie klas: `- aktywna : bool`.
+--     `cena` to koszt otwarcia — pobierany przez Portfel::pobierzOplate().
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS skrzynki (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    nazwa       TEXT    NOT NULL UNIQUE,
+    opis        TEXT    NOT NULL DEFAULT '',
+    cena        REAL    NOT NULL CHECK (cena >= 0),
+    ikona       TEXT    NOT NULL DEFAULT '',
+    aktywna     INTEGER NOT NULL DEFAULT 1 CHECK (aktywna IN (0, 1)),
+    kolejnosc   INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ----------------------------------------------------------------------------
+-- 7c. skrzynka_przedmioty — klasa SkrzynkaPrzedmiot (id, waga).
+--     Nazwa tabeli wprost ze strony 2 diagramu PROJEKT: „Pobranie puli dropu
+--     i wag z tabeli skrzynka_przedmioty".
+--     waga NULL = dziedziczenie waga_domyslna z tabeli rzadkosci (jak w wędkach).
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS skrzynka_przedmioty (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    skrzynka_id     INTEGER NOT NULL,
+    przedmiot_id    INTEGER NOT NULL,
+    waga            REAL    CHECK (waga IS NULL OR waga > 0),
+    UNIQUE (skrzynka_id, przedmiot_id),
+    FOREIGN KEY (skrzynka_id)  REFERENCES skrzynki (id)    ON DELETE CASCADE,
+    FOREIGN KEY (przedmiot_id) REFERENCES przedmioty (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_skrzynka_przedmioty_skrzynka ON skrzynka_przedmioty (skrzynka_id);
+
+-- ----------------------------------------------------------------------------
 -- 8. ekwipunek — klasa Ekwipunek (data_nabycia, sprzedany).
 --    Jeden wiersz = jedna złowiona sztuka (asocjacja Uzytkownik 1 — 1..* Ekwipunek).
 --    `wartosc` zamraża wartość przedmiotu w chwili połowu, żeby późniejsza
@@ -178,10 +221,19 @@ CREATE INDEX IF NOT EXISTS idx_ekwipunek_user ON ekwipunek (user_id, sprzedany);
 -- ----------------------------------------------------------------------------
 -- 9. historia_losowan — klasa Losowanie (czas, typ, wynik).
 --    `typ` to TypLosowania z diagramu: cztery tryby gry ze strony 2 diagramu
---    PROJEKT (skrzynka, wedka, upgrader, trader). Na razie używany jest 'wedka'.
+--    PROJEKT (skrzynka, wedka, upgrader, trader). Wszystkie cztery są
+--    zaimplementowane i zapisują tutaj swoje zdarzenia.
 --    `wynik_id` to asocjacja Losowanie —wynik→ Przedmiot (*:1).
 --    waga_wylosowana i suma_wag pozwalają odtworzyć P(i) dokładnie tak, jak
 --    zostało wyliczone w momencie losowania (audyt + test rozkładu).
+--
+--    Kolumny poza diagramem (detal implementacji, jak wedka_id):
+--      skrzynka_id — asocjacja Skrzynka — Losowanie (*:1) z diagramu klas,
+--      udane       — 1 = wygrana, 0 = porażka. Potrzebne TYLKO upgraderowi,
+--                    gdzie «Porażka: bezpowrotna utrata przedmiotu wkładu»
+--                    jest pełnoprawnym wynikiem losowania (diagram PROJEKT).
+--                    Przy porażce wynik_id wskazuje cel próby, a
+--                    wygrana_wartosc = 0, więc RTP nadal liczy się poprawnie.
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS historia_losowan (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -189,6 +241,8 @@ CREATE TABLE IF NOT EXISTS historia_losowan (
     typ               TEXT    NOT NULL CHECK (typ IN ('skrzynka', 'wedka', 'upgrader', 'trader')),
     wynik_id          INTEGER NOT NULL,
     wedka_id          INTEGER,
+    skrzynka_id       INTEGER,
+    udane             INTEGER NOT NULL DEFAULT 1 CHECK (udane IN (0, 1)),
     koszt             REAL    NOT NULL,
     wygrana_wartosc   REAL    NOT NULL,
     waga_wylosowana   REAL    NOT NULL,
@@ -196,7 +250,8 @@ CREATE TABLE IF NOT EXISTS historia_losowan (
     czas              TEXT    NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (user_id)  REFERENCES uzytkownicy (id) ON DELETE CASCADE,
     FOREIGN KEY (wynik_id) REFERENCES przedmioty (id)  ON DELETE RESTRICT,
-    FOREIGN KEY (wedka_id) REFERENCES wedki (id)       ON DELETE CASCADE
+    FOREIGN KEY (wedka_id) REFERENCES wedki (id)       ON DELETE CASCADE,
+    FOREIGN KEY (skrzynka_id) REFERENCES skrzynki (id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_historia_user ON historia_losowan (user_id, czas);
@@ -231,4 +286,15 @@ INSERT OR IGNORE INTO ustawienia (klucz, wartosc, opis) VALUES
     ('waluta',               'monety', 'Nazwa waluty trzymanej w portfelu'),
     ('reel_dlugosc',         '60',     'Liczba pozycji paska ruletki dla animacji'),
     ('reel_indeks_wygranej', '54',     'Indeks (0-based), na którym staje wygrany przedmiot'),
-    ('token_waznosc_godz',   '72',     'Ważność tokena Bearer w godzinach');
+    ('token_waznosc_godz',   '72',     'Ważność tokena Bearer w godzinach'),
+    -- Upgrader (UC_UPGRADE): szansa = (W_wklad / W_cel) * (1 - marza).
+    ('upgrader_marza',       '0.05',   'Marża platformy w upgraderze (0.05 = 5%)'),
+    -- Trader (UC_TRADE): kontrakt 3-10 przedmiotów o łącznej wartości >= progu.
+    ('trader_min_przedmiotow', '3',    'Minimalna liczba przedmiotów w kontrakcie'),
+    ('trader_max_przedmiotow', '10',   'Maksymalna liczba przedmiotów w kontrakcie'),
+    ('trader_min_wartosc',   '10.0',   'Minimalna łączna wartość wkładu (próg kontraktu)'),
+    -- Monitoring aktywności (UC_ADM3): alert «podejrzana seria wygranych».
+    ('alert_seria_dlugosc',  '3',      'Długość serii trafień, która uruchamia alert'),
+    ('alert_rzadkosc_kolejnosc', '4',  'Minimalna kolejność rzadkości liczonej do serii (4 = Mityczna)'),
+    ('alert_rtp_prog',       '3.0',    'RTP gracza powyżej tego progu jest oznaczany jako anomalia'),
+    ('alert_min_losowan',    '5',      'Minimalna liczba losowań gracza, żeby liczyć jego RTP');

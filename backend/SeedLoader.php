@@ -21,8 +21,10 @@ use PDO;
  *   wedki.csv       nazwa,opis,koszt_uzycia,ikona,kolejnosc
  *   przedmioty.csv    nazwa,rzadkosc_kod,wartosc,ikona,opis
  *   wedka_przedmioty.csv  wedka_nazwa,przedmiot_nazwa,waga
+ *   skrzynki.csv    nazwa,opis,cena,ikona,kolejnosc
+ *   skrzynka_przedmioty.csv  skrzynka_nazwa,przedmiot_nazwa,waga
  *
- * W pliku wedka_przedmioty.csv kolumna `waga` może być pusta — wtedy przedmiot
+ * W plikach *_przedmioty.csv kolumna `waga` może być pusta — wtedy przedmiot
  * dziedziczy wagę domyślną swojego poziomu rzadkości z README.md.
  *
  * Wszystkie inserty są INSERT OR IGNORE, więc loader można odpalać wielokrotnie.
@@ -36,6 +38,8 @@ final class SeedLoader
         'wedki.csv' => 'loadRods',
         'przedmioty.csv' => 'loadItems',
         'wedka_przedmioty.csv' => 'loadRodItems',
+        'skrzynki.csv' => 'loadCases',
+        'skrzynka_przedmioty.csv' => 'loadCaseItems',
     ];
 
     /**
@@ -289,6 +293,115 @@ final class SeedLoader
     }
 
     /**
+     * skrzynki.csv → tabela `skrzynki` (klasa Skrzynka z diagramu).
+     *
+     * Tryb «Otwarcie skrzynki» (UC_CASE) — te same zasady co przy wędkach:
+     * ujemna cena jest odrzucana z ostrzeżeniem, bo schemat ma CHECK (cena >= 0).
+     *
+     * @param list<string> $warnings
+     */
+    private static function loadCases(PDO $db, string $path, array &$warnings): int
+    {
+        $rows = self::readCsv($path, $warnings);
+
+        $stmt = $db->prepare(
+            'INSERT OR IGNORE INTO skrzynki (nazwa, opis, cena, ikona, aktywna, kolejnosc)
+             VALUES (?, ?, ?, ?, 1, ?)'
+        );
+
+        $loaded = 0;
+
+        foreach ($rows as $row) {
+            $nazwa = $row['nazwa'] ?? '';
+
+            if ($nazwa === '') {
+                $warnings[] = 'skrzynki.csv: wiersz bez nazwy — pominięty.';
+                continue;
+            }
+
+            $cena = self::toFloat($row['cena'] ?? '0', 0.0);
+
+            if ($cena < 0) {
+                $warnings[] = sprintf('skrzynki.csv: "%s" ma ujemną cenę — pominięty.', $nazwa);
+                continue;
+            }
+
+            $stmt->execute([
+                $nazwa,
+                $row['opis'] ?? '',
+                $cena,
+                $row['ikona'] ?? '',
+                (int) self::toFloat($row['kolejnosc'] ?? '0', 0.0),
+            ]);
+
+            $loaded++;
+        }
+
+        return $loaded;
+    }
+
+    /**
+     * skrzynka_przedmioty.csv → tabela `skrzynka_przedmioty` (klasa
+     * SkrzynkaPrzedmiot z diagramu).
+     *
+     * CSV odwołuje się do NAZW, nie do id — id zależą od kolejności importu.
+     * Pusta waga = NULL = dziedziczenie wagi domyślnej poziomu rzadkości.
+     *
+     * @param list<string> $warnings
+     */
+    private static function loadCaseItems(PDO $db, string $path, array &$warnings): int
+    {
+        $rows = self::readCsv($path, $warnings);
+
+        $caseIds = self::nameToIdMap($db, 'skrzynki');
+        $itemIds = self::nameToIdMap($db, 'przedmioty');
+
+        $stmt = $db->prepare('INSERT OR IGNORE INTO skrzynka_przedmioty (skrzynka_id, przedmiot_id, waga) VALUES (?, ?, ?)');
+
+        $loaded = 0;
+
+        foreach ($rows as $row) {
+            $caseName = $row['skrzynka_nazwa'] ?? '';
+            $itemName = $row['przedmiot_nazwa'] ?? '';
+
+            if (!isset($caseIds[$caseName])) {
+                $warnings[] = sprintf('skrzynka_przedmioty.csv: nieznana skrzynka "%s" — wiersz pominięty.', $caseName);
+                continue;
+            }
+
+            if (!isset($itemIds[$itemName])) {
+                $warnings[] = sprintf('skrzynka_przedmioty.csv: nieznany przedmiot "%s" — wiersz pominięty.', $itemName);
+                continue;
+            }
+
+            $rawWaga = trim($row['waga'] ?? '');
+            $waga = null;
+
+            if ($rawWaga !== '') {
+                $parsed = self::toFloat($rawWaga, 0.0);
+
+                if ($parsed <= 0) {
+                    $warnings[] = sprintf(
+                        'skrzynka_przedmioty.csv: "%s" / "%s" ma wagę %s — musi być dodatnia albo pusta.',
+                        $caseName,
+                        $itemName,
+                        $rawWaga
+                    );
+                    continue;
+                }
+
+                $waga = $parsed;
+            }
+
+            $stmt->execute([$caseIds[$caseName], $itemIds[$itemName], $waga]);
+
+            $loaded++;
+        }
+
+        return $loaded;
+    }
+
+    /**
      * Mapa nazwa => id dla tabeli z kolumnami `id` i `nazwa`.
      * Nazwa tabeli pochodzi z naszej listy, nie z wejścia użytkownika,
      * więc doklejenie jej do zapytania nie jest podatne na wstrzyknięcie SQL.
@@ -297,7 +410,7 @@ final class SeedLoader
      */
     private static function nameToIdMap(PDO $db, string $table): array
     {
-        if (!in_array($table, ['wedki', 'przedmioty'], true)) {
+        if (!in_array($table, ['wedki', 'przedmioty', 'skrzynki'], true)) {
             throw ApiException::badRequest('Nieobsługiwana tabela: ' . $table);
         }
 
