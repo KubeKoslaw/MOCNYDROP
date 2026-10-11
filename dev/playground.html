@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Strona leży w dev/, a API i ikony są względem katalogu głównego projektu.
+     Dzięki <base> zarówno fetch('api/cast.php') jak i 'assets/icons/x.png'
+     działają bez zmian z `php -S localhost:8000` i z XAMPP
+     (http://localhost/MOCNYDROP/dev/playground.html). -->
+<base href="../">
+<title>MOCNY DROP — konsola developerska</title>
+<style>
+  :root {
+    --bg: #0b1220; --panel: #131c2e; --panel2: #1b2740; --line: #26344f;
+    --txt: #e6edf7; --muted: #8ea0bd; --accent: #22d3ee;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--txt); font: 15px/1.5 system-ui, "Segoe UI", Roboto, sans-serif; }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    padding: 14px 22px; background: var(--panel); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 5; flex-wrap: wrap;
+  }
+  .brand { font-weight: 700; font-size: 18px; letter-spacing: .3px; }
+  .tag { font-size: 11px; font-weight: 600; color: var(--accent); border: 1px solid var(--accent);
+    border-radius: 999px; padding: 1px 8px; margin-left: 8px; vertical-align: middle; }
+  .wallet { display: flex; align-items: center; gap: 10px; }
+  .wallet strong { color: var(--accent); font-size: 17px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  main.grid { display: grid; gap: 16px; padding: 16px 22px 40px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 16px 22px; }
+  main.grid .card { margin: 0; }
+  h2 { margin: 0 0 12px; font-size: 15px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  input { background: #0d1524; border: 1px solid var(--line); color: var(--txt); border-radius: 8px; padding: 8px 10px; min-width: 150px; }
+  button { background: var(--accent); color: #052028; border: 0; border-radius: 8px; padding: 9px 14px; font-weight: 700; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--txt); border: 1px solid var(--line); font-weight: 600; }
+  button.small { padding: 4px 9px; font-size: 12px; }
+  .hint { color: var(--muted); font-size: 12.5px; margin: 10px 0 0; }
+  code { background: #0d1524; padding: 1px 5px; border-radius: 4px; color: #a5e9f7; }
+  /* --- łowiska --- */
+  .spots { display: grid; gap: 10px; }
+  .spot { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .spot-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .spot h3 { margin: 0; font-size: 15px; }
+  .cost { color: var(--accent); font-weight: 700; white-space: nowrap; }
+  .pool { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0; }
+  .chip { font-size: 11.5px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); background: #0d1524; color: var(--muted); }
+
+  /* --- scena łowienia ------------------------------------------------------
+     STARY komponent skrzynki (.reel-viewport / .reel-track / .reel-card /
+     .reel-pointer) został usunięty. Zastąpił go <fishing-scene> z
+     public/assets/js/fishing/ — mechanika łowienia wędką:
+       idle -> requesting -> casting -> waiting -> bite -> reeling -> reveal
+     Pasek `reel` z API nadal jest używany, tylko jako parada ryb POD WODĄ,
+     która zatrzymuje się na `reel_indeks_wygranej` = moment brania.         */
+  .scene-wrap { max-width: 880px; margin: 0 auto; }
+  .scene-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .wynik { margin-top: 12px; }
+  .wynik .box {
+    display: flex; gap: 12px; align-items: center; background: var(--panel2);
+    border: 1px solid var(--line); border-left-width: 5px; border-radius: 10px; padding: 12px;
+  }
+  .wynik img { width: 56px; height: 56px; object-fit: contain; }
+
+  /* --- ekwipunek / historia --- */
+  .inv { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+  .item { background: var(--panel2); border: 1px solid var(--line); border-left-width: 4px; border-radius: 9px; padding: 8px; text-align: center; }
+  .item img { width: 44px; height: 44px; object-fit: contain; }
+  .item .n { font-size: 12px; margin: 4px 0 2px; }
+  .item .r { font-size: 10.5px; color: var(--muted); }
+  .item button { width: 100%; margin-top: 6px; padding: 5px; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+  .pos { color: #4ade80; } .neg { color: #f87171; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+    background: #0d1524; border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    border-radius: 9px; padding: 10px 16px; opacity: 0; transition: .25s; pointer-events: none;
+    max-width: 90vw; z-index: 20;
+  }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.err { border-left-color: #f87171; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🎣 MOCNY DROP<span class="tag">konsola dev</span></div>
+  <div class="wallet">
+    <span id="whoami" class="muted">niezalogowany</span>
+    <strong id="saldo">—</strong> <span class="muted">monet</span>
+    <button id="btn-logout" class="ghost small" hidden>Wyloguj</button>
+  </div>
+</header>
+
+<section class="card" id="panel-auth">
+  <h2>Konto</h2>
+  <div class="row">
+    <input id="f-login" placeholder="login" autocomplete="username">
+    <input id="f-pass" type="password" placeholder="hasło (min. 8 znaków)" autocomplete="current-password">
+    <input id="f-mail" type="email" placeholder="e-mail (tylko do rejestracji)">
+    <button id="btn-login">Zaloguj</button>
+    <button id="btn-register" class="ghost">Zarejestruj</button>
+    <button id="btn-demo" class="ghost">Szybkie konto demo</button>
+  </div>
+  <p class="hint">
+    Nowe konto dostaje 50 monet (<code>saldo_startowe</code> w tabeli <code>ustawienia</code>).
+    Gdy zabraknie monet: <code>php database/topup.php &lt;login&gt; 500</code>
+  </p>
+</section>
+
+<section class="card" id="panel-scene">
+  <h2>Scena łowienia <span class="tag">zamiast skrzynki</span></h2>
+
+  <div class="scene-wrap">
+    <!-- Komponent z public/assets/js/fishing/ (rejestruje go moduł ES podpięty
+         na dole strony). `show-lane` włącza podwodną paradę ryb = pasek `reel`
+         z api/cast.php. Bez tego atrybutu zostaje sama tafla wody ze spławikiem. -->
+    <fishing-scene id="scene" api-base="api/" show-lane></fishing-scene>
+  </div>
+
+  <div class="scene-tools">
+    <button id="btn-reset-scene" class="ghost small">Reset sceny</button>
+    <button id="btn-toggle-lane" class="ghost small">Ukryj pasek pod wodą</button>
+  </div>
+
+  <div class="wynik" id="wynik"></div>
+
+  <p class="hint">
+    Wynik losuje serwer — animacja tylko go prezentuje. Pasek <code>reel</code>
+    zatrzymuje się na <code>reel_indeks_wygranej</code> i dokładnie wtedy
+    następuje branie. Czysta wizualizacja bez wpływu na drop:
+    <code>dev/fishing-demo.html</code>
+  </p>
+</section>
+
+<main class="grid">
+  <section class="card">
+    <h2>Łowiska <button id="btn-spots" class="ghost small">Odśwież</button></h2>
+    <div id="spots" class="spots"><p class="hint">Ładowanie…</p></div>
+  </section>
+  <section class="card">
+    <h2>Ekwipunek <button id="btn-inv" class="ghost small">Odśwież</button></h2>
+    <div id="inventory" class="inv"></div>
+    <p id="inv-summary" class="hint"></p>
+  </section>
+  <section class="card">
+    <h2>Historia połowów <button id="btn-hist" class="ghost small">Odśwież</button></h2>
+    <div id="history"></div>
+  </section>
+</main>
+
+<div id="toast"></div>
+
+<!-- Rejestracja komponentu <fishing-scene> (scena łowienia zamiast skrzynki).
+     Moduły ES mają domyślnie "defer", więc ten plik wykona się PO skrypcie
+     klasycznym poniżej — dlatego konsola sięga po scenę przez
+     customElements.whenDefined() w getScene(). -->
+<script type="module" src="public/assets/js/fishing/index.js"></script>
+
+<script>
+'use strict';
+
+/**
+ * dev/playground.html — konsola developerska backendu MOCNY DROP.
+ *
+ * To NIE jest frontend docelowy (ten budują @THOPA174 i @jgpostrach w public/).
+ * Strona istnieje po to, żeby dało się klikalnie sprawdzić całe API bez czekania
+ * na layout: rejestracja, logowanie, łowiska, zarzut wędką, ekwipunek, sprzedaż
+ * i historia.
+ *
+ * Animacją zarzutu zajmuje się komponent <fishing-scene>
+ * (public/assets/js/fishing/) — zastąpił stary pasek ruletki "skrzynkowy".
+ * Konsola tylko wybiera łowisko i reaguje na zdarzenia komponentu:
+ *   `catch` -> pokaż wynik, saldo_po, odśwież ekwipunek i historię,
+ *   `error` -> komunikat po kodzie błędu (insufficient_funds, spot_empty...).
+ *
+ * Wzorcową KOLEJNOŚĆ obsługi zarzutu pilnuje sam komponent:
+ *   1. najpierw żądanie i odpowiedź,
+ *   2. potem animacja `reel` zatrzymana na `reel_indeks_wygranej`,
+ *   3. dopiero na końcu komunikat o wygranej i saldo z `saldo_po`.
+ */
+
+const TOKEN_KEY = 'mocnydrop_token';
+
+const $ = (id) => document.getElementById(id);
+
+function getToken() { return localStorage.getItem(TOKEN_KEY); }
+function setToken(value) {
+  if (value) { localStorage.setItem(TOKEN_KEY, value); } else { localStorage.removeItem(TOKEN_KEY); }
+}
+
+function esc(value) {
+  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return String(value ?? '').replace(/[&<>"']/g, (c) => map[c]);
+}
+
+function money(value) {
+  return Number(value ?? 0).toFixed(2).replace('.', ',');
+}
+
+let toastTimer = null;
+
+function toast(message, isError = false) {
+  const el = $('toast');
+  el.textContent = message;
+  el.className = isError ? 'on err' : 'on';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3600);
+}
+
+/**
+ * Jedyny punkt kontaktu z API.
+ * Rzuca Error z polem `.kod` — logika opiera się na kodzie, nie na tekście.
+ */
+async function api(path, { method = 'GET', body } = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+
+  if (getToken()) { headers.Authorization = 'Bearer ' + getToken(); }
+
+  const response = await fetch('api/' + path, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch (e) {
+    data = { success: false, error: 'Odpowiedź nie jest JSON-em (HTTP ' + response.status + ')', kod: 'bad_response' };
+  }
+
+  if (!response.ok || data.success === false) {
+    const error = new Error(data.error || ('Błąd HTTP ' + response.status));
+    error.kod = data.kod || 'error';
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
+}
+
+function setSession(user, saldo) {
+  const loggedIn = Boolean(user);
+  $('whoami').textContent = loggedIn ? user.login : 'niezalogowany';
+  $('saldo').textContent = loggedIn ? money(saldo ?? user.saldo) : '—';
+  $('btn-logout').hidden = !loggedIn;
+  $('panel-auth').style.opacity = loggedIn ? '0.65' : '1';
+}
+
+async function loadMe() {
+  if (!getToken()) { setSession(null); return null; }
+
+  try {
+    const data = await api('me.php');
+    setSession(data.user, data.saldo);
+    $('inv-summary').textContent = 'Ryb w ekwipunku: ' + data.ekwipunek.liczba_ryb
+      + ' • łączna wartość: ' + money(data.ekwipunek.laczna_wartosc);
+    return data;
+  } catch (error) {
+    if (error.status === 401) {
+      setToken(null);
+      setSession(null);
+      toast('Sesja wygasła — zaloguj się ponownie.', true);
+      return null;
+    }
+    toast(error.message, true);
+    return null;
+  }
+}
+
+async function doLogin(login, password) {
+  const data = await api('login.php', { method: 'POST', body: { login, password } });
+  setToken(data.token);
+  setSession(data.user, data.user.saldo);
+  toast('Zalogowano jako ' + data.user.login + ' (token ważny do ' + data.expires_at + ')');
+  await loadMe();
+  await Promise.all([loadInventory(), loadHistory()]);
+}
+
+async function doRegister(login, email, password) {
+  const data = await api('register.php', { method: 'POST', body: { login, email, password } });
+  toast(data.message);
+  await doLogin(login, password);
+}
+
+/** Ostatnio wczytana lista łowisk — używana m.in. przez tryb `?auto=1`. */
+let spotsCache = [];
+
+async function loadSpots() {
+  const box = $('spots');
+
+  try {
+    const data = await api('spots.php');
+
+    spotsCache = data.lowiska || [];
+
+    if (!data.lowiska.length) {
+      box.innerHTML = '<p class="hint">Brak łowisk w bazie. Załaduj dane: '
+        + '<code>php database/migrate.php --fresh</code></p>';
+      return;
+    }
+
+    box.innerHTML = data.lowiska.map((spot) => {
+      const chips = spot.ryby.map((fish) => '<span class="chip" style="border-color:' + esc(fish.kolor)
+        + ';color:' + esc(fish.kolor) + '">' + esc(fish.nazwa) + ' · ' + esc(fish.szansa_procent.toFixed(3))
+        + '%</span>').join('');
+
+      return '<div class="spot">'
+        + '<div class="spot-head"><div><h3>' + esc(spot.nazwa) + '</h3>'
+        + '<div class="muted">' + esc(spot.opis) + '</div></div>'
+        + '<div class="cost">' + money(spot.koszt_zarzutu) + ' 🪙</div></div>'
+        + '<div class="pool">' + chips + '</div>'
+        + '<button class="btn-cast" data-spot="' + Number(spot.id) + '" data-cost="' + Number(spot.koszt_zarzutu)
+        + '" data-name="' + esc(spot.nazwa) + '">'
+        + 'Zarzuć wędkę (' + spot.liczba_ryb + ' ryb)</button>'
+        + '</div>';
+    }).join('');
+
+    box.querySelectorAll('.btn-cast').forEach((btn) => {
+      btn.addEventListener('click', () => cast(Number(btn.dataset.spot), {
+        nazwa: btn.dataset.name,
+        koszt_zarzutu: btn.dataset.cost,
+      }));
+    });
+  } catch (error) {
+    box.innerHTML = '<p class="hint">' + esc(error.message) + ' (kod: <code>' + esc(error.kod) + '</code>)</p>';
+  }
+}
+
+/* --- scena łowienia i zarzut -------------------------------------------- */
+
+let casting = false;
+
+/**
+ * Komponent <fishing-scene> rejestruje moduł ES (script type=module), czyli
+ * wykonuje się PO tym skrypcie. Dlatego przed pierwszym użyciem jego metod
+ * czekamy na `customElements.whenDefined` — inaczej `scene.cast` byłoby
+ * jeszcze niezdefiniowane (element istnieje w DOM, ale nie jest "upgrade'owany").
+ */
+async function getScene() {
+  await customElements.whenDefined('fishing-scene');
+
+  return $('scene');
+}
+
+/** Zwięzłe podsumowanie połowu pod sceną — odpowiednik starego `.wynik`. */
+function showWynik(castResult) {
+  const fish = castResult.zlowiona_ryba;
+
+  $('wynik').innerHTML = '<div class="box" style="border-left-color:' + esc(fish.kolor) + '">'
+    + (fish.ikona ? '<img src="' + esc(fish.ikona) + '" alt="">' : '')
+    + '<div><strong style="color:' + esc(fish.kolor) + '">' + esc(fish.nazwa) + '</strong>'
+    + '<div class="muted">' + esc(fish.rzadkosc) + ' • wartość ' + money(fish.wartosc)
+    + ' • szansa ' + Number(fish.szansa_procent).toFixed(3) + '%</div>'
+    + '<div class="muted">Koszt zarzutu ' + money(castResult.rzut.koszt) + ' • saldo '
+    + money(castResult.saldo_przed) + ' → ' + money(castResult.saldo_po) + '</div>'
+    + '</div></div>';
+}
+
+/** Obsługa błędów po KODZIE (nie po tekście) — tak jak umówione z backendem. */
+function reportError(kod, message, status) {
+  if (kod === 'insufficient_funds') {
+    toast('Za mało monet. Doładuj: php database/topup.php <login> 500', true);
+  } else if (kod === 'spot_empty') {
+    toast('To łowisko nie ma ryb — załaduj dane (php database/migrate.php --fresh).', true);
+  } else if (kod === 'spot_inactive') {
+    toast('To łowisko jest zamknięte.', true);
+  } else if (status === 401) {
+    setToken(null);
+    setSession(null);
+    toast('Sesja wygasła — zaloguj się ponownie.', true);
+  } else {
+    toast(message + ' (' + kod + ')', true);
+  }
+}
+
+/**
+ * Zarzut wędką.
+ *
+ * Cała kolejność z kontraktu api/cast.php dzieje się wewnątrz komponentu:
+ *   1. POST cast.php i czekanie na odpowiedź,
+ *   2. animacja (pasek `reel` zatrzymuje się na `reel_indeks_wygranej`),
+ *   3. karta wygranej, a dopiero z niej saldo_po i odświeżenie list.
+ */
+async function cast(spotId, spot) {
+  if (casting) { return; }
+
+  if (!getToken()) {
+    toast('Najpierw się zaloguj.', true);
+    return;
+  }
+
+  const scene = await getScene();
+
+  casting = true;
+  document.querySelectorAll('.btn-cast').forEach((btn) => { btn.disabled = true; });
+  $('wynik').innerHTML = '';
+
+  // Scena pokazuje nazwę łowiska i koszt zarzutu pod swoim przyciskiem.
+  scene.select(spotId, { nazwa: spot ? spot.nazwa : '', koszt: spot ? spot.koszt_zarzutu : '' });
+
+  try {
+    // Promise rozwiązuje się po zamknięciu karty wygranej (albo zwraca null).
+    await scene.cast(spotId);
+  } catch (error) {
+    // Komponent sam obsługuje błędy API (zdarzenie `error`) — to tylko siatka.
+    reportError(error.kod || 'error', error.message, error.status);
+  } finally {
+    casting = false;
+    document.querySelectorAll('.btn-cast').forEach((btn) => { btn.disabled = false; });
+  }
+}
+
+/** Podpięcie zdarzeń komponentu i przycisków narzędziowych konsoli. */
+async function bindScene() {
+  const scene = await getScene();
+
+  scene.addEventListener('catch', async (event) => {
+    const payload = event.detail.payload;
+
+    showWynik(payload);
+    toast(payload.message);
+    $('saldo').textContent = money(payload.saldo_po);
+
+    await Promise.all([loadInventory(), loadHistory()]);
+  });
+
+  scene.addEventListener('error', (event) => {
+    reportError(event.detail.kod, event.detail.message, event.detail.status);
+  });
+
+  $('btn-reset-scene').addEventListener('click', () => {
+    scene.reset();
+    $('wynik').innerHTML = '';
+  });
+
+  $('btn-toggle-lane').addEventListener('click', (event) => {
+    const visible = scene.hasAttribute('show-lane');
+
+    if (visible) {
+      scene.removeAttribute('show-lane');
+      event.currentTarget.textContent = 'Pokaż pasek pod wodą';
+    } else {
+      scene.setAttribute('show-lane', '');
+      event.currentTarget.textContent = 'Ukryj pasek pod wodą';
+    }
+  });
+}
+
+/* --- ekwipunek, sprzedaż, historia --------------------------------------- */
+
+async function loadInventory() {
+  if (!getToken()) { return; }
+
+  try {
+    const data = await api('inventory.php');
+
+    $('inventory').innerHTML = data.ekwipunek.length
+      ? data.ekwipunek.map((item) => '<div class="item" style="border-left-color:' + esc(item.kolor) + '">'
+          + (item.ikona ? '<img src="' + esc(item.ikona) + '" alt="">' : '')
+          + '<div class="n">' + esc(item.nazwa) + '</div>'
+          + '<div class="r">' + esc(item.rzadkosc) + '</div>'
+          + '<button class="btn-sell" data-id="' + Number(item.ekwipunek_id) + '">Sprzedaj '
+          + money(item.wartosc) + '</button></div>').join('')
+      : '<p class="hint">Pusto — zarzuć wędkę.</p>';
+
+    $('inv-summary').textContent = 'Ryb w ekwipunku: ' + data.podsumowanie.liczba_ryb
+      + ' • łączna wartość: ' + money(data.podsumowanie.laczna_wartosc);
+
+    $('inventory').querySelectorAll('.btn-sell').forEach((btn) => {
+      btn.addEventListener('click', () => sell(Number(btn.dataset.id), btn));
+    });
+  } catch (error) {
+    if (error.status !== 401) { toast(error.message, true); }
+  }
+}
+
+async function sell(inventoryId, button) {
+  button.disabled = true;
+
+  try {
+    const data = await api('sell.php', { method: 'POST', body: { ekwipunek_id: inventoryId } });
+    toast(data.message);
+    $('saldo').textContent = money(data.nowe_saldo);
+    await loadInventory();
+    await loadHistory();
+  } catch (error) {
+    button.disabled = false;
+
+    if (error.kod === 'already_sold') {
+      toast('Ta ryba jest już sprzedana — odświeżam ekwipunek.', true);
+      await loadInventory();
+    } else {
+      toast(error.message + ' (' + error.kod + ')', true);
+    }
+  }
+}
+
+async function loadHistory() {
+  if (!getToken()) { return; }
+
+  try {
+    const data = await api('history.php?limit=15');
+
+    if (!data.historia.length) {
+      $('history').innerHTML = '<p class="hint">Brak połowów.</p>';
+      return;
+    }
+
+    const rows = data.historia.map((entry) => '<tr>'
+      + '<td>' + esc(entry.data) + '</td>'
+      + '<td>' + esc(entry.lowisko) + '</td>'
+      + '<td style="color:' + esc(entry.kolor) + '">' + esc(entry.nazwa) + '</td>'
+      + '<td class="neg">-' + money(entry.koszt) + '</td>'
+      + '<td class="' + (entry.bilans >= 0 ? 'pos' : 'neg') + '">'
+      + (entry.bilans >= 0 ? '+' : '') + money(entry.bilans) + '</td>'
+      + '</tr>').join('');
+
+    const breakdown = Object.entries(data.rozbicie_rzadkosci || {})
+      .map(([kod, ile]) => esc(kod) + ': ' + ile)
+      .join(' • ');
+
+    $('history').innerHTML = '<table><thead><tr><th>Data</th><th>Łowisko</th><th>Ryba</th>'
+      + '<th>Koszt</th><th>Bilans</th></tr></thead><tbody>' + rows + '</tbody></table>'
+      + '<p class="hint">Rozbicie rzadkości → ' + breakdown + '</p>';
+  } catch (error) {
+    if (error.status !== 401) { toast(error.message, true); }
+  }
+}
+
+/* --- zdarzenia i start ---------------------------------------------------- */
+
+$('btn-login').addEventListener('click', async () => {
+  try {
+    await doLogin($('f-login').value.trim(), $('f-pass').value);
+  } catch (error) {
+    toast(error.message + ' (' + error.kod + ')', true);
+  }
+});
+
+$('btn-register').addEventListener('click', async () => {
+  try {
+    await doRegister($('f-login').value.trim(), $('f-mail').value.trim(), $('f-pass').value);
+  } catch (error) {
+    toast(error.message + ' (' + error.kod + ')', true);
+  }
+});
+
+$('btn-demo').addEventListener('click', async () => {
+  const login = 'wedkarz_' + Math.random().toString(36).slice(2, 8);
+  const password = 'haslo1234';
+
+  $('f-login').value = login;
+  $('f-pass').value = password;
+  $('f-mail').value = login + '@test.local';
+
+  try {
+    await doRegister(login, login + '@test.local', password);
+  } catch (error) {
+    toast(error.message + ' (' + error.kod + ')', true);
+  }
+});
+
+$('btn-logout').addEventListener('click', async () => {
+  try {
+    await api('logout.php', { method: 'POST' });
+  } catch (error) {
+    // Token i tak kasujemy lokalnie — wylogowanie musi działać zawsze.
+  }
+
+  setToken(null);
+  setSession(null);
+  $('inventory').innerHTML = '';
+  $('history').innerHTML = '';
+  $('inv-summary').textContent = '';
+  $('wynik').innerHTML = '';
+  // Scena wraca do idle: przerywa animację, czyści pasek i kartę wygranej.
+  getScene().then((scene) => scene.reset());
+  toast('Wylogowano.');
+});
+
+$('btn-spots').addEventListener('click', loadSpots);
+$('btn-inv').addEventListener('click', loadInventory);
+$('btn-hist').addEventListener('click', loadHistory);
+
+(async function init() {
+  // Zdarzenia komponentu podpinamy od razu (bindScene czeka na whenDefined).
+  bindScene();
+
+  await loadSpots();
+
+  if (getToken()) {
+    await loadMe();
+    await Promise.all([loadInventory(), loadHistory()]);
+  } else {
+    setSession(null);
+  }
+
+  /* --- tryb automatyczny (headless / szybka demonstracja) -----------------
+     ?auto=1          zakłada konto demo i wykonuje PRAWDZIWY zarzut
+     ?auto=1&spot=2   j.w., ale na wskazanym łowisku (domyślnie 1 = najtańsze)
+
+     UWAGA: to nie jest mock — pobiera opłatę za zarzut i zapisuje połów w bazie.
+     Służy do sprawdzenia całego obiegu (rejestracja -> token -> POST cast.php
+     -> animacja -> saldo_po -> ekwipunek/historia) bez klikania.             */
+  const params = new URLSearchParams(location.search);
+
+  if (params.get('auto')) {
+    const spotId = Number(params.get('spot') || 1);
+
+    if (!getToken()) {
+      const login = 'wedkarz_' + Math.random().toString(36).slice(2, 8);
+
+      await doRegister(login, login + '@test.local', 'haslo1234');
+    }
+
+    const spot = spotsCache.find((item) => Number(item.id) === spotId);
+
+    await cast(spotId, spot || { nazwa: '', koszt_zarzutu: '' });
+  }
+})();
+</script>
+</body>
+</html>
