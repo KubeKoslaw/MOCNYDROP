@@ -76,6 +76,26 @@
   th { color: var(--muted); font-weight: 600; }
   .pos { color: #4ade80; } .neg { color: #f87171; }
 
+  /* --- nowe tryby gry (skrzynki, upgrader, trader) i panel administratora --- */
+  select {
+    background: #0d1524; border: 1px solid var(--line); color: var(--txt);
+    border-radius: 8px; padding: 8px 10px; min-width: 190px; max-width: 100%;
+  }
+  h3.sub {
+    margin: 22px 0 8px; font-size: 12.5px; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--accent); border-top: 1px solid var(--line); padding-top: 14px;
+  }
+  .btn-link { display: inline-block; text-decoration: none; line-height: 1.4; }
+  .kpi { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 0; }
+  .kpi div { background: var(--panel2); border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; min-width: 120px; }
+  .kpi strong { display: block; color: var(--accent); font-size: 16px; }
+  .kpi span { color: var(--muted); font-size: 11.5px; }
+  .alert { border-left: 4px solid #f87171; background: var(--panel2); border-radius: 8px; padding: 8px 10px; margin-top: 6px; font-size: 13px; }
+  .item.pick { outline: 2px solid var(--accent); }
+  .item label { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; cursor: pointer; }
+  .wheel { font-size: 13px; color: var(--muted); }
+  .wheel b { color: var(--accent); font-size: 15px; }
+
   #toast {
     position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
     background: #0d1524; border: 1px solid var(--line); border-left: 4px solid var(--accent);
@@ -153,6 +173,97 @@
   </section>
 </main>
 
+<!-- UC_CASE «Otwarcie skrzynki» — POST api/open_case.php -->
+<section class="card" id="panel-cases">
+  <h2>Skrzynki <span class="tag">UC_CASE</span> <button id="btn-cases" class="ghost small">Odśwież</button></h2>
+  <div id="cases" class="rods"><p class="hint">Ładowanie…</p></div>
+  <div class="wynik" id="case-wynik"></div>
+  <p class="hint">
+    Otwarcie pobiera <code>cena</code> z portfela (<code>Portfel::pobierzOplate</code>), a wynik ustala serwer —
+    pasek <code>reel</code> to tylko prezentacja.
+    <label><input type="checkbox" id="case-sell"> sprzedaj wygraną od razu (CASE_SELL)</label>
+  </p>
+</section>
+
+<main class="grid">
+  <!-- UC_UPGRADE «Ulepszenie przedmiotu (Upgrader)» — POST api/upgrade.php -->
+  <section class="card" id="panel-upgrade">
+    <h2>Upgrader <span class="tag">UC_UPGRADE</span></h2>
+
+    <div class="row">
+      <select id="up-wklad"><option value="">— wkład z ekwipunku —</option></select>
+      <span class="muted">→</span>
+      <select id="up-cel"><option value="">— cel z katalogu —</option></select>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button id="btn-up-calc" class="ghost small">Policz szansę</button>
+      <button id="btn-up-run" disabled>Ulepsz</button>
+    </div>
+
+    <div id="up-info" class="hint">
+      Szansa = (W_wkład / W_cel) × (1 − marża). Porażka = wkład przepada bezpowrotnie.
+    </div>
+    <div class="wynik" id="up-wynik"></div>
+  </section>
+
+  <!-- UC_TRADE «Wymiana przedmiotów (Trader)» — POST api/trade_up.php -->
+  <section class="card" id="panel-trade">
+    <h2>Trader <span class="tag">UC_TRADE</span></h2>
+
+    <div id="trade-items" class="inv"><p class="hint">Zaznacz 3–10 przedmiotów z ekwipunku.</p></div>
+
+    <div class="row" style="margin-top:10px">
+      <button id="btn-trade-calc" class="ghost small">Podgląd kontraktu</button>
+      <button id="btn-trade-run" disabled>Wymień</button>
+      <button id="btn-trade-clear" class="ghost small">Wyczyść</button>
+    </div>
+
+    <div id="trade-info" class="hint">Wkład jest trwale usuwany, a nagroda losowana z puli rzadszej niż najrzadszy wkład.</div>
+    <div class="wynik" id="trade-wynik"></div>
+  </section>
+</main>
+
+<!-- UC_ADM1 / UC_ADM2 / UC_ADM3 — api/admin/*.php (wymaga konta z rola = 'admin') -->
+<section class="card" id="panel-admin">
+  <h2>Panel administratora <span class="tag">UC_ADM1–3</span>
+    <button id="btn-admin-load" class="ghost small">Wczytaj</button>
+  </h2>
+
+  <p class="hint">
+    Działa tylko na koncie z <code>rola = 'admin'</code>. Ręczne nadanie roli:
+    <code>UPDATE uzytkownicy SET rola = 'admin' WHERE login = '...'</code>
+  </p>
+
+  <h3 class="sub">Monitoring aktywności (UC_ADM3)</h3>
+  <div id="adm-stats"></div>
+  <div id="adm-alerts"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="btn-adm-refresh" class="ghost small">Odśwież monitoring</button>
+    <!-- CSV pobieramy przez fetch, bo link <a href> nie wysłałby nagłówka
+         Authorization: Bearer — a raport jest tylko dla administratora. -->
+    <button id="btn-adm-csv" class="ghost small">Eksport CSV (ADM3_S3)</button>
+    <button id="btn-adm-json" class="ghost small">Eksport JSON</button>
+  </div>
+  <div id="adm-log"></div>
+
+  <h3 class="sub">Zarządzanie użytkownikami (UC_ADM2)</h3>
+  <div class="row">
+    <input id="adm-q" placeholder="ID, login lub e-mail">
+    <button id="btn-adm-search" class="ghost small">Szukaj</button>
+  </div>
+  <div id="adm-users"></div>
+
+  <h3 class="sub">Zarządzanie skrzynkami (UC_ADM1)</h3>
+  <div class="row">
+    <input id="adm-case-nazwa" placeholder="nazwa skrzynki">
+    <input id="adm-case-cena" placeholder="cena" type="number" step="0.01" min="0" style="min-width:90px">
+    <input id="adm-case-opis" placeholder="opis">
+    <button id="btn-adm-case-create">Utwórz</button>
+  </div>
+  <div id="adm-cases"></div>
+</section>
+
 <div id="toast"></div>
 
 <!-- Rejestracja komponentu <fishing-scene> (scena łowienia zamiast skrzynki).
@@ -169,14 +280,27 @@
  *
  * To NIE jest frontend docelowy (ten budują @THOPA174 i @jgpostrach w public/).
  * Strona istnieje po to, żeby dało się klikalnie sprawdzić całe API bez czekania
- * na layout: rejestracja, logowanie, łowiska, zarzut wędką, ekwipunek, sprzedaż
- * i historia.
+ * na layout. Pokrywa WSZYSTKIE przypadki użycia z diagramu
+ * MOCNYDROP_USECASEUML.drawio:
+ *
+ *   UC_REG / UC_LOGIN  panel „Konto" (rejestracja z bonusem 50, logowanie)
+ *   UC_FISH            panel „Scena łowienia" + „Łowiska" (POST api/fish.php)
+ *   UC_CASE            panel „Skrzynki" (POST api/open_case.php, CASE_SELL, CASE_ERR)
+ *   UC_UPGRADE         panel „Upgrader" (GET kalkulacja + POST api/upgrade.php)
+ *   UC_TRADE           panel „Trader" (GET podgląd + POST api/trade_up.php)
+ *   ekwipunek/sprzedaż panel „Ekwipunek" (GET api/inventory.php, POST api/sell.php)
+ *   historia           panel „Historia połowów" (GET api/history.php, cztery tryby)
+ *   UC_ADM1/2/3        panel „Panel administratora" (api/admin/*.php)
  *
  * Animacją zarzutu zajmuje się komponent <fishing-scene>
  * (public/assets/js/fishing/) — zastąpił stary pasek ruletki "skrzynkowy".
  * Konsola tylko wybiera łowisko i reaguje na zdarzenia komponentu:
  *   `catch` -> pokaż wynik, saldo_po, odśwież ekwipunek i historię,
  *   `error` -> komunikat po kodzie błędu (insufficient_funds, rod_empty...).
+ *
+ * Pozostałe tryby (skrzynki, upgrader, trader) celowo NIE animują paska `reel`,
+ * choć dostają go w odpowiedzi — konsola sprawdza za to kontrakt
+ * reel[reel_indeks_wygranej] === przedmiot i pokazuje wynik oraz saldo.
  *
  * Wzorcową KOLEJNOŚĆ obsługi zarzutu pilnuje sam komponent:
  *   1. najpierw żądanie i odpowiedź,
@@ -461,6 +585,8 @@ async function loadInventory() {
   try {
     const data = await api('inventory.php');
 
+    inventoryCache = data.ekwipunek;
+
     $('inventory').innerHTML = data.ekwipunek.length
       ? data.ekwipunek.map((item) => '<div class="item" style="border-left-color:' + esc(item.kolor) + '">'
           + (item.ikona ? '<img src="' + esc(item.ikona) + '" alt="">' : '')
@@ -468,7 +594,7 @@ async function loadInventory() {
           + '<div class="r">' + esc(item.rzadkosc) + '</div>'
           + '<button class="btn-sell" data-id="' + Number(item.ekwipunek_id) + '">Sprzedaj '
           + money(item.wartosc) + '</button></div>').join('')
-      : '<p class="hint">Pusto — zarzuć wędkę.</p>';
+      : '<p class="hint">Pusto — zarzuć wędkę albo otwórz skrzynkę.</p>';
 
     $('inv-summary').textContent = 'Ryb w ekwipunku: ' + data.podsumowanie.liczba_przedmiotow
       + ' • łączna wartość: ' + money(data.podsumowanie.laczna_wartosc);
@@ -476,6 +602,10 @@ async function loadInventory() {
     $('inventory').querySelectorAll('.btn-sell').forEach((btn) => {
       btn.addEventListener('click', () => sell(Number(btn.dataset.id), btn));
     });
+
+    // Ekwipunek jest wkładem dla upgradera i tradera (UC_UPGRADE / UC_TRADE).
+    fillUpgradeWklady(data.ekwipunek);
+    renderTradeItems(data.ekwipunek);
   } catch (error) {
     if (error.status !== 401) { toast(error.message, true); }
   }
@@ -509,14 +639,18 @@ async function loadHistory() {
     const data = await api('history.php?limit=15');
 
     if (!data.historia.length) {
-      $('history').innerHTML = '<p class="hint">Brak połowów.</p>';
+      $('history').innerHTML = '<p class="hint">Brak zdarzeń.</p>';
       return;
     }
 
+    // Historia obejmuje wszystkie cztery tryby (TypLosowania z diagramu klas),
+    // więc zamiast „Łowisko" jest kolumna „Źródło" z nazwą trybu/łowiska/skrzynki,
+    // a porażka w upgraderze jest oznaczona (udane = false).
     const rows = data.historia.map((entry) => '<tr>'
-      + '<td>' + esc(entry.data) + '</td>'
-      + '<td>' + esc(entry.wedka) + '</td>'
-      + '<td style="color:' + esc(entry.kolor) + '">' + esc(entry.nazwa) + '</td>'
+      + '<td>' + esc(entry.czas) + '</td>'
+      + '<td>' + esc(entry.typ_nazwa) + '<br><span class="muted">' + esc(entry.zrodlo || '') + '</span></td>'
+      + '<td style="color:' + esc(entry.kolor) + '">' + esc(entry.nazwa)
+      + (entry.udane === false ? ' <span class="neg">(przegrana)</span>' : '') + '</td>'
       + '<td class="neg">-' + money(entry.koszt) + '</td>'
       + '<td class="' + (entry.bilans >= 0 ? 'pos' : 'neg') + '">'
       + (entry.bilans >= 0 ? '+' : '') + money(entry.bilans) + '</td>'
@@ -526,11 +660,587 @@ async function loadHistory() {
       .map(([kod, ile]) => esc(kod) + ': ' + ile)
       .join(' • ');
 
-    $('history').innerHTML = '<table><thead><tr><th>Data</th><th>Łowisko</th><th>Ryba</th>'
+    $('history').innerHTML = '<table><thead><tr><th>Data</th><th>Tryb / źródło</th><th>Przedmiot</th>'
       + '<th>Koszt</th><th>Bilans</th></tr></thead><tbody>' + rows + '</tbody></table>'
       + '<p class="hint">Rozbicie rzadkości → ' + breakdown + '</p>';
   } catch (error) {
     if (error.status !== 401) { toast(error.message, true); }
+  }
+}
+
+/* --- skrzynki (UC_CASE) --------------------------------------------------- */
+
+/** Ostatnio wczytany ekwipunek i katalog — wkłady upgradera/tradera. */
+let inventoryCache = [];
+let catalogCache = [];
+
+/** Zaznaczenie do kontraktu tradera (ekwipunek_id). */
+const tradeSelection = new Set();
+
+async function loadCases() {
+  const box = $('cases');
+
+  try {
+    const data = await api('skrzynki.php');
+
+    if (!data.skrzynki.length) {
+      box.innerHTML = '<p class="hint">Brak skrzynek w bazie. Załaduj dane: '
+        + '<code>php database/migrate.php --fresh</code></p>';
+      return;
+    }
+
+    box.innerHTML = data.skrzynki.map((skrzynka) => {
+      const chips = skrzynka.przedmioty.map((item) => '<span class="chip" style="border-color:' + esc(item.kolor)
+        + ';color:' + esc(item.kolor) + '">' + esc(item.nazwa) + ' · ' + esc(item.szansa_procent.toFixed(3))
+        + '%</span>').join('');
+
+      return '<div class="rod">'
+        + '<div class="rod-head"><div><h3>' + esc(skrzynka.nazwa) + '</h3>'
+        + '<div class="muted">' + esc(skrzynka.opis) + '</div></div>'
+        + '<div class="cost">' + money(skrzynka.cena) + ' 🪙</div></div>'
+        + '<div class="pool">' + chips + '</div>'
+        + '<button class="btn-open-case" data-id="' + Number(skrzynka.id) + '" data-nazwa="' + esc(skrzynka.nazwa)
+        + '">' + 'Otwórz (' + skrzynka.liczba_przedmiotow + ' dropów)</button>'
+        + '</div>';
+    }).join('');
+
+    box.querySelectorAll('.btn-open-case').forEach((btn) => {
+      btn.addEventListener('click', () => openCase(Number(btn.dataset.id), btn));
+    });
+  } catch (error) {
+    box.innerHTML = '<p class="hint">' + esc(error.message) + ' (kod: <code>' + esc(error.kod) + '</code>)</p>';
+  }
+}
+
+/**
+ * Otwarcie skrzynki.
+ *
+ * Kontrakt odpowiedzi jest taki sam jak w api/fish.php: wynik ustala serwer,
+ * a `reel[reel_indeks_wygranej]` to wygrany przedmiot. Konsola nie animuje
+ * paska (tym zajmie się layout w public/) — pokazuje za to zwycięzcę i saldo,
+ * żeby dało się klikalnie zweryfikować cały obieg.
+ */
+async function openCase(skrzynkaId, button) {
+  if (!getToken()) {
+    toast('Najpierw się zaloguj.', true);
+    return;
+  }
+
+  button.disabled = true;
+
+  try {
+    const data = await api('open_case.php', {
+      method: 'POST',
+      body: {
+        skrzynka_id: skrzynkaId,
+        sprzedaj_natychmiast: $('case-sell').checked,
+      },
+    });
+
+    const item = data.przedmiot;
+    const sprzedaz = data.sprzedaz;
+
+    $('case-wynik').innerHTML = '<div class="box" style="border-left-color:' + esc(item.kolor) + '">'
+      + (item.ikona ? '<img src="' + esc(item.ikona) + '" alt="">' : '')
+      + '<div><strong style="color:' + esc(item.kolor) + '">' + esc(item.nazwa) + '</strong>'
+      + '<div class="muted">' + esc(item.rzadkosc) + ' • wartość ' + money(item.wartosc)
+      + ' • szansa ' + Number(item.szansa_procent).toFixed(3) + '%</div>'
+      + '<div class="muted">Cena ' + money(data.otwarcie.cena) + ' • saldo '
+      + money(data.saldo_przed) + ' → ' + money(data.saldo_po)
+      + (sprzedaz ? ' (sprzedano od razu za ' + money(sprzedaz.otrzymane_monety) + ')' : '') + '</div>'
+      + '</div></div>';
+
+    // Kontrola kontraktu: wygrana musi leżeć pod reel_indeks_wygranej.
+    const reelWinner = (data.reel || [])[data.reel_indeks_wygranej] || {};
+
+    if (Number(reelWinner.przedmiot_id) !== Number(item.przedmiot_id)) {
+      toast('UWAGA: reel[reel_indeks_wygranej] nie wskazuje wygranej!', true);
+    }
+
+    toast(data.message);
+    $('saldo').textContent = money(data.saldo_po);
+
+    await Promise.all([loadInventory(), loadHistory()]);
+  } catch (error) {
+    reportError(error.kod || 'error', error.message, error.status);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+/* --- upgrader (UC_UPGRADE) ------------------------------------------------ */
+
+async function loadCatalog() {
+  try {
+    const data = await api('katalog.php');
+
+    catalogCache = data.przedmioty || [];
+    tradeLimits = data.trader;
+
+    $('up-info').innerHTML = 'Szansa = (W_wkład / W_cel) × (1 − marża), marża = '
+      + Number(data.upgrader.marza * 100).toFixed(0) + '%. '
+      + 'Trader: ' + data.trader.min_przedmiotow + '–' + data.trader.max_przedmiotow
+      + ' przedmiotów o łącznej wartości ≥ ' + money(data.trader.min_wartosc) + '. '
+      + 'Porażka w upgraderze = wkład przepada bezpowrotnie.';
+
+    fillUpgradeCele();
+  } catch (error) {
+    if (error.status !== 401) { toast(error.message, true); }
+  }
+}
+
+/** Lista wkładów = cały niesprzedany ekwipunek gracza. */
+function fillUpgradeWklady(items) {
+  const select = $('up-wklad');
+  const previous = select.value;
+
+  select.innerHTML = '<option value="">— wkład z ekwipunku —</option>'
+    + items.map((item) => '<option value="' + Number(item.ekwipunek_id) + '" data-wartosc="' + Number(item.wartosc) + '">'
+      + esc(item.nazwa) + ' (' + esc(item.rzadkosc) + ', ' + money(item.wartosc) + ')</option>').join('');
+
+  if (previous) { select.value = previous; }
+
+  fillUpgradeCele();
+}
+
+/** Cele z katalogu — tylko droższe od wkładu (backend odrzuca tańsze). */
+function fillUpgradeCele() {
+  const select = $('up-cel');
+  const wkladOption = $('up-wklad').selectedOptions[0];
+  const wartoscWkladu = Number(wkladOption ? wkladOption.dataset.wartosc : 0);
+  const previous = select.value;
+
+  const cele = catalogCache.filter((item) => Number(item.wartosc) > wartoscWkladu);
+
+  select.innerHTML = '<option value="">— cel z katalogu (' + cele.length + ') —</option>'
+    + cele.map((item) => '<option value="' + Number(item.przedmiot_id) + '">'
+      + esc(item.nazwa) + ' (' + esc(item.rzadkosc) + ', ' + money(item.wartosc) + ')</option>').join('');
+
+  if (previous) { select.value = previous; }
+
+  $('btn-up-run').disabled = !$('up-wklad').value || !$('up-cel').value;
+}
+
+/** GET api/upgrade.php — kalkulacja szansy bez wykonywania próby. */
+async function calcUpgrade() {
+  const wklad = Number($('up-wklad').value);
+  const cel = Number($('up-cel').value);
+
+  if (!wklad || !cel) {
+    toast('Wybierz wkład z ekwipunku i cel z katalogu.', true);
+    return;
+  }
+
+  try {
+    const data = await api('upgrade.php?ekwipunek_id=' + wklad + '&cel_przedmiot_id=' + cel);
+
+    $('up-info').innerHTML = '<span class="wheel">Koło: <b>' + Number(data.szansa_procent).toFixed(2)
+      + '%</b> szansy</span> • wkład ' + esc(data.wklad.nazwa) + ' (' + money(data.wartosc_wkladu) + ')'
+      + ' → cel ' + esc(data.cel.nazwa) + ' (' + money(data.wartosc_celu) + ')'
+      + ' • marża ' + Number(data.marza * 100).toFixed(0) + '%';
+
+    $('btn-up-run').disabled = false;
+  } catch (error) {
+    toast(error.message + ' (' + error.kod + ')', true);
+  }
+}
+
+/** POST api/upgrade.php — wykonanie próby (wkład przepada przy porażce). */
+async function runUpgrade() {
+  const wklad = Number($('up-wklad').value);
+  const cel = Number($('up-cel').value);
+
+  $('btn-up-run').disabled = true;
+
+  try {
+    const data = await api('upgrade.php', {
+      method: 'POST',
+      body: { ekwipunek_id: wklad, cel_przedmiot_id: cel },
+    });
+
+    const item = data.przedmiot;
+
+    $('up-wynik').innerHTML = '<div class="box" style="border-left-color:'
+      + (data.udane ? esc(item.kolor) : '#f87171') + '">'
+      + (data.udane && item.ikona ? '<img src="' + esc(item.ikona) + '" alt="">' : '')
+      + '<div><strong>' + (data.udane ? 'UDANE: ' + esc(item.nazwa) : 'PORAŻKA — ' + esc(data.wklad.nazwa) + ' przepadł')
+      + '</strong>'
+      + '<div class="muted wheel">Koło zatrzymało się na <b>' + Number(data.kolo).toFixed(2)
+      + '%</b> (próg ' + Number(data.szansa_procent).toFixed(2) + '%)</div>'
+      + '<div class="muted">' + esc(data.message) + '</div></div></div>';
+
+    toast(data.message, !data.udane);
+
+    await Promise.all([loadInventory(), loadHistory(), loadMe()]);
+  } catch (error) {
+    reportError(error.kod || 'error', error.message, error.status);
+    await loadInventory();
+  }
+}
+
+/* --- trader (UC_TRADE) ---------------------------------------------------- */
+
+let tradeLimits = { min_przedmiotow: 3, max_przedmiotow: 10, min_wartosc: 10 };
+
+function renderTradeItems(items) {
+  // Po sprzedaży albo spaleniu część zaznaczeń jest nieaktualna — czyścimy je.
+  const valid = new Set(items.map((item) => Number(item.ekwipunek_id)));
+
+  Array.from(tradeSelection).forEach((id) => {
+    if (!valid.has(id)) { tradeSelection.delete(id); }
+  });
+
+  const box = $('trade-items');
+
+  box.innerHTML = items.length
+    ? items.map((item) => {
+      const id = Number(item.ekwipunek_id);
+      const checked = tradeSelection.has(id);
+
+      return '<div class="item' + (checked ? ' pick' : '') + '" style="border-left-color:' + esc(item.kolor) + '">'
+        + (item.ikona ? '<img src="' + esc(item.ikona) + '" alt="">' : '')
+        + '<div class="n">' + esc(item.nazwa) + '</div>'
+        + '<div class="r">' + money(item.wartosc) + '</div>'
+        + '<label><input type="checkbox" class="trade-pick" data-id="' + id + '"'
+        + (checked ? ' checked' : '') + '> do kontraktu</label></div>';
+    }).join('')
+    : '<p class="hint">Pusto — zarzuć wędkę albo otwórz skrzynkę.</p>';
+
+  box.querySelectorAll('.trade-pick').forEach((input) => {
+    input.addEventListener('change', () => {
+      const id = Number(input.dataset.id);
+
+      if (input.checked) {
+        tradeSelection.add(id);
+      } else {
+        tradeSelection.delete(id);
+      }
+
+      updateTradeState();
+    });
+  });
+
+  updateTradeState();
+}
+
+function selectedIds() {
+  return Array.from(tradeSelection);
+}
+
+/** Walidacja progów kontraktu po stronie konsoli (backend i tak ją powtarza). */
+function updateTradeState() {
+  const ids = selectedIds();
+  const suma = inventoryCache
+    .filter((item) => tradeSelection.has(Number(item.ekwipunek_id)))
+    .reduce((acc, item) => acc + Number(item.wartosc), 0);
+
+  const zaDuzo = ids.length > tradeLimits.max_przedmiotow;
+  const zaMalo = ids.length < tradeLimits.min_przedmiotow;
+  const zaTanio = suma < tradeLimits.min_wartosc;
+
+  $('trade-info').innerHTML = 'Wybrano <b>' + ids.length + '</b> (' + tradeLimits.min_przedmiotow + '–'
+    + tradeLimits.max_przedmiotow + ') • wartość <b>' + money(suma) + '</b> (próg '
+    + money(tradeLimits.min_wartosc) + ')'
+    + (zaDuzo ? ' <span class="neg">za dużo przedmiotów</span>' : '')
+    + (zaMalo ? ' <span class="neg">za mało przedmiotów</span>' : '')
+    + (!zaMalo && !zaDuzo && zaTanio ? ' <span class="neg">za niska wartość (TRADE_ERR)</span>' : '');
+
+  $('trade-items').querySelectorAll('.item').forEach((el) => {
+    const input = el.querySelector('.trade-pick');
+
+    el.classList.toggle('pick', Boolean(input && input.checked));
+  });
+
+  const gotowy = !zaDuzo && !zaMalo && !zaTanio;
+
+  $('btn-trade-calc').disabled = !gotowy;
+  $('btn-trade-run').disabled = !gotowy;
+}
+
+/** GET api/trade_up.php — podgląd kontraktu: suma wkładu i pula nagród. */
+async function calcTrade() {
+  try {
+    const data = await api('trade_up.php?ekwipunek_ids=' + selectedIds().join(','));
+
+    $('trade-info').innerHTML = 'Wkład: <b>' + data.wklad.length + '</b> szt. = <b>'
+      + money(data.wartosc_wkladu) + '</b> • poziom wejściowy: ' + esc(data.poziom_wejsciowy)
+      + '<br>Pula nagród (' + data.pula.length + '): '
+      + data.pula.slice(0, 8).map((item) => '<span class="chip" style="border-color:' + esc(item.kolor)
+        + ';color:' + esc(item.kolor) + '">' + esc(item.nazwa) + ' · '
+        + Number(item.szansa_procent).toFixed(3) + '%</span>').join(' ')
+      + (data.pula.length > 8 ? ' …' : '');
+  } catch (error) {
+    toast(error.message + ' (' + error.kod + ')', true);
+  }
+}
+
+/** POST api/trade_up.php — spalenie wkładu i losowanie jednej nagrody. */
+async function runTrade() {
+  $('btn-trade-run').disabled = true;
+
+  try {
+    const data = await api('trade_up.php', { method: 'POST', body: { ekwipunek_ids: selectedIds() } });
+
+    const nagroda = data.nagroda;
+
+    $('trade-wynik').innerHTML = '<div class="box" style="border-left-color:' + esc(nagroda.kolor) + '">'
+      + (nagroda.ikona ? '<img src="' + esc(nagroda.ikona) + '" alt="">' : '')
+      + '<div><strong style="color:' + esc(nagroda.kolor) + '">' + esc(nagroda.nazwa) + '</strong>'
+      + '<div class="muted">' + esc(nagroda.rzadkosc) + ' • wartość ' + money(nagroda.wartosc)
+      + ' • szansa ' + Number(nagroda.szansa_procent).toFixed(3) + '%</div>'
+      + '<div class="muted">Spalono ' + data.spalone.length + ' przedmiotów o wartości '
+      + money(data.kontrakt.wartosc_wkladu) + '</div></div></div>';
+
+    tradeSelection.clear();
+    toast(data.message);
+
+    await Promise.all([loadInventory(), loadHistory(), loadMe()]);
+  } catch (error) {
+    reportError(error.kod || 'error', error.message, error.status);
+    await loadInventory();
+  }
+}
+
+/* --- panel administratora (UC_ADM1, UC_ADM2, UC_ADM3) --------------------- */
+
+/**
+ * Wczytuje cały panel. Konto bez roli admin dostaje 403 admin_required —
+ * wtedy panel pokazuje instrukcję nadania roli zamiast błędu w konsoli.
+ */
+async function loadAdmin() {
+  try {
+    const [monitoring, uzytkownicy, skrzynki] = await Promise.all([
+      api('admin/monitoring.php'),
+      api('admin/uzytkownicy.php?limit=20'),
+      api('admin/skrzynki.php'),
+    ]);
+
+    renderMonitoring(monitoring);
+    renderAdminUsers(uzytkownicy.uzytkownicy);
+    renderAdminCases(skrzynki.skrzynki);
+  } catch (error) {
+    if (error.status === 403) {
+      $('adm-stats').innerHTML = '<p class="hint">To konto nie jest administratorem (<code>admin_required</code>). '
+        + 'Nadaj rolę: <code>UPDATE uzytkownicy SET rola = \'admin\' WHERE login = \'…\'</code></p>';
+      return;
+    }
+
+    if (error.status === 401) {
+      toast('Zaloguj się, żeby otworzyć panel administratora.', true);
+      return;
+    }
+
+    toast(error.message + ' (' + error.kod + ')', true);
+  }
+}
+
+/** ADM3_S1 statystyki + ADM3_EXT alerty + dziennik audytowy. */
+function renderMonitoring(data) {
+  const lacznie = data.statystyki.lacznie;
+
+  $('adm-stats').innerHTML = '<div class="kpi">'
+    + '<div><strong>' + Number(lacznie.rtp).toFixed(3) + '</strong><span>RTP platformy</span></div>'
+    + '<div><strong>' + lacznie.liczba_losowan + '</strong><span>losowań</span></div>'
+    + '<div><strong>' + lacznie.liczba_graczy + '</strong><span>graczy</span></div>'
+    + '<div><strong>' + money(lacznie.suma_kosztow) + '</strong><span>pobrane opłaty</span></div>'
+    + '<div><strong>' + money(lacznie.suma_wyplat) + '</strong><span>wypłacone wartości</span></div>'
+    + '<div><strong>' + money(lacznie.bilans_platformy) + '</strong><span>bilans platformy</span></div>'
+    + '</div>'
+    + '<table><thead><tr><th>Tryb</th><th>Losowań</th><th>Porażek</th><th>Koszty</th><th>Wypłaty</th><th>RTP</th></tr></thead><tbody>'
+    + data.statystyki.wedlug_typu.map((typ) => '<tr><td>' + esc(typ.typ_nazwa) + '</td>'
+      + '<td>' + typ.liczba_losowan + '</td><td>' + typ.liczba_porazek + '</td>'
+      + '<td>' + money(typ.suma_kosztow) + '</td><td>' + money(typ.suma_wyplat) + '</td>'
+      + '<td>' + Number(typ.rtp).toFixed(3) + '</td></tr>').join('')
+    + '</tbody></table>';
+
+  $('adm-alerts').innerHTML = data.alerty.length
+    ? '<p class="hint">Alerty (' + data.alerty.length + ') — progi: seria ≥ ' + data.progi_alertow.dlugosc_serii
+        + ', rzadkość ≥ ' + data.progi_alertow.min_rzadkosc_kolejnosc
+        + ', RTP ≥ ' + data.progi_alertow.rtp_prog + '</p>'
+      + data.alerty.map((alert) => '<div class="alert"><b>' + esc(alert.typ_alertu) + '</b> — '
+        + esc(alert.login) + ': ' + esc(alert.szczegoly)
+        + (alert.przedmioty ? ' [' + esc(alert.przedmioty.join(', ')) + ']' : '') + '</div>').join('')
+    : '<p class="hint">Brak alertów (ADM3_EXT) — nic nie wygląda podejrzanie.</p>';
+
+  $('adm-log').innerHTML = '<p class="hint">Dziennik audytowy (' + data.dziennik_audytowy.length + ' ostatnich):</p>'
+    + '<table><thead><tr><th>Czas</th><th>Kto</th><th>Akcja</th><th>Szczegóły</th></tr></thead><tbody>'
+    + data.dziennik_audytowy.map((wpis) => '<tr><td>' + esc(wpis.czas) + '</td>'
+      + '<td>' + esc(wpis.login || '—') + '</td><td>' + esc(wpis.akcja) + '</td>'
+      + '<td class="muted">' + esc(wpis.szczegoly) + '</td></tr>').join('')
+    + '</tbody></table>';
+}
+
+/** UC_ADM2: lista kont + operacje na koncie (saldo, ban, odblokowanie). */
+function renderAdminUsers(users) {
+  $('adm-users').innerHTML = users.length
+    ? '<table><thead><tr><th>ID</th><th>Login</th><th>Rola</th><th>Saldo</th><th>Losowań</th>'
+      + '<th>RTP</th><th>Stan</th><th>Akcje</th></tr></thead><tbody>'
+      + users.map((user) => '<tr>'
+        + '<td>' + user.id + '</td>'
+        + '<td>' + esc(user.login) + '<br><span class="muted">' + esc(user.email) + '</span></td>'
+        + '<td>' + esc(user.rola) + '</td>'
+        + '<td>' + money(user.saldo) + '</td>'
+        + '<td>' + user.liczba_losowan + '</td>'
+        + '<td>' + Number(user.rtp).toFixed(2) + '</td>'
+        + '<td>' + (user.zablokowany ? '<span class="neg">zablokowany</span>' : '<span class="pos">aktywny</span>') + '</td>'
+        + '<td><button class="ghost small adm-user" data-id="' + user.id + '" data-akcja="saldo" data-kwota="100">+100</button> '
+        + '<button class="ghost small adm-user" data-id="' + user.id + '" data-akcja="saldo" data-kwota="-100">-100</button> '
+        + '<button class="ghost small adm-user" data-id="' + user.id + '" data-akcja="'
+        + (user.zablokowany ? 'odblokuj' : 'ban') + '">' + (user.zablokowany ? 'Odblokuj' : 'Ban') + '</button></td>'
+        + '</tr>').join('')
+      + '</tbody></table>'
+    : '<p class="hint">Brak kont.</p>';
+
+  $('adm-users').querySelectorAll('.adm-user').forEach((btn) => {
+    btn.addEventListener('click', () => userAction(
+      btn.dataset.akcja,
+      Number(btn.dataset.id),
+      Number(btn.dataset.kwota || 0)
+    ));
+  });
+}
+
+async function userAction(akcja, userId, kwota) {
+  const body = { akcja, user_id: userId };
+
+  if (akcja === 'saldo') { body.kwota = kwota; }
+
+  try {
+    const data = await api('admin/uzytkownicy.php', { method: 'POST', body });
+
+    toast(data.message);
+    await Promise.all([loadAdmin(), loadMe()]);
+  } catch (error) {
+    // ADM2_ERR: próba zablokowania głównego administratora.
+    toast(error.message + ' (' + error.kod + ')', true);
+  }
+}
+
+async function searchUsers() {
+  try {
+    const data = await api('admin/uzytkownicy.php?q=' + encodeURIComponent($('adm-q').value.trim()) + '&limit=50');
+
+    renderAdminUsers(data.uzytkownicy);
+  } catch (error) {
+    toast(error.message + ' (' + error.kod + ')', true);
+  }
+}
+
+/** UC_ADM1: lista skrzynek w panelu + przełącznik aktywna = 0/1. */
+function renderAdminCases(skrzynki) {
+  $('adm-cases').innerHTML = skrzynki.length
+    ? '<table><thead><tr><th>ID</th><th>Nazwa</th><th>Cena</th><th>Dropów</th><th>Stan</th><th>Akcje</th></tr></thead><tbody>'
+      + skrzynki.map((skrzynka) => '<tr>'
+        + '<td>' + skrzynka.id + '</td>'
+        + '<td>' + esc(skrzynka.nazwa) + '</td>'
+        + '<td>' + money(skrzynka.cena) + '</td>'
+        + '<td>' + skrzynka.liczba_przedmiotow + '</td>'
+        + '<td>' + (skrzynka.aktywna ? '<span class="pos">aktywna</span>' : '<span class="neg">wyłączona</span>') + '</td>'
+        + '<td><button class="ghost small adm-case" data-id="' + skrzynka.id + '">'
+        + (skrzynka.aktywna ? 'Wyłącz' : 'Włącz') + '</button></td></tr>').join('')
+      + '</tbody></table>'
+    : '<p class="hint">Brak skrzynek.</p>';
+
+  $('adm-cases').querySelectorAll('.adm-case').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        const data = await api('admin/skrzynki.php', {
+          method: 'POST',
+          body: { akcja: 'przelacz', skrzynka_id: Number(btn.dataset.id) },
+        });
+
+        toast(data.message);
+        await Promise.all([loadAdmin(), loadCases()]);
+      } catch (error) {
+        toast(error.message + ' (' + error.kod + ')', true);
+      }
+    });
+  });
+}
+
+/**
+ * Kreator skrzynki (nazwa + cena + opis).
+ * Pula = wszystkie aktywne przedmioty z katalogu z wagą NULL, czyli z wagą
+ * domyślną poziomu rzadkości z README.md — admin doprecyzuje wagi w edycji.
+ */
+async function createCase() {
+  const nazwa = $('adm-case-nazwa').value.trim();
+  const cena = Number($('adm-case-cena').value);
+
+  if (!nazwa) {
+    toast('Podaj nazwę skrzynki.', true);
+    return;
+  }
+
+  if (!catalogCache.length) {
+    toast('Katalog jest pusty — nie ma z czego zbudować puli.', true);
+    return;
+  }
+
+  const przedmioty = catalogCache.map((item) => ({ przedmiot_id: Number(item.przedmiot_id), waga: null }));
+
+  try {
+    const data = await api('admin/skrzynki.php', {
+      method: 'POST',
+      body: {
+        akcja: 'utworz',
+        nazwa,
+        cena,
+        opis: $('adm-case-opis').value.trim(),
+        przedmioty,
+      },
+    });
+
+    toast(data.message + ' Dropów: ' + data.skrzynka.liczba_przedmiotow);
+
+    $('adm-case-nazwa').value = '';
+    $('adm-case-cena').value = '';
+    $('adm-case-opis').value = '';
+
+    await Promise.all([loadAdmin(), loadCases()]);
+  } catch (error) {
+    // ADM1_ERR: błędne wagi albo ujemna cena.
+    toast(error.message + ' (' + error.kod + ')', true);
+  }
+}
+
+/**
+ * Eksport raportu (ADM3_S3) z nagłówkiem Authorization — zwykły link <a href>
+ * nie wysłałby tokena, a raport jest tylko dla administratora.
+ */
+async function downloadReport(format) {
+  try {
+    const response = await fetch('api/admin/raport.php?format=' + format, {
+      headers: { Authorization: 'Bearer ' + getToken() },
+    });
+
+    if (!response.ok) {
+      toast('Eksport się nie udał (HTTP ' + response.status + ').', true);
+      return;
+    }
+
+    if (format === 'json') {
+      const data = await response.json();
+
+      $('adm-log').innerHTML = '<p class="hint">Raport JSON (statystyki z Losowanie::statystyki):</p>'
+        + '<pre class="hint">' + esc(JSON.stringify(data.raport, null, 2)) + '</pre>';
+
+      return;
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = 'raport-mocnydrop.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast('Pobrano raport CSV (eksport zostawił wpis w dzienniku audytowym).');
+    await loadAdmin();
+  } catch (error) {
+    toast(error.message, true);
   }
 }
 
@@ -580,6 +1290,19 @@ $('btn-logout').addEventListener('click', async () => {
   $('history').innerHTML = '';
   $('inv-summary').textContent = '';
   $('wynik').innerHTML = '';
+  // Nowe tryby gry i panel admina też wracają do stanu pustego.
+  $('case-wynik').innerHTML = '';
+  $('up-wynik').innerHTML = '';
+  $('trade-wynik').innerHTML = '';
+  $('adm-stats').innerHTML = '';
+  $('adm-alerts').innerHTML = '';
+  $('adm-log').innerHTML = '';
+  $('adm-users').innerHTML = '';
+  $('adm-cases').innerHTML = '';
+  inventoryCache = [];
+  tradeSelection.clear();
+  renderTradeItems([]);
+  fillUpgradeWklady([]);
   // Scena wraca do idle: przerywa animację, czyści pasek i kartę wygranej.
   getScene().then((scene) => scene.reset());
   toast('Wylogowano.');
@@ -589,11 +1312,41 @@ $('btn-rods').addEventListener('click', loadSpots);
 $('btn-inv').addEventListener('click', loadInventory);
 $('btn-hist').addEventListener('click', loadHistory);
 
+/* --- nowe tryby gry i panel administratora -------------------------------- */
+
+$('btn-cases').addEventListener('click', loadCases);
+
+$('btn-up-calc').addEventListener('click', calcUpgrade);
+$('btn-up-run').addEventListener('click', runUpgrade);
+$('up-wklad').addEventListener('change', fillUpgradeCele);
+$('up-cel').addEventListener('change', () => {
+  $('btn-up-run').disabled = !$('up-wklad').value || !$('up-cel').value;
+});
+
+$('btn-trade-calc').addEventListener('click', calcTrade);
+$('btn-trade-run').addEventListener('click', runTrade);
+$('btn-trade-clear').addEventListener('click', () => {
+  tradeSelection.clear();
+  renderTradeItems(inventoryCache);
+});
+
+$('btn-admin-load').addEventListener('click', loadAdmin);
+$('btn-adm-refresh').addEventListener('click', loadAdmin);
+$('btn-adm-search').addEventListener('click', searchUsers);
+$('btn-adm-case-create').addEventListener('click', createCase);
+$('btn-adm-csv').addEventListener('click', () => downloadReport('csv'));
+$('btn-adm-json').addEventListener('click', () => downloadReport('json'));
+
+$('adm-q').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') { searchUsers(); }
+});
+
 (async function init() {
   // Zdarzenia komponentu podpinamy od razu (bindScene czeka na whenDefined).
   bindScene();
 
-  await loadSpots();
+  // Katalog i skrzynki są publiczne — ładują się bez tokena.
+  await Promise.all([loadSpots(), loadCases(), loadCatalog()]);
 
   if (getToken()) {
     await loadMe();
