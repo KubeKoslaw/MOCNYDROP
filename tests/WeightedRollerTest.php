@@ -23,9 +23,9 @@ final class WeightedRollerTest extends TestCase
     public function testLosujePoprawnePrzedzialy(): void
     {
         $pool = [
-            ['ryba_id' => 1, 'nazwa' => 'A', 'waga' => 50.0],
-            ['ryba_id' => 2, 'nazwa' => 'B', 'waga' => 30.0],
-            ['ryba_id' => 3, 'nazwa' => 'C', 'waga' => 20.0],
+            ['przedmiot_id' => 1, 'nazwa' => 'A', 'waga' => 50.0],
+            ['przedmiot_id' => 2, 'nazwa' => 'B', 'waga' => 30.0],
+            ['przedmiot_id' => 3, 'nazwa' => 'C', 'waga' => 20.0],
         ];
 
         $this->assertSame('A', WeightedRoller::roll($pool, Fixtures::scriptedRandom([0.0]))['nazwa'], 'random=0.0 powinien trafić w pierwszy przedział');
@@ -41,13 +41,13 @@ final class WeightedRollerTest extends TestCase
      * ULTRA MEGA NIESAMOWITA. Bez zabezpieczeń arytmetyki zmiennoprzecinkowej
      * ten element mógłby przepaść przy losowaniu bliskim górnej granicy.
      */
-    public function testUltraRzadkaRybaJestOsiagalna(): void
+    public function testUltraRzadkiPrzedmiotJestOsiagalny(): void
     {
         $pool = [];
 
         foreach (Fixtures::PULA_README as $index => $fish) {
             $pool[] = [
-                'ryba_id' => $index + 1,
+                'przedmiot_id' => $index + 1,
                 'nazwa' => $fish['nazwa'],
                 'kod' => $fish['kod'],
                 'waga' => self::wagaReadme($fish['kod']),
@@ -80,11 +80,11 @@ final class WeightedRollerTest extends TestCase
     public function testRozkladZgadzaSieZWagami(): void
     {
         $pool = [
-            ['ryba_id' => 1, 'kod' => 'pospolita',   'waga' => 50.0],
-            ['ryba_id' => 2, 'kod' => 'przecietna',  'waga' => 30.0],
-            ['ryba_id' => 3, 'kod' => 'niezla',      'waga' => 15.0],
-            ['ryba_id' => 4, 'kod' => 'mityczna',    'waga' => 4.0],
-            ['ryba_id' => 5, 'kod' => 'niesamowita', 'waga' => 1.0],
+            ['przedmiot_id' => 1, 'kod' => 'pospolita',   'waga' => 50.0],
+            ['przedmiot_id' => 2, 'kod' => 'przecietna',  'waga' => 30.0],
+            ['przedmiot_id' => 3, 'kod' => 'niezla',      'waga' => 15.0],
+            ['przedmiot_id' => 4, 'kod' => 'mityczna',    'waga' => 4.0],
+            ['przedmiot_id' => 5, 'kod' => 'niesamowita', 'waga' => 1.0],
         ];
 
         $oczekiwane = [
@@ -155,13 +155,13 @@ final class WeightedRollerTest extends TestCase
     public function testZwracaWynikWzbogaconyOMetadane(): void
     {
         $pool = [
-            ['ryba_id' => 7, 'nazwa' => 'Anchois', 'wartosc' => 2.0, 'waga' => 50.0],
-            ['ryba_id' => 8, 'nazwa' => 'Jesiotr', 'wartosc' => 400.0, 'waga' => 50.0],
+            ['przedmiot_id' => 7, 'nazwa' => 'Anchois', 'wartosc' => 2.0, 'waga' => 50.0],
+            ['przedmiot_id' => 8, 'nazwa' => 'Jesiotr', 'wartosc' => 400.0, 'waga' => 50.0],
         ];
 
         $wynik = WeightedRoller::roll($pool, Fixtures::scriptedRandom([0.0]));
 
-        $this->assertSame(7, $wynik['ryba_id'], 'Powinien zwrócić pierwszy element puli');
+        $this->assertSame(7, $wynik['przedmiot_id'], 'Powinien zwrócić pierwszy element puli');
         $this->assertArrayHasKey('suma_wag', $wynik, 'Wynik musi zawierać sumę wag — idzie do historii połowów');
         $this->assertArrayHasKey('szansa_procent', $wynik, 'Wynik musi zawierać szansę — idzie do frontendu');
         $this->assertFloat(100.0, (float) $wynik['suma_wag'], 'Suma wag');

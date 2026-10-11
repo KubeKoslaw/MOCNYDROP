@@ -7,25 +7,26 @@ declare(strict_types=1);
  * Nagłówek: Authorization: Bearer <token>
  * Body: { "ekwipunek_id": 12 }
  *
- * Sprzedaje rybę i dopisuje monety do salda.
+ * Natychmiastowa sprzedaż wygranej (przypadek rozszerzający z diagramu
+ * use case). Pieniądze trafiają do Portfela przez Portfel::dodajSrodki().
  *
- * Uwaga na `ekwipunek_id`: to id WPISU w ekwipunku, nie id ryby z katalogu.
- * Gracz może mieć trzy takie same ryby i każda to osobny wpis.
+ * Uwaga na `ekwipunek_id`: to id WPISU w ekwipunku, nie id przedmiotu z
+ * katalogu. Gracz może mieć trzy takie same ryby i każda to osobny wpis.
  *
  * Właściciel: @KubeKoslaw (Core Backend)
  */
 
-use MocnyDrop\Auth;
-use MocnyDrop\InventoryService;
+use MocnyDrop\Ekwipunek;
 use MocnyDrop\Json;
+use MocnyDrop\Token;
 
 require_once __DIR__ . '/_bootstrap.php';
 
 Json::requireMethod('POST');
 
-$user = Auth::requireAuth();
+$uzytkownik = Token::wymagajZalogowania();
 $body = Json::readBody();
 
-$inventoryId = Json::intField($body, 'ekwipunek_id');
+$ekwipunekId = Json::intField($body, 'ekwipunek_id');
 
-Json::success(InventoryService::sell($user['id'], $inventoryId));
+Json::success((new Ekwipunek($uzytkownik->id))->sprzedajWpis($ekwipunekId));

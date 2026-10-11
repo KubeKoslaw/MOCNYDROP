@@ -3,19 +3,19 @@
  *
  * Uruchamianie:
  *   node dev/check-fishing.mjs                 testy czystej logiki
- *   node dev/check-fishing.mjs /tmp/cast.json  + walidacja PRAWDZIWEJ odpowiedzi api/cast.php
+ *   node dev/check-fishing.mjs /tmp/cast.json  + walidacja PRAWDZIWEJ odpowiedzi api/fish.php
  *
  * Jak zdobyć payload do drugiego wariantu (serwer musi działać):
- *   curl -s -X POST http://localhost:8000/api/cast.php \
+ *   curl -s -X POST http://localhost:8000/api/fish.php \
  *        -H "Authorization: Bearer <token>" -H 'Content-Type: application/json' \
- *        -d '{"lowisko_id":1}' > /tmp/cast.json
+ *        -d '{"wedka_id":1}' > /tmp/cast.json
  *
  * Co jest sprawdzane (moduły bez DOM — dlatego logika siedzi w osobnych plikach):
  *   config.js    fazy, czasy, kąty wędziska, kolejność rzadkości
  *   timeline.js  lerp / lerpStops / easing / scaleTime / token anulowania / tween
  *   reel-lane.js skalowanie czasu parady (widełki laneMin..laneMax)
- *   api.js       kształt żądania POST cast.php i mapowanie błędów na `kod`
- *   contract.js  umowa reel[reel_indeks_wygranej] === zlowiona_ryba
+ *   api.js       kształt żądania POST fish.php i mapowanie błędów na `kod`
+ *   contract.js  umowa reel[reel_indeks_wygranej] === przedmiot
  *
  * Kod wyjścia: 0 = zielone, 1 = coś nie przeszło.
  *
@@ -47,10 +47,10 @@ import {
 import { ReelLane } from '../public/assets/js/fishing/reel-lane.js';
 import { ApiError, createApi } from '../public/assets/js/fishing/api.js';
 import {
-  REQUIRED_FISH_FIELDS,
+  REQUIRED_PRZEDMIOT_FIELDS,
   isContractValid,
   reelWinnerMismatch,
-  validateCastPayload,
+  validateFishPayload,
 } from '../public/assets/js/fishing/contract.js';
 
 let passed = 0;
@@ -200,16 +200,16 @@ const fakeOk = (data) => async (...args) => {
 const okApi = createApi({
   baseUrl: 'api/',
   getToken: () => 'TOK3N',
-  fetchImpl: fakeOk({ success: true, zlowiona_ryba: { nazwa: 'x' } }),
+  fetchImpl: fakeOk({ success: true, przedmiot: { nazwa: 'x' } }),
 });
 
 await okApi.cast(6);
 
-check('URL = api/cast.php', captured.url === 'api/cast.php', captured.url);
+check('URL = api/fish.php', captured.url === 'api/fish.php', captured.url);
 check('metoda POST', captured.init.method === 'POST');
 check('nagłówek Authorization: Bearer', captured.init.headers.Authorization === 'Bearer TOK3N');
 check('Content-Type: application/json', captured.init.headers['Content-Type'] === 'application/json');
-check('body = {"lowisko_id":6}', captured.init.body === '{"lowisko_id":6}', captured.init.body);
+check('body = {"wedka_id":6}', captured.init.body === '{"wedka_id":6}', captured.init.body);
 
 const slashApi = createApi({
   baseUrl: '/api',
@@ -217,9 +217,9 @@ const slashApi = createApi({
   fetchImpl: fakeOk({ success: true }),
 });
 
-await slashApi.spots();
-check('baseUrl bez "/" i bez tokenu: URL=/api/spots.php, brak Authorization',
-  captured.url === '/api/spots.php' && captured.init.headers.Authorization === undefined, captured.url);
+await slashApi.rods();
+check('baseUrl bez "/" i bez tokenu: URL=/api/wedki.php, brak Authorization',
+  captured.url === '/api/wedki.php' && captured.init.headers.Authorization === undefined, captured.url);
 
 const failApi = createApi({
   baseUrl: 'api/',
@@ -249,13 +249,13 @@ check('ApiError to Error z polem status', (() => {
 
 /* --- 5. contract.js ------------------------------------------------------ */
 
-console.log('\ncontract.js — umowa reel[indeks] === zlowiona_ryba');
+console.log('\ncontract.js — umowa reel[indeks] === przedmiot');
 
-/** Poprawny payload w kształcie odpowiedzi api/cast.php. */
+/** Poprawny payload w kształcie odpowiedzi api/fish.php. */
 function fakePayload(overrides = {}) {
   const fish = {
     ekwipunek_id: 11,
-    ryba_id: 7,
+    przedmiot_id: 7,
     nazwa: 'Jesiotr',
     rzadkosc: 'Niesamowita',
     rzadkosc_kod: 'niesamowita',
@@ -265,16 +265,16 @@ function fakePayload(overrides = {}) {
     szansa_procent: 1.0,
   };
   const reel = Array.from({ length: 60 }, (unused, index) => (index === 54
-    ? { ryba_id: 7, nazwa: 'Jesiotr', ikona: fish.ikona, rzadkosc: 'Niesamowita',
+    ? { przedmiot_id: 7, nazwa: 'Jesiotr', ikona: fish.ikona, rzadkosc: 'Niesamowita',
       rzadkosc_kod: 'niesamowita', kolor: '#eab308', wartosc: 400 }
-    : { ryba_id: 1, nazwa: 'Anchois', ikona: 'assets/icons/anchovy.png', rzadkosc: 'Pospolita',
+    : { przedmiot_id: 1, nazwa: 'Anchois', ikona: 'assets/icons/anchovy.png', rzadkosc: 'Pospolita',
       rzadkosc_kod: 'pospolita', kolor: '#94a3b8', wartosc: 3 }));
 
   return {
     success: true,
     rzut: { id: 5, koszt: 150 },
-    lowisko: { id: 5, nazwa: 'Głębia', koszt_zarzutu: 150 },
-    zlowiona_ryba: fish,
+    wedka: { id: 5, nazwa: 'Głębia', koszt_uzycia: 150 },
+    przedmiot: fish,
     saldo_przed: 500,
     saldo_po: 350,
     reel,
@@ -285,39 +285,39 @@ function fakePayload(overrides = {}) {
   };
 }
 
-check('poprawny payload przechodzi walidację', validateCastPayload(fakePayload()).ryba_id === 7);
+check('poprawny payload przechodzi walidację', validateFishPayload(fakePayload()).przedmiot_id === 7);
 check('isContractValid = true dla poprawnego payloadu', isContractValid(fakePayload()) === true);
 check('reelWinnerMismatch = null gdy zgodne', reelWinnerMismatch(fakePayload()) === null);
 
 const mismatched = fakePayload();
 
-mismatched.reel[54] = { ...mismatched.reel[54], ryba_id: 999 };
-check('rozjazd ryba_id jest wykrywany', typeof reelWinnerMismatch(mismatched) === 'string');
+mismatched.reel[54] = { ...mismatched.reel[54], przedmiot_id: 999 };
+check('rozjazd przedmiot_id jest wykrywany', typeof reelWinnerMismatch(mismatched) === 'string');
 check('rozjazd => isContractValid = false', isContractValid(mismatched) === false);
 
-await throwsWith('brak payloadu -> bad_response', () => validateCastPayload(null), 'bad_response');
-await throwsWith('brak zlowiona_ryba -> bad_response',
-  () => validateCastPayload({ reel: [{}], reel_indeks_wygranej: 0 }), 'bad_response');
+await throwsWith('brak payloadu -> bad_response', () => validateFishPayload(null), 'bad_response');
+await throwsWith('brak przedmiot -> bad_response',
+  () => validateFishPayload({ reel: [{}], reel_indeks_wygranej: 0 }), 'bad_response');
 
 const noFields = fakePayload();
 
-noFields.zlowiona_ryba = { ryba_id: 1 };
-await throwsWith('niepełna ryba -> bad_response', () => validateCastPayload(noFields), 'bad_response');
-check('lista wymaganych pól ryby jest pełna', REQUIRED_FISH_FIELDS.length === 7);
-await throwsWith('pusty reel -> bad_response', () => validateCastPayload(fakePayload({ reel: [] })), 'bad_response');
+noFields.przedmiot = { przedmiot_id: 1 };
+await throwsWith('niepełny przedmiot -> bad_response', () => validateFishPayload(noFields), 'bad_response');
+check('lista wymaganych pól przedmiotu jest pełna', REQUIRED_PRZEDMIOT_FIELDS.length === 7);
+await throwsWith('pusty reel -> bad_response', () => validateFishPayload(fakePayload({ reel: [] })), 'bad_response');
 await throwsWith('indeks poza zakresem -> bad_response',
-  () => validateCastPayload(fakePayload({ reel_indeks_wygranej: 60 })), 'bad_response');
+  () => validateFishPayload(fakePayload({ reel_indeks_wygranej: 60 })), 'bad_response');
 await throwsWith('indeks ujemny -> bad_response',
-  () => validateCastPayload(fakePayload({ reel_indeks_wygranej: -1 })), 'bad_response');
+  () => validateFishPayload(fakePayload({ reel_indeks_wygranej: -1 })), 'bad_response');
 await throwsWith('indeks niecałkowity -> bad_response',
-  () => validateCastPayload(fakePayload({ reel_indeks_wygranej: 1.5 })), 'bad_response');
+  () => validateFishPayload(fakePayload({ reel_indeks_wygranej: 1.5 })), 'bad_response');
 
-/* --- 6. prawdziwa odpowiedź api/cast.php (opcjonalnie) -------------------- */
+/* --- 6. prawdziwa odpowiedź api/fish.php (opcjonalnie) -------------------- */
 
 const payloadPath = process.argv[2];
 
 if (payloadPath) {
-  console.log('\ncast.php — walidacja prawdziwej odpowiedzi: ' + payloadPath);
+  console.log('\nfish.php — walidacja prawdziwej odpowiedzi: ' + payloadPath);
 
   let real = null;
 
@@ -331,13 +331,13 @@ if (payloadPath) {
     check('success === true', real.success === true);
 
     try {
-      validateCastPayload(real);
-      check('validateCastPayload przechodzi', true);
+      validateFishPayload(real);
+      check('validateFishPayload przechodzi', true);
     } catch (error) {
-      check('validateCastPayload przechodzi', false, error.message);
+      check('validateFishPayload przechodzi', false, error.message);
     }
 
-    check('reel[reel_indeks_wygranej] === zlowiona_ryba', reelWinnerMismatch(real) === null,
+    check('reel[reel_indeks_wygranej] === przedmiot', reelWinnerMismatch(real) === null,
       String(reelWinnerMismatch(real)));
     check('reel.length === reel_dlugosc', Array.isArray(real.reel)
       && real.reel.length === Number(real.reel_dlugosc),
@@ -345,13 +345,13 @@ if (payloadPath) {
     check('indeks wygranej mieści się w pasku', Number.isInteger(real.reel_indeks_wygranej)
       && real.reel_indeks_wygranej >= 0 && real.reel_indeks_wygranej < (real.reel || []).length);
     check('ikona to ścieżka względna assets/icons/ albo pusta',
-      /^(assets\/icons\/[\w.-]+\.png)?$/.test(String(real.zlowiona_ryba.ikona || '')),
-      String(real.zlowiona_ryba.ikona));
-    check('kolor rzadkości to hex', /^#[0-9a-fA-F]{6}$/.test(String(real.zlowiona_ryba.kolor || '')),
-      String(real.zlowiona_ryba.kolor));
+      /^(assets\/icons\/[\w.-]+\.png)?$/.test(String(real.przedmiot.ikona || '')),
+      String(real.przedmiot.ikona));
+    check('kolor rzadkości to hex', /^#[0-9a-fA-F]{6}$/.test(String(real.przedmiot.kolor || '')),
+      String(real.przedmiot.kolor));
     check('rzadkosc_kod jest w słowniku frontendu',
-      RARITY_ORDER.includes(String(real.zlowiona_ryba.rzadkosc_kod).toLowerCase()),
-      String(real.zlowiona_ryba.rzadkosc_kod));
+      RARITY_ORDER.includes(String(real.przedmiot.rzadkosc_kod).toLowerCase()),
+      String(real.przedmiot.rzadkosc_kod));
     check('saldo_przed i saldo_po są liczbami',
       typeof real.saldo_przed === 'number' && typeof real.saldo_po === 'number');
     check('czas parady dla tej długości mieści się w widełkach',
@@ -360,11 +360,11 @@ if (payloadPath) {
       lane.durationFor(Number(real.reel_dlugosc)) + ' ms');
     check('isContractValid = true', isContractValid(real) === true);
 
-    const caught = real.zlowiona_ryba;
+    const caught = real.przedmiot;
 
     console.log('\n  złowiono: ' + caught.nazwa + ' [' + caught.rzadkosc_kod + '] '
       + caught.wartosc + ' monet, szansa ' + Number(caught.szansa_procent).toFixed(3) + '%');
-    console.log('  łowisko: ' + (real.lowisko ? real.lowisko.nazwa : '?')
+    console.log('  wedka: ' + (real.wedka ? real.wedka.nazwa : '?')
       + ', koszt ' + (real.rzut ? real.rzut.koszt : '?')
       + ', saldo ' + real.saldo_przed + ' -> ' + real.saldo_po);
   }

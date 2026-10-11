@@ -2,9 +2,9 @@
  * public/assets/js/fishing/reel-lane.js
  *
  * Podwodny pasek ruletki — ta sama dana co w starej animacji skrzynki, tylko
- * przeniesiona pod wodę. Realizuje umowę z api/cast.php:
+ * przeniesiona pod wodę. Realizuje umowę z api/fish.php:
  *
- *   reel[reel_indeks_wygranej] === zlowiona_ryba
+ *   reel[reel_indeks_wygranej] === przedmiot
  *
  * czyli pasek przewija się i ZATRZYMUJE na wygranej pozycji. Zatrzymanie jest
  * sygnałem dla sceny: "teraz branie". Nic tu nie losuje — kolejność i zawartość
@@ -44,7 +44,7 @@ export class ReelLane {
   }
 
   /**
-   * Buduje pasek z odpowiedzi `cast.php`.
+   * Buduje pasek z odpowiedzi `fish.php`.
    *
    * @param {Array<Record<string, any>>} reel  lista pozycji paska
    * @param {number} winnerIndex               `reel_indeks_wygranej`

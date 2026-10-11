@@ -5,39 +5,44 @@ declare(strict_types=1);
 namespace MocnyDrop\Tests;
 
 use MocnyDrop\ApiException;
-use MocnyDrop\Auth;
-use MocnyDrop\Wallet;
+use MocnyDrop\Token;
+use MocnyDrop\Uzytkownik;
+use MocnyDrop\Portfel;
 
 /**
- * tests/AuthTest.php
+ * tests/UzytkownikTest.php
  *
  * Testy rejestracji, logowania i autoryzacji tokenem Bearer.
  *
  * Właściciel: @KubeKoslaw (Core Backend)
  */
-final class AuthTest extends TestCase
+final class UzytkownikTest extends TestCase
 {
     public function testRejestracjaTworzyKontoZSaldemStartowym(): void
     {
-        $user = Auth::register('wedkarz', 'Wedkarz@Test.local', 'haslo1234', $this->db);
+        $user = $this->zarejestruj('wedkarz', 'Wedkarz@Test.local', 'haslo1234');
 
         $this->assertSame('wedkarz', $user['login'], 'Login bez zmian');
         $this->assertSame('wedkarz@test.local', $user['email'], 'E-mail musi być normalizowany do małych liter');
         $this->assertSame('user', $user['rola'], 'Nowe konto nie może być kontem administratora');
         $this->assertFloat(50.0, (float) $user['saldo'], 'Saldo startowe z ustawień bazy (saldo_startowe)');
-        $this->assertFalse($user['czy_zablokowany'], 'Nowe konto nie jest zablokowane');
-        $this->assertFloat(50.0, Wallet::balance($this->db, $user['id']), 'Saldo musi być faktycznie zapisane w bazie');
+        $this->assertFalse($user['zablokowany'], 'Nowe konto nie jest zablokowane');
+        $this->assertFloat(50.0, Portfel::dlaUzytkownika($user['id'], $this->db)->saldo, 'Saldo musi być faktycznie zapisane w bazie');
     }
 
     /** Odpowiedź API nigdy nie może zawierać hasha hasła. */
     public function testHashHaslaNieWychodziNaZewnatrz(): void
     {
-        $user = Auth::register('wedkarz', 'w@test.local', 'haslo1234', $this->db);
+        $user = $this->zarejestruj('wedkarz', 'w@test.local', 'haslo1234');
 
-        $publiczne = Auth::toPublic($user);
+        $publiczne = Uzytkownik::znajdz($user['id'], $this->db)->doPublicznej($this->db);
 
         $this->assertFalse(isset($publiczne['haslo_hash']), 'Wersja publiczna nie może zawierać hasha');
-        $this->assertSame(['id', 'login', 'email', 'rola', 'saldo'], array_keys($publiczne), 'Dokładna lista pól publicznych');
+        $this->assertSame(
+            ['id', 'login', 'email', 'rola', 'saldo', 'waluta'],
+            array_keys($publiczne),
+            'Dokładna lista pól publicznych (waluta dochodzi z Portfela)'
+        );
 
         $hash = (string) $this->db->query('SELECT haslo_hash FROM uzytkownicy')->fetchColumn();
 
@@ -49,11 +54,11 @@ final class AuthTest extends TestCase
 
     public function testRejestracjaOdrzucaZajetyLogin(): void
     {
-        Auth::register('wedkarz', 'a@test.local', 'haslo1234', $this->db);
+        $this->zarejestruj('wedkarz', 'a@test.local', 'haslo1234');
 
         $this->assertThrows(
             ApiException::class,
-            fn (): array => Auth::register('wedkarz', 'b@test.local', 'haslo1234', $this->db),
+            fn (): array => $this->zarejestruj('wedkarz', 'b@test.local', 'haslo1234'),
             'Zajęty login powinien być odrzucony',
             'login_taken'
         );
@@ -63,12 +68,12 @@ final class AuthTest extends TestCase
 
     public function testRejestracjaOdrzucaZajetyEmail(): void
     {
-        Auth::register('pierwszy', 'Ten.Sam@Test.local', 'haslo1234', $this->db);
+        $this->zarejestruj('pierwszy', 'Ten.Sam@Test.local', 'haslo1234');
 
         // Ten sam e-mail zapisany inaczej — normalizacja ma to złapać.
         $this->assertThrows(
             ApiException::class,
-            fn (): array => Auth::register('drugi', 'ten.sam@test.local', 'haslo1234', $this->db),
+            fn (): array => $this->zarejestruj('drugi', 'ten.sam@test.local', 'haslo1234'),
             'Zajęty e-mail powinien być odrzucony niezależnie od wielkości liter',
             'email_taken'
         );
@@ -78,28 +83,28 @@ final class AuthTest extends TestCase
     {
         $this->assertThrows(
             ApiException::class,
-            fn (): array => Auth::register('ab', 'ok@test.local', 'haslo1234', $this->db),
+            fn (): array => $this->zarejestruj('ab', 'ok@test.local', 'haslo1234'),
             'Za krótki login powinien być odrzucony',
             'login_length'
         );
 
         $this->assertThrows(
             ApiException::class,
-            fn (): array => Auth::register('login ze spacjami', 'ok@test.local', 'haslo1234', $this->db),
+            fn (): array => $this->zarejestruj('login ze spacjami', 'ok@test.local', 'haslo1234'),
             'Login ze spacjami powinien być odrzucony',
             'login_charset'
         );
 
         $this->assertThrows(
             ApiException::class,
-            fn (): array => Auth::register('ok_login', 'to-nie-email', 'haslo1234', $this->db),
+            fn (): array => $this->zarejestruj('ok_login', 'to-nie-email', 'haslo1234'),
             'Nieprawidłowy e-mail powinien być odrzucony',
             'email_invalid'
         );
 
         $this->assertThrows(
             ApiException::class,
-            fn (): array => Auth::register('ok_login', 'ok@test.local', 'krotkie', $this->db),
+            fn (): array => $this->zarejestruj('ok_login', 'ok@test.local', 'krotkie'),
             'Za krótkie hasło powinno być odrzucone',
             'password_too_short'
         );
@@ -109,9 +114,9 @@ final class AuthTest extends TestCase
 
     public function testLogowanieZwracaToken(): void
     {
-        Auth::register('wedkarz', 'w@test.local', 'haslo1234', $this->db);
+        $this->zarejestruj('wedkarz', 'w@test.local', 'haslo1234');
 
-        $wynik = Auth::login('wedkarz', 'haslo1234', $this->db);
+        $wynik = Token::zaloguj('wedkarz', 'haslo1234', $this->db);
 
         $this->assertSame('Bearer', $wynik['token_type'], 'Typ tokena');
         $this->assertSame(64, strlen($wynik['token']), 'Token to 32 bajty z random_bytes() zapisane jako hex');
@@ -124,9 +129,9 @@ final class AuthTest extends TestCase
 
     public function testLogowanieDzialaTEmailem(): void
     {
-        Auth::register('wedkarz', 'W@Test.local', 'haslo1234', $this->db);
+        $this->zarejestruj('wedkarz', 'W@Test.local', 'haslo1234');
 
-        $wynik = Auth::login('w@test.local', 'haslo1234', $this->db);
+        $wynik = Token::zaloguj('w@test.local', 'haslo1234', $this->db);
 
         $this->assertSame('wedkarz', $wynik['user']['login'], 'Logowanie e-mailem musi trafić w to samo konto');
     }
@@ -137,10 +142,10 @@ final class AuthTest extends TestCase
      */
     public function testKomunikatBleduNieZdradzaIstnieniaKonta(): void
     {
-        Auth::register('istniejacy', 'i@test.local', 'haslo1234', $this->db);
+        $this->zarejestruj('istniejacy', 'i@test.local', 'haslo1234');
 
-        $zleHaslo = $this->zlapBlad(fn (): array => Auth::login('istniejacy', 'zlehaslo99', $this->db));
-        $zlyLogin = $this->zlapBlad(fn (): array => Auth::login('nieistniejacy', 'zlehaslo99', $this->db));
+        $zleHaslo = $this->zlapBlad(fn (): array => Token::zaloguj('istniejacy', 'zlehaslo99', $this->db));
+        $zlyLogin = $this->zlapBlad(fn (): array => Token::zaloguj('nieistniejacy', 'zlehaslo99', $this->db));
 
         $this->assertTrue($zleHaslo !== 'BRAK_WYJATKU', 'Złe hasło musi zostać odrzucone');
         $this->assertSame($zleHaslo, $zlyLogin, 'Błąd logowania musi być nieodróżnialny dla istniejącego i nieistniejącego konta');
@@ -149,10 +154,10 @@ final class AuthTest extends TestCase
 
     public function testKazdeLogowanieDajeInnyToken(): void
     {
-        Auth::register('wedkarz', 'w@test.local', 'haslo1234', $this->db);
+        $this->zarejestruj('wedkarz', 'w@test.local', 'haslo1234');
 
-        $pierwszy = Auth::login('wedkarz', 'haslo1234', $this->db)['token'];
-        $drugi = Auth::login('wedkarz', 'haslo1234', $this->db)['token'];
+        $pierwszy = Token::zaloguj('wedkarz', 'haslo1234', $this->db)['token'];
+        $drugi = Token::zaloguj('wedkarz', 'haslo1234', $this->db)['token'];
 
         $this->assertTrue($pierwszy !== $drugi, 'Tokeny z dwóch logowań muszą się różnić — inaczej dałoby się je odgadnąć');
         $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM tokeny')->fetchColumn(), 'Obie sesje są ważne równolegle');
@@ -160,26 +165,26 @@ final class AuthTest extends TestCase
 
     public function testTokenUwierzytelniaGracza(): void
     {
-        Auth::register('wedkarz', 'w@test.local', 'haslo1234', $this->db);
-        $token = Auth::login('wedkarz', 'haslo1234', $this->db)['token'];
+        $this->zarejestruj('wedkarz', 'w@test.local', 'haslo1234');
+        $token = Token::zaloguj('wedkarz', 'haslo1234', $this->db)['token'];
 
-        $user = Auth::authenticate($token, $this->db);
+        $user = Token::uwierzytelnij($token, $this->db);
 
         $this->assertNotNull($user, 'Poprawny token musi uwierzytelnić gracza');
-        $this->assertSame('wedkarz', $user['login'], 'Token musi wskazywać właściwe konto');
-        $this->assertNull(Auth::authenticate('nieprawdziwy-token', $this->db), 'Nieistniejący token musi być odrzucony');
-        $this->assertNull(Auth::authenticate(null, $this->db), 'Brak tokena musi być odrzucony');
-        $this->assertNull(Auth::authenticate('', $this->db), 'Pusty token musi być odrzucony');
+        $this->assertSame('wedkarz', $user->login, 'Token musi wskazywać właściwe konto');
+        $this->assertNull(Token::uwierzytelnij('nieprawdziwy-token', $this->db), 'Nieistniejący token musi być odrzucony');
+        $this->assertNull(Token::uwierzytelnij(null, $this->db), 'Brak tokena musi być odrzucony');
+        $this->assertNull(Token::uwierzytelnij('', $this->db), 'Pusty token musi być odrzucony');
     }
 
     public function testWylogowanieUniewazniaToken(): void
     {
-        Auth::register('wedkarz', 'w@test.local', 'haslo1234', $this->db);
-        $token = Auth::login('wedkarz', 'haslo1234', $this->db)['token'];
+        $this->zarejestruj('wedkarz', 'w@test.local', 'haslo1234');
+        $token = Token::zaloguj('wedkarz', 'haslo1234', $this->db)['token'];
 
-        Auth::logout($token, $this->db);
+        Token::zBazy($token, $this->db)?->uniewaznij();
 
-        $this->assertNull(Auth::authenticate($token, $this->db), 'Po wylogowaniu token nie może już działać');
+        $this->assertNull(Token::uwierzytelnij($token, $this->db), 'Po wylogowaniu token nie może już działać');
         $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM tokeny')->fetchColumn(), 'Token musi zostać skasowany z bazy');
     }
 
@@ -191,18 +196,18 @@ final class AuthTest extends TestCase
         $this->db->prepare('INSERT INTO tokeny (user_id, token, expires_at) VALUES (?, ?, ?)')
             ->execute([$user['id'], $staryToken, '2000-01-01 00:00:00']);
 
-        $this->assertNull(Auth::authenticate($staryToken, $this->db), 'Token z przeszłą datą ważności musi być odrzucony');
+        $this->assertNull(Token::uwierzytelnij($staryToken, $this->db), 'Token z przeszłą datą ważności musi być odrzucony');
     }
 
     public function testZablokowaneKontoNieMozeSieZalogowac(): void
     {
-        Auth::register('wedkarz', 'w@test.local', 'haslo1234', $this->db);
+        $this->zarejestruj('wedkarz', 'w@test.local', 'haslo1234');
 
-        $this->db->exec('UPDATE uzytkownicy SET czy_zablokowany = 1');
+        $this->db->exec('UPDATE uzytkownicy SET zablokowany = 1');
 
         $this->assertThrows(
             ApiException::class,
-            fn (): array => Auth::login('wedkarz', 'haslo1234', $this->db),
+            fn (): array => Token::zaloguj('wedkarz', 'haslo1234', $this->db),
             'Zablokowane konto nie może się zalogować',
             'account_blocked'
         );
@@ -211,14 +216,14 @@ final class AuthTest extends TestCase
     /** Blokada musi działać natychmiast, także na już wydane tokeny. */
     public function testBlokadaUniewazniaWczesniejWydanyToken(): void
     {
-        Auth::register('wedkarz', 'w@test.local', 'haslo1234', $this->db);
-        $token = Auth::login('wedkarz', 'haslo1234', $this->db)['token'];
+        $this->zarejestruj('wedkarz', 'w@test.local', 'haslo1234');
+        $token = Token::zaloguj('wedkarz', 'haslo1234', $this->db)['token'];
 
-        $this->assertNotNull(Auth::authenticate($token, $this->db), 'Przed blokadą token działa');
+        $this->assertNotNull(Token::uwierzytelnij($token, $this->db), 'Przed blokadą token działa');
 
-        $this->db->exec('UPDATE uzytkownicy SET czy_zablokowany = 1');
+        $this->db->exec('UPDATE uzytkownicy SET zablokowany = 1');
 
-        $this->assertNull(Auth::authenticate($token, $this->db), 'Po blokadzie wcześniej wydany token musi przestać działać');
+        $this->assertNull(Token::uwierzytelnij($token, $this->db), 'Po blokadzie wcześniej wydany token musi przestać działać');
     }
 
     /**
@@ -231,19 +236,19 @@ final class AuthTest extends TestCase
 
         try {
             $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer abc123';
-            $this->assertSame('abc123', Auth::bearerToken(), 'Standardowy nagłówek Bearer');
+            $this->assertSame('abc123', Token::bearerToken(), 'Standardowy nagłówek Bearer');
 
             $_SERVER['HTTP_AUTHORIZATION'] = '  bearer   abc123  ';
-            $this->assertSame('abc123', Auth::bearerToken(), 'Wielkość liter i odstępy nie mogą mieć znaczenia');
+            $this->assertSame('abc123', Token::bearerToken(), 'Wielkość liter i odstępy nie mogą mieć znaczenia');
 
             $_SERVER['HTTP_AUTHORIZATION'] = 'Basic abc123';
-            $this->assertNull(Auth::bearerToken(), 'Inny schemat autoryzacji musi być odrzucony');
+            $this->assertNull(Token::bearerToken(), 'Inny schemat autoryzacji musi być odrzucony');
 
             $_SERVER['HTTP_AUTHORIZATION'] = 'abc123';
-            $this->assertNull(Auth::bearerToken(), 'Token bez prefiksu Bearer musi być odrzucony');
+            $this->assertNull(Token::bearerToken(), 'Token bez prefiksu Bearer musi być odrzucony');
 
             $_SERVER['HTTP_AUTHORIZATION'] = '';
-            $this->assertNull(Auth::bearerToken(), 'Pusty nagłówek musi być odrzucony');
+            $this->assertNull(Token::bearerToken(), 'Pusty nagłówek musi być odrzucony');
         } finally {
             // $_SERVER jest globalny — po teście musi wrócić do stanu sprzed niego,
             // inaczej kolejne testy widziałyby cudzy nagłówek.
@@ -265,5 +270,24 @@ final class AuthTest extends TestCase
         }
 
         return 'BRAK_WYJATKU';
+    }
+
+    /**
+     * Rejestracja przez klasy z diagramu: Uzytkownik::utworz() + zarejestruj().
+     *
+     * Zwraca kształt, jakim posługują się testy: pola publiczne gracza
+     * (Uzytkownik::doPublicznej) poszerzone o `zablokowany`, którego API
+     * celowo nie wystawia.
+     *
+     * @return array<string, mixed>
+     */
+    private function zarejestruj(string $login, string $email, string $haslo): array
+    {
+        $uzytkownik = Uzytkownik::utworz($login, $email, $haslo, $this->db);
+        $uzytkownik->zarejestruj();
+
+        return $uzytkownik->doPublicznej($this->db) + [
+            'zablokowany' => $uzytkownik->czyZablokowany(),
+        ];
     }
 }

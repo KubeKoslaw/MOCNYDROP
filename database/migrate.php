@@ -68,12 +68,14 @@ foreach ($warnings as $warning) {
     echo '  OSTRZEŻENIE: ' . $warning . PHP_EOL;
 }
 
-// Stan końcowy — bez ryb w łowiskach zarzut zwróci "spot_empty",
+// Stan końcowy — bez przedmiotów w puli wędki zarzut zwróci "rod_empty",
 // więc warto to zobaczyć od razu, a nie dopiero w przeglądarce.
 $counts = [
-    'łowiska' => (int) $db->query('SELECT COUNT(*) FROM lowiska')->fetchColumn(),
-    'ryby' => (int) $db->query('SELECT COUNT(*) FROM ryby')->fetchColumn(),
-    'połączenia łowisko-ryba' => (int) $db->query('SELECT COUNT(*) FROM lowisko_ryby')->fetchColumn(),
+    'wędki' => (int) $db->query('SELECT COUNT(*) FROM wedki')->fetchColumn(),
+    'skrzynki' => (int) $db->query('SELECT COUNT(*) FROM skrzynki')->fetchColumn(),
+    'przedmioty' => (int) $db->query('SELECT COUNT(*) FROM przedmioty')->fetchColumn(),
+    'połączenia wędka-przedmiot' => (int) $db->query('SELECT COUNT(*) FROM wedka_przedmioty')->fetchColumn(),
+    'połączenia skrzynka-przedmiot' => (int) $db->query('SELECT COUNT(*) FROM skrzynka_przedmioty')->fetchColumn(),
     'użytkownicy' => (int) $db->query('SELECT COUNT(*) FROM uzytkownicy')->fetchColumn(),
 ];
 
@@ -83,21 +85,34 @@ foreach ($counts as $label => $count) {
     echo sprintf('  %-26s %d%s', $label, $count, PHP_EOL);
 }
 
-$lowiskaBezRyb = (int) $db->query(
-    'SELECT COUNT(*) FROM lowiska l
-     WHERE l.czy_aktywne = 1
-       AND NOT EXISTS (SELECT 1 FROM lowisko_ryby lr
-                       JOIN ryby r ON r.id = lr.ryba_id AND r.czy_aktywna = 1
-                       WHERE lr.lowisko_id = l.id)'
+$wedkiBezPuli = (int) $db->query(
+    'SELECT COUNT(*) FROM wedki w
+     WHERE w.czy_aktywna = 1
+       AND NOT EXISTS (SELECT 1 FROM wedka_przedmioty wp
+                       JOIN przedmioty p ON p.id = wp.przedmiot_id AND p.czy_aktywny = 1
+                       WHERE wp.wedka_id = w.id)'
 )->fetchColumn();
 
-if ($lowiskaBezRyb > 0) {
-    echo PHP_EOL . '  UWAGA: ' . $lowiskaBezRyb . ' aktywnych łowisk nie ma ani jednej ryby.'
-        . ' Zarzut zwróci błąd "spot_empty".' . PHP_EOL;
+if ($wedkiBezPuli > 0) {
+    echo PHP_EOL . '  UWAGA: ' . $wedkiBezPuli . ' aktywnych wędek nie ma ani jednego przedmiotu.'
+        . ' Zarzut zwróci błąd "rod_empty".' . PHP_EOL;
+}
+
+$skrzynkiBezPuli = (int) $db->query(
+    'SELECT COUNT(*) FROM skrzynki s
+     WHERE s.aktywna = 1
+       AND NOT EXISTS (SELECT 1 FROM skrzynka_przedmioty sp
+                       JOIN przedmioty p ON p.id = sp.przedmiot_id AND p.czy_aktywny = 1
+                       WHERE sp.skrzynka_id = s.id)'
+)->fetchColumn();
+
+if ($skrzynkiBezPuli > 0) {
+    echo PHP_EOL . '  UWAGA: ' . $skrzynkiBezPuli . ' aktywnych skrzynek nie ma ani jednego dropu.'
+        . ' Otwarcie zwróci błąd "case_empty".' . PHP_EOL;
 }
 
 $brakIkony = (int) $db->query(
-    "SELECT COUNT(*) FROM ryby WHERE ikona != ''"
+    "SELECT COUNT(*) FROM przedmioty WHERE ikona != ''"
 )->fetchColumn();
 
 echo PHP_EOL . sprintf('Ikon w użyciu: %d (katalog: %s)%s', $brakIkony, Config::iconsDir(), PHP_EOL);

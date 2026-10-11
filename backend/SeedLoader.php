@@ -12,17 +12,19 @@ use PDO;
  * Ładuje dane startowe z database/seed/*.csv.
  *
  * PODZIAŁ RÓL: katalog database/seed/ należy do @moxmar26 (CODEOWNERS) —
- * on decyduje, jakie ryby i łowiska są w grze. Ten loader jest po stronie
+ * on decyduje, jakie przedmioty i wędki są w grze. Ten loader jest po stronie
  * backendu i tylko wczytuje to, co tam zastanie. Backend nie hardkoduje
- * żadnej ryby, więc zmiana treści nie wymaga zmiany kodu.
+ * żadnego przedmiotu, więc zmiana treści nie wymaga zmiany kodu.
  *
  * Obsługiwane pliki i ich kolumny (pierwszy wiersz = nagłówki):
  *
- *   lowiska.csv       nazwa,opis,koszt_zarzutu,ikona,kolejnosc
- *   ryby.csv          nazwa,rzadkosc_kod,wartosc,ikona,opis
- *   lowisko_ryby.csv  lowisko_nazwa,ryba_nazwa,waga
+ *   wedki.csv       nazwa,opis,koszt_uzycia,ikona,kolejnosc
+ *   przedmioty.csv    nazwa,rzadkosc_kod,wartosc,ikona,opis
+ *   wedka_przedmioty.csv  wedka_nazwa,przedmiot_nazwa,waga
+ *   skrzynki.csv    nazwa,opis,cena,ikona,kolejnosc
+ *   skrzynka_przedmioty.csv  skrzynka_nazwa,przedmiot_nazwa,waga
  *
- * W pliku lowisko_ryby.csv kolumna `waga` może być pusta — wtedy ryba
+ * W plikach *_przedmioty.csv kolumna `waga` może być pusta — wtedy przedmiot
  * dziedziczy wagę domyślną swojego poziomu rzadkości z README.md.
  *
  * Wszystkie inserty są INSERT OR IGNORE, więc loader można odpalać wielokrotnie.
@@ -33,9 +35,11 @@ final class SeedLoader
 {
     /** Plik seed => metoda loadera. Kolejność ma znaczenie: najpierw rodzice. */
     private const FILES = [
-        'lowiska.csv' => 'loadSpots',
-        'ryby.csv' => 'loadFish',
-        'lowisko_ryby.csv' => 'loadSpotFish',
+        'wedki.csv' => 'loadRods',
+        'przedmioty.csv' => 'loadItems',
+        'wedka_przedmioty.csv' => 'loadRodItems',
+        'skrzynki.csv' => 'loadCases',
+        'skrzynka_przedmioty.csv' => 'loadCaseItems',
     ];
 
     /**
@@ -129,16 +133,16 @@ final class SeedLoader
     }
 
     /**
-     * lowiska.csv → tabela `lowiska`.
+     * wedki.csv → tabela `wedki`.
      *
      * @param list<string> $warnings
      */
-    private static function loadSpots(PDO $db, string $path, array &$warnings): int
+    private static function loadRods(PDO $db, string $path, array &$warnings): int
     {
         $rows = self::readCsv($path, $warnings);
 
         $stmt = $db->prepare(
-            'INSERT OR IGNORE INTO lowiska (nazwa, opis, koszt_zarzutu, ikona, czy_aktywne, kolejnosc)
+            'INSERT OR IGNORE INTO wedki (nazwa, opis, koszt_uzycia, ikona, czy_aktywna, kolejnosc)
              VALUES (?, ?, ?, ?, 1, ?)'
         );
 
@@ -148,16 +152,16 @@ final class SeedLoader
             $nazwa = $row['nazwa'] ?? '';
 
             if ($nazwa === '') {
-                $warnings[] = 'lowiska.csv: wiersz bez nazwy — pominięty.';
+                $warnings[] = 'wedki.csv: wiersz bez nazwy — pominięty.';
                 continue;
             }
 
-            $koszt = self::toFloat($row['koszt_zarzutu'] ?? '0', 0.0);
+            $koszt = self::toFloat($row['koszt_uzycia'] ?? '0', 0.0);
 
-            // Schemat ma CHECK (koszt_zarzutu >= 0), więc taki INSERT wywaliłby
+            // Schemat ma CHECK (koszt_uzycia >= 0), więc taki INSERT wywaliłby
             // się i przerwał całe ładowanie. Lepiej ostrzec i pominąć wiersz.
             if ($koszt < 0) {
-                $warnings[] = sprintf('lowiska.csv: "%s" ma ujemny koszt — pominięty.', $nazwa);
+                $warnings[] = sprintf('wedki.csv: "%s" ma ujemny koszt — pominięty.', $nazwa);
                 continue;
             }
 
@@ -176,16 +180,16 @@ final class SeedLoader
     }
 
     /**
-     * ryby.csv → tabela `ryby`.
+     * przedmioty.csv → tabela `przedmioty`.
      *
      * @param list<string> $warnings
      */
-    private static function loadFish(PDO $db, string $path, array &$warnings): int
+    private static function loadItems(PDO $db, string $path, array &$warnings): int
     {
         $rows = self::readCsv($path, $warnings);
 
         $stmt = $db->prepare(
-            'INSERT OR IGNORE INTO ryby (nazwa, rzadkosc_kod, wartosc, ikona, opis, czy_aktywna)
+            'INSERT OR IGNORE INTO przedmioty (nazwa, rzadkosc_kod, wartosc, ikona, opis, czy_aktywny)
              VALUES (?, ?, ?, ?, ?, 1)'
         );
 
@@ -196,18 +200,18 @@ final class SeedLoader
             $kod = $row['rzadkosc_kod'] ?? '';
 
             if ($nazwa === '') {
-                $warnings[] = 'ryby.csv: wiersz bez nazwy — pominięty.';
+                $warnings[] = 'przedmioty.csv: wiersz bez nazwy — pominięty.';
                 continue;
             }
 
             // Klucz obcy na rzadkosci jest ON DELETE RESTRICT, więc literówka
             // w kodzie rzadkości wywaliłaby cały import. Sprawdzamy wcześniej.
-            if (!Rarity::exists($kod, $db)) {
+            if (!Rzadkosc::exists($kod, $db)) {
                 $warnings[] = sprintf(
-                    'ryby.csv: "%s" ma nieznany rzadkosc_kod "%s" (dozwolone: %s) — pominięty.',
+                    'przedmioty.csv: "%s" ma nieznany rzadkosc_kod "%s" (dozwolone: %s) — pominięty.',
                     $nazwa,
                     $kod,
-                    implode(', ', array_keys(Rarity::all($db)))
+                    implode(', ', array_keys(Rzadkosc::wszystkie($db)))
                 );
                 continue;
             }
@@ -215,7 +219,7 @@ final class SeedLoader
             $wartosc = self::toFloat($row['wartosc'] ?? '0', 0.0);
 
             if ($wartosc < 0) {
-                $warnings[] = sprintf('ryby.csv: "%s" ma ujemną wartość — pominięty.', $nazwa);
+                $warnings[] = sprintf('przedmioty.csv: "%s" ma ujemną wartość — pominięty.', $nazwa);
                 continue;
             }
 
@@ -228,33 +232,33 @@ final class SeedLoader
     }
 
     /**
-     * lowisko_ryby.csv → tabela `lowisko_ryby`.
+     * wedka_przedmioty.csv → tabela `wedka_przedmioty`.
      * CSV odwołuje się do nazw, nie do id — id zależą od kolejności importu.
      *
      * @param list<string> $warnings
      */
-    private static function loadSpotFish(PDO $db, string $path, array &$warnings): int
+    private static function loadRodItems(PDO $db, string $path, array &$warnings): int
     {
         $rows = self::readCsv($path, $warnings);
 
-        $spotIds = self::nameToIdMap($db, 'lowiska');
-        $fishIds = self::nameToIdMap($db, 'ryby');
+        $rodIds = self::nameToIdMap($db, 'wedki');
+        $itemIds = self::nameToIdMap($db, 'przedmioty');
 
-        $stmt = $db->prepare('INSERT OR IGNORE INTO lowisko_ryby (lowisko_id, ryba_id, waga) VALUES (?, ?, ?)');
+        $stmt = $db->prepare('INSERT OR IGNORE INTO wedka_przedmioty (wedka_id, przedmiot_id, waga) VALUES (?, ?, ?)');
 
         $loaded = 0;
 
         foreach ($rows as $row) {
-            $spotName = $row['lowisko_nazwa'] ?? '';
-            $fishName = $row['ryba_nazwa'] ?? '';
+            $rodName = $row['wedka_nazwa'] ?? '';
+            $itemName = $row['przedmiot_nazwa'] ?? '';
 
-            if (!isset($spotIds[$spotName])) {
-                $warnings[] = sprintf('lowisko_ryby.csv: nieznane łowisko "%s" — wiersz pominięty.', $spotName);
+            if (!isset($rodIds[$rodName])) {
+                $warnings[] = sprintf('wedka_przedmioty.csv: nieznana wędka "%s" — wiersz pominięty.', $rodName);
                 continue;
             }
 
-            if (!isset($fishIds[$fishName])) {
-                $warnings[] = sprintf('lowisko_ryby.csv: nieznana ryba "%s" — wiersz pominięty.', $fishName);
+            if (!isset($itemIds[$itemName])) {
+                $warnings[] = sprintf('wedka_przedmioty.csv: nieznany przedmiot "%s" — wiersz pominięty.', $itemName);
                 continue;
             }
 
@@ -269,9 +273,9 @@ final class SeedLoader
 
                 if ($parsed <= 0) {
                     $warnings[] = sprintf(
-                        'lowisko_ryby.csv: "%s" / "%s" ma wagę %s — musi być dodatnia albo pusta.',
-                        $spotName,
-                        $fishName,
+                        'wedka_przedmioty.csv: "%s" / "%s" ma wagę %s — musi być dodatnia albo pusta.',
+                        $rodName,
+                        $itemName,
                         $rawWaga
                     );
                     continue;
@@ -280,7 +284,116 @@ final class SeedLoader
                 $waga = $parsed;
             }
 
-            $stmt->execute([$spotIds[$spotName], $fishIds[$fishName], $waga]);
+            $stmt->execute([$rodIds[$rodName], $itemIds[$itemName], $waga]);
+
+            $loaded++;
+        }
+
+        return $loaded;
+    }
+
+    /**
+     * skrzynki.csv → tabela `skrzynki` (klasa Skrzynka z diagramu).
+     *
+     * Tryb «Otwarcie skrzynki» (UC_CASE) — te same zasady co przy wędkach:
+     * ujemna cena jest odrzucana z ostrzeżeniem, bo schemat ma CHECK (cena >= 0).
+     *
+     * @param list<string> $warnings
+     */
+    private static function loadCases(PDO $db, string $path, array &$warnings): int
+    {
+        $rows = self::readCsv($path, $warnings);
+
+        $stmt = $db->prepare(
+            'INSERT OR IGNORE INTO skrzynki (nazwa, opis, cena, ikona, aktywna, kolejnosc)
+             VALUES (?, ?, ?, ?, 1, ?)'
+        );
+
+        $loaded = 0;
+
+        foreach ($rows as $row) {
+            $nazwa = $row['nazwa'] ?? '';
+
+            if ($nazwa === '') {
+                $warnings[] = 'skrzynki.csv: wiersz bez nazwy — pominięty.';
+                continue;
+            }
+
+            $cena = self::toFloat($row['cena'] ?? '0', 0.0);
+
+            if ($cena < 0) {
+                $warnings[] = sprintf('skrzynki.csv: "%s" ma ujemną cenę — pominięty.', $nazwa);
+                continue;
+            }
+
+            $stmt->execute([
+                $nazwa,
+                $row['opis'] ?? '',
+                $cena,
+                $row['ikona'] ?? '',
+                (int) self::toFloat($row['kolejnosc'] ?? '0', 0.0),
+            ]);
+
+            $loaded++;
+        }
+
+        return $loaded;
+    }
+
+    /**
+     * skrzynka_przedmioty.csv → tabela `skrzynka_przedmioty` (klasa
+     * SkrzynkaPrzedmiot z diagramu).
+     *
+     * CSV odwołuje się do NAZW, nie do id — id zależą od kolejności importu.
+     * Pusta waga = NULL = dziedziczenie wagi domyślnej poziomu rzadkości.
+     *
+     * @param list<string> $warnings
+     */
+    private static function loadCaseItems(PDO $db, string $path, array &$warnings): int
+    {
+        $rows = self::readCsv($path, $warnings);
+
+        $caseIds = self::nameToIdMap($db, 'skrzynki');
+        $itemIds = self::nameToIdMap($db, 'przedmioty');
+
+        $stmt = $db->prepare('INSERT OR IGNORE INTO skrzynka_przedmioty (skrzynka_id, przedmiot_id, waga) VALUES (?, ?, ?)');
+
+        $loaded = 0;
+
+        foreach ($rows as $row) {
+            $caseName = $row['skrzynka_nazwa'] ?? '';
+            $itemName = $row['przedmiot_nazwa'] ?? '';
+
+            if (!isset($caseIds[$caseName])) {
+                $warnings[] = sprintf('skrzynka_przedmioty.csv: nieznana skrzynka "%s" — wiersz pominięty.', $caseName);
+                continue;
+            }
+
+            if (!isset($itemIds[$itemName])) {
+                $warnings[] = sprintf('skrzynka_przedmioty.csv: nieznany przedmiot "%s" — wiersz pominięty.', $itemName);
+                continue;
+            }
+
+            $rawWaga = trim($row['waga'] ?? '');
+            $waga = null;
+
+            if ($rawWaga !== '') {
+                $parsed = self::toFloat($rawWaga, 0.0);
+
+                if ($parsed <= 0) {
+                    $warnings[] = sprintf(
+                        'skrzynka_przedmioty.csv: "%s" / "%s" ma wagę %s — musi być dodatnia albo pusta.',
+                        $caseName,
+                        $itemName,
+                        $rawWaga
+                    );
+                    continue;
+                }
+
+                $waga = $parsed;
+            }
+
+            $stmt->execute([$caseIds[$caseName], $itemIds[$itemName], $waga]);
 
             $loaded++;
         }
@@ -297,7 +410,7 @@ final class SeedLoader
      */
     private static function nameToIdMap(PDO $db, string $table): array
     {
-        if (!in_array($table, ['lowiska', 'ryby'], true)) {
+        if (!in_array($table, ['wedki', 'przedmioty', 'skrzynki'], true)) {
             throw ApiException::badRequest('Nieobsługiwana tabela: ' . $table);
         }
 
@@ -311,7 +424,7 @@ final class SeedLoader
     }
 
     /**
-     * Wyłapuje literówki w nazwach ikon: ryba wskazująca nieistniejący plik
+     * Wyłapuje literówki w nazwach ikon: przedmiot wskazujący nieistniejący plik
      * pokazałaby w animacji pusty kwadrat. Ostrzegamy zamiast rzucać błąd,
      * bo brak jednej grafiki nie powinien blokować uruchomienia gry.
      *
@@ -319,14 +432,14 @@ final class SeedLoader
      */
     private static function warnAboutBrokenIcons(PDO $db, array &$warnings): void
     {
-        $rows = $db->query("SELECT nazwa, ikona FROM ryby WHERE ikona != ''")->fetchAll();
+        $rows = $db->query("SELECT nazwa, ikona FROM przedmioty WHERE ikona != ''")->fetchAll();
 
         foreach ($rows as $row) {
             $ikona = (string) $row['ikona'];
 
             if (!Config::iconExists($ikona)) {
                 $warnings[] = sprintf(
-                    'Ryba "%s" wskazuje ikonę "%s", której nie ma w %s/.',
+                    'Przedmiot "%s" wskazuje ikonę "%s", której nie ma w %s/.',
                     (string) $row['nazwa'],
                     $ikona,
                     basename(Config::iconsDir())

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MocnyDrop\Tests;
 
 use MocnyDrop\Config;
-use MocnyDrop\FishingSpotRepository;
+use MocnyDrop\Wedka;
 use MocnyDrop\SeedLoader;
 
 /**
@@ -52,21 +52,21 @@ final class SeedLoaderTest extends TestCase
         parent::tearDown();
     }
 
-    public function testWczytujeLowiskaRybyIPolaczenia(): void
+    public function testWczytujeWedkiPrzedmiotyIPolaczenia(): void
     {
         $this->zapiszPodstawoweCsv();
 
         $ostrzezenia = [];
         $wynik = SeedLoader::load($this->db, $this->katalog, $ostrzezenia);
 
-        $this->assertSame(2, $wynik['wczytane']['lowiska.csv'], 'Liczba wczytanych łowisk');
-        $this->assertSame(2, $wynik['wczytane']['ryby.csv'], 'Liczba wczytanych ryb');
-        $this->assertSame(3, $wynik['wczytane']['lowisko_ryby.csv'], 'Liczba połączeń łowisko-ryba');
-        $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM lowiska')->fetchColumn(), 'Łowiska w bazie');
-        $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM ryby')->fetchColumn(), 'Ryby w bazie');
-        $this->assertSame(3, (int) $this->db->query('SELECT COUNT(*) FROM lowisko_ryby')->fetchColumn(), 'Połączenia w bazie');
+        $this->assertSame(2, $wynik['wczytane']['wedki.csv'], 'Liczba wczytanych wędek');
+        $this->assertSame(2, $wynik['wczytane']['przedmioty.csv'], 'Liczba wczytanych przedmiotów');
+        $this->assertSame(3, $wynik['wczytane']['wedka_przedmioty.csv'], 'Liczba połączeń wędka-przedmiot');
+        $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM wedki')->fetchColumn(), 'Łowiska w bazie');
+        $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM przedmioty')->fetchColumn(), 'Ryby w bazie');
+        $this->assertSame(3, (int) $this->db->query('SELECT COUNT(*) FROM wedka_przedmioty')->fetchColumn(), 'Połączenia w bazie');
 
-        $stmt = $this->db->prepare('SELECT koszt_zarzutu FROM lowiska WHERE nazwa = ?');
+        $stmt = $this->db->prepare('SELECT koszt_uzycia FROM wedki WHERE nazwa = ?');
         $stmt->execute(['Jezioro Ciche']);
 
         $this->assertFloat(10.0, (float) $stmt->fetchColumn(), 'Koszt zarzutu łowiska z CSV');
@@ -87,21 +87,21 @@ final class SeedLoaderTest extends TestCase
         $rzeka = $this->idLowiska('Rzeka Bystra');
 
         $stmt = $this->db->prepare(
-            'SELECT lr.waga FROM lowisko_ryby lr
-             JOIN ryby r ON r.id = lr.ryba_id
-             WHERE lr.lowisko_id = ? AND r.nazwa = ?'
+            'SELECT lr.waga FROM wedka_przedmioty lr
+             JOIN przedmioty r ON r.id = lr.przedmiot_id
+             WHERE lr.wedka_id = ? AND r.nazwa = ?'
         );
         $stmt->execute([$jezioro, 'Anchois']);
 
         $this->assertTrue($stmt->fetchColumn() === null, 'Pusta waga w CSV musi dać NULL w bazie, nie zero');
 
-        $anchovis = $this->znajdzWPuli(FishingSpotRepository::pool($jezioro, $this->db), 'Anchois');
-        $jesiotr = $this->znajdzWPuli(FishingSpotRepository::pool($jezioro, $this->db), 'Jesiotr');
+        $anchovis = $this->znajdzWPuli(Wedka::wymagaj($jezioro, $this->db)->pula($this->db), 'Anchois');
+        $jesiotr = $this->znajdzWPuli(Wedka::wymagaj($jezioro, $this->db)->pula($this->db), 'Jesiotr');
 
         $this->assertFloat(50.0, (float) $anchovis['waga'], 'Anchois (Pospolita) dziedziczy wagę 50 z README');
         $this->assertFloat(1.0, (float) $jesiotr['waga'], 'Jesiotr (Niesamowita) dziedziczy wagę 1 z README');
 
-        $rzekaAnchovis = $this->znajdzWPuli(FishingSpotRepository::pool($rzeka, $this->db), 'Anchois');
+        $rzekaAnchovis = $this->znajdzWPuli(Wedka::wymagaj($rzeka, $this->db)->pula($this->db), 'Anchois');
 
         $this->assertFloat(5.0, (float) $rzekaAnchovis['waga'], 'Jawna waga z CSV ma pierwszeństwo przed domyślną');
     }
@@ -111,16 +111,16 @@ final class SeedLoaderTest extends TestCase
      * Legendarna". Aktualny README.md ma ich sześć z innymi kodami, więc stary
      * seed musi zostać odrzucony z czytelnym ostrzeżeniem, a nie wysypać bazy.
      */
-    public function testOdrzucaRybeZNieznanaRzadkoscia(): void
+    public function testOdrzucaPrzedmiotZNieznanaRzadkoscia(): void
     {
-        $this->zapiszCsv('lowiska.csv', "nazwa,opis,koszt_zarzutu,ikona,kolejnosc\nJezioro,opis,10,,1");
-        $this->zapiszCsv('ryby.csv', "nazwa,rzadkosc_kod,wartosc,ikona,opis\nDobra Ryba,legendarna,100,anchovy.png,opis");
+        $this->zapiszCsv('wedki.csv', "nazwa,opis,koszt_uzycia,ikona,kolejnosc\nJezioro,opis,10,,1");
+        $this->zapiszCsv('przedmioty.csv', "nazwa,rzadkosc_kod,wartosc,ikona,opis\nDobra Ryba,legendarna,100,anchovy.png,opis");
 
         $ostrzezenia = [];
         $wynik = SeedLoader::load($this->db, $this->katalog, $ostrzezenia);
 
-        $this->assertSame(0, $wynik['wczytane']['ryby.csv'], 'Ryba z kodem "legendarna" nie może się wczytać');
-        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM ryby')->fetchColumn(), 'Ryba nie może trafić do bazy');
+        $this->assertSame(0, $wynik['wczytane']['przedmioty.csv'], 'Ryba z kodem "legendarna" nie może się wczytać');
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM przedmioty')->fetchColumn(), 'Ryba nie może trafić do bazy');
         $this->assertCount(1, $this->zawierajace($ostrzezenia, 'legendarna'), 'Ostrzeżenie musi wymieniać odrzucony kod rzadkości');
         $this->assertCount(1, $this->zawierajace($ostrzezenia, 'pospolita'), 'Ostrzeżenie musi podpowiadać dozwolone kody');
     }
@@ -128,25 +128,25 @@ final class SeedLoaderTest extends TestCase
     /** CI sprawdza równość kolumn w CSV — loader musi zrobić to samo, ale per wiersz. */
     public function testPomijaWierszZNierownaLiczbaKolumn(): void
     {
-        $this->zapiszCsv('lowiska.csv', "nazwa,opis,koszt_zarzutu,ikona,kolejnosc\nPoprawne,opis,10,,1\nZepsute,opis,10");
+        $this->zapiszCsv('wedki.csv', "nazwa,opis,koszt_uzycia,ikona,kolejnosc\nPoprawne,opis,10,,1\nZepsute,opis,10");
 
         $ostrzezenia = [];
         $wynik = SeedLoader::load($this->db, $this->katalog, $ostrzezenia);
 
-        $this->assertSame(1, $wynik['wczytane']['lowiska.csv'], 'Tylko poprawny wiersz może się wczytać');
-        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM lowiska')->fetchColumn(), 'Zepsuty wiersz nie może trafić do bazy');
+        $this->assertSame(1, $wynik['wczytane']['wedki.csv'], 'Tylko poprawny wiersz może się wczytać');
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM wedki')->fetchColumn(), 'Zepsuty wiersz nie może trafić do bazy');
         $this->assertCount(1, $this->zawierajace($ostrzezenia, 'oczekiwano 5 kolumn'), 'Ostrzeżenie musi mówić o liczbie kolumn');
     }
 
     public function testOstrzegaOIkonieKtorejNieMa(): void
     {
-        $this->zapiszCsv('ryby.csv', "nazwa,rzadkosc_kod,wartosc,ikona,opis\nZla Ikona,pospolita,5,brak_takiego_pliku.png,opis");
+        $this->zapiszCsv('przedmioty.csv', "nazwa,rzadkosc_kod,wartosc,ikona,opis\nZla Ikona,pospolita,5,brak_takiego_pliku.png,opis");
 
         $ostrzezenia = [];
         SeedLoader::load($this->db, $this->katalog, $ostrzezenia);
 
         $this->assertCount(1, $this->zawierajace($ostrzezenia, 'brak_takiego_pliku.png'), 'Literówka w nazwie ikony musi zostać zgłoszona');
-        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM ryby')->fetchColumn(), 'Brak ikony nie może blokować wczytania ryby');
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM przedmioty')->fetchColumn(), 'Brak ikony nie może blokować wczytania przedmioty');
     }
 
     public function testPoprawnaIkonaNieDajeOstrzezenia(): void
@@ -158,7 +158,7 @@ final class SeedLoaderTest extends TestCase
             return;
         }
 
-        $this->zapiszCsv('ryby.csv', "nazwa,rzadkosc_kod,wartosc,ikona,opis\nAnchois,pospolita,5,anchovy.png,opis");
+        $this->zapiszCsv('przedmioty.csv', "nazwa,rzadkosc_kod,wartosc,ikona,opis\nAnchois,pospolita,5,anchovy.png,opis");
 
         $ostrzezenia = [];
         SeedLoader::load($this->db, $this->katalog, $ostrzezenia);
@@ -185,49 +185,49 @@ final class SeedLoaderTest extends TestCase
         SeedLoader::load($this->db, $this->katalog);
         SeedLoader::load($this->db, $this->katalog);
 
-        $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM lowiska')->fetchColumn(), 'Podwójne ładowanie nie może zduplikować łowisk');
-        $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM ryby')->fetchColumn(), 'Podwójne ładowanie nie może zduplikować ryb');
-        $this->assertSame(3, (int) $this->db->query('SELECT COUNT(*) FROM lowisko_ryby')->fetchColumn(), 'Podwójne ładowanie nie może zduplikować połączeń');
+        $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM wedki')->fetchColumn(), 'Podwójne ładowanie nie może zduplikować łowisk');
+        $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM przedmioty')->fetchColumn(), 'Podwójne ładowanie nie może zduplikować przedmiotów');
+        $this->assertSame(3, (int) $this->db->query('SELECT COUNT(*) FROM wedka_przedmioty')->fetchColumn(), 'Podwójne ładowanie nie może zduplikować połączeń');
     }
 
     /** CSV zapisane z polskiego Excela mają przecinek jako separator dziesiętny. */
     public function testAkceptujePolskiSeparatorDziesietny(): void
     {
-        $this->zapiszCsv('lowiska.csv', "nazwa,opis,koszt_zarzutu,ikona,kolejnosc\nJezioro,opis,\"12,50\",,1");
+        $this->zapiszCsv('wedki.csv', "nazwa,opis,koszt_uzycia,ikona,kolejnosc\nJezioro,opis,\"12,50\",,1");
 
         SeedLoader::load($this->db, $this->katalog);
 
-        $this->assertFloat(12.5, (float) $this->db->query('SELECT koszt_zarzutu FROM lowiska')->fetchColumn(), 'Koszt "12,50" musi zostać wczytany jako 12.5');
+        $this->assertFloat(12.5, (float) $this->db->query('SELECT koszt_uzycia FROM wedki')->fetchColumn(), 'Koszt "12,50" musi zostać wczytany jako 12.5');
     }
 
-    public function testOdrzucaUjemnyKosztZarzutu(): void
+    public function testOdrzucaUjemnyKosztUzycia(): void
     {
-        $this->zapiszCsv('lowiska.csv', "nazwa,opis,koszt_zarzutu,ikona,kolejnosc\nMinusowe,opis,-5,,1");
+        $this->zapiszCsv('wedki.csv', "nazwa,opis,koszt_uzycia,ikona,kolejnosc\nMinusowe,opis,-5,,1");
 
         $ostrzezenia = [];
         $wynik = SeedLoader::load($this->db, $this->katalog, $ostrzezenia);
 
-        $this->assertSame(0, $wynik['wczytane']['lowiska.csv'], 'Łowisko z ujemnym kosztem nie może się wczytać');
+        $this->assertSame(0, $wynik['wczytane']['wedki.csv'], 'Wędka z ujemnym kosztem nie może się wczytać');
         $this->assertCount(1, $this->zawierajace($ostrzezenia, 'ujemny koszt'), 'Ostrzeżenie o ujemnym koszcie');
     }
 
     private function zapiszPodstawoweCsv(): void
     {
-        $this->zapiszCsv('lowiska.csv', implode("\n", [
-            'nazwa,opis,koszt_zarzutu,ikona,kolejnosc',
+        $this->zapiszCsv('wedki.csv', implode("\n", [
+            'nazwa,opis,koszt_uzycia,ikona,kolejnosc',
             'Jezioro Ciche,Spokojna woda,10,,1',
             'Rzeka Bystra,Szybki nurt,25,,2',
         ]));
 
-        $this->zapiszCsv('ryby.csv', implode("\n", [
+        $this->zapiszCsv('przedmioty.csv', implode("\n", [
             'nazwa,rzadkosc_kod,wartosc,ikona,opis',
             'Anchois,pospolita,2,anchovy.png,Mała ryba',
             'Jesiotr,niesamowita,400,sturgeon.png,Duża ryba',
         ]));
 
         // Pusta waga przy obu rybach Jeziora = dziedziczenie wag z README.
-        $this->zapiszCsv('lowisko_ryby.csv', implode("\n", [
-            'lowisko_nazwa,ryba_nazwa,waga',
+        $this->zapiszCsv('wedka_przedmioty.csv', implode("\n", [
+            'wedka_nazwa,przedmiot_nazwa,waga',
             'Jezioro Ciche,Anchois,',
             'Jezioro Ciche,Jesiotr,',
             'Rzeka Bystra,Anchois,5',
@@ -241,7 +241,7 @@ final class SeedLoaderTest extends TestCase
 
     private function idLowiska(string $nazwa): int
     {
-        $stmt = $this->db->prepare('SELECT id FROM lowiska WHERE nazwa = ?');
+        $stmt = $this->db->prepare('SELECT id FROM wedki WHERE nazwa = ?');
         $stmt->execute([$nazwa]);
 
         $id = $stmt->fetchColumn();

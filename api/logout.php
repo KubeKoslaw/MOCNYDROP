@@ -6,23 +6,27 @@ declare(strict_types=1);
  * api/logout.php — POST /api/logout.php
  * Nagłówek: Authorization: Bearer <token>
  *
- * Kasuje token z bazy, więc nie da się go użyć ponownie nawet jeśli
- * ktoś go wcześniej skopiował.
+ * Woła Token::uniewaznij() z diagramu klas — kasuje token z bazy, więc nie da
+ * się go użyć ponownie, nawet jeśli ktoś go wcześniej skopiował.
  *
  * Właściciel: @KubeKoslaw (Core Backend)
  */
 
-use MocnyDrop\Auth;
 use MocnyDrop\Json;
+use MocnyDrop\Token;
 
 require_once __DIR__ . '/_bootstrap.php';
 
 Json::requireMethod('POST');
 
-$token = Auth::bearerToken();
+$token = Token::bearerToken();
 
 if ($token !== null) {
-    Auth::logout($token);
+    $encja = Token::zBazy($token);
+
+    if ($encja !== null) {
+        $encja->uniewaznij();
+    }
 }
 
 // Brak tokena też uznajemy za sukces: stan końcowy jest ten sam —

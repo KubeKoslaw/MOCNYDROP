@@ -205,7 +205,7 @@ fishing-scene {
    To jest ten sam `reel`, który w starej wersji jeździł po ekranie jako
    "skrzynka". Teraz płynie pod wodą w stronę haczyka, a zatrzymanie się na
    `reel_indeks_wygranej` JEST momentem brania. Dzięki temu:
-     - umowa z api/cast.php zostaje dotrzymana,
+     - umowa z api/fish.php zostaje dotrzymana,
      - gracz widzi pulę łowiska (szum wizualny) bez zdradzania wyniku,
      - nic nie jest losowane w przeglądarce.                                     */
 

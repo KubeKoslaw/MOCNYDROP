@@ -22,9 +22,24 @@ final class Settings
 {
     /** Klucze używane przez backend — jedna lista, żeby nie szukać po kodzie. */
     public const KEY_START_BALANCE = 'saldo_startowe';
+    public const KEY_CURRENCY = 'waluta';
     public const KEY_REEL_LENGTH = 'reel_dlugosc';
     public const KEY_REEL_WINNER_INDEX = 'reel_indeks_wygranej';
     public const KEY_TOKEN_HOURS = 'token_waznosc_godz';
+
+    /** Upgrader (UC_UPGRADE): marża wchodząca w wzór na szansę. */
+    public const KEY_UPGRADER_MARGIN = 'upgrader_marza';
+
+    /** Trader (UC_TRADE): limit przedmiotów i próg wartości kontraktu. */
+    public const KEY_TRADER_MIN_ITEMS = 'trader_min_przedmiotow';
+    public const KEY_TRADER_MAX_ITEMS = 'trader_max_przedmiotow';
+    public const KEY_TRADER_MIN_VALUE = 'trader_min_wartosc';
+
+    /** Monitoring (UC_ADM3): progi alertu «podejrzane serie wygranych». */
+    public const KEY_ALERT_STREAK = 'alert_seria_dlugosc';
+    public const KEY_ALERT_RARITY_ORDER = 'alert_rzadkosc_kolejnosc';
+    public const KEY_ALERT_RTP = 'alert_rtp_prog';
+    public const KEY_ALERT_MIN_DRAWS = 'alert_min_losowan';
 
     public static function get(string $key, string $default = '', ?PDO $pdo = null): string
     {

@@ -28,7 +28,7 @@ use InvalidArgumentException;
 final class Reel
 {
     /**
-     * @param list<array<string, mixed>> $pool        pula ryb łowiska
+     * @param list<array<string, mixed>> $pool        pula przedmiotów wędki
      * @param array<string, mixed>       $winner      wynik WeightedRoller::roll()
      * @param int                        $length      długość paska (>= 1)
      * @param int                        $winnerIndex indeks wygranej (0-based)
@@ -82,8 +82,8 @@ final class Reel
     }
 
     /**
-     * Pasek przewija się przez dziesiątki ryb, więc frontend potrzebuje tylko
-     * pól wizualnych. Celowo NIE wysyłamy wag i sum — to dane wewnętrzne
+     * Pasek przewija się przez dziesiątki przedmiotów, więc frontend potrzebuje
+     * tylko pól wizualnych. Celowo NIE wysyłamy wag i sum — to dane wewnętrzne
      * losowania i nie mają powodu wychodzić do przeglądarki w każdym elemencie.
      *
      * @param array<string, mixed> $item
@@ -92,7 +92,7 @@ final class Reel
     private static function strip(array $item): array
     {
         return [
-            'ryba_id' => isset($item['ryba_id']) ? (int) $item['ryba_id'] : null,
+            'przedmiot_id' => isset($item['przedmiot_id']) ? (int) $item['przedmiot_id'] : null,
             'nazwa' => (string) ($item['nazwa'] ?? ''),
             'ikona' => (string) ($item['ikona_url'] ?? ''),
             'rzadkosc' => (string) ($item['rzadkosc_nazwa'] ?? ''),
