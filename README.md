@@ -113,5 +113,5 @@ Przykładowe wagi (rzadkość nagrody rośnie → waga maleje):
 - [x] 3. Implementacja algorytmu losowania, aktualizacja stanu strony (konta), wyświetlanie zapytań, styl losowanych przycisków.
 - [ ] 4. Testy, merytoryka i ewentualna naprawa błędów.
 
-PROJEKT W PEŁNI LEGALNY BO BEZ PRAWDZIWEJ WALUTY POZDRAWIAM *cytat moxmar*
+"PROJEKT W PEŁNI LEGALNY BO BEZ PRAWDZIWEJ WALUTY POZDRAWIAM" -- *cytat moxmar*
 
