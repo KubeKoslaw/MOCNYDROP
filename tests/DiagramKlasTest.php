@@ -13,6 +13,8 @@ use MocnyDrop\Portfel;
 use MocnyDrop\Przedmiot;
 use MocnyDrop\Rola;
 use MocnyDrop\Rzadkosc;
+use MocnyDrop\Skrzynka;
+use MocnyDrop\SkrzynkaPrzedmiot;
 use MocnyDrop\Token;
 use MocnyDrop\TypLosowania;
 use MocnyDrop\Uzytkownik;
@@ -61,6 +63,8 @@ final class DiagramKlasTest extends TestCase
         Przedmiot::class => ['obliczWartosc', 'opis'],
         Rzadkosc::class => [],
         Ekwipunek::class => ['dodaj', 'usun', 'sprzedaj', 'wartoscRynkowa'],
+        Skrzynka::class => ['otworz', 'losuj', 'czyAktywna'],
+        SkrzynkaPrzedmiot::class => ['losuj'],
         Wedka::class => ['zarzuc'],
         Losowanie::class => ['zapisz', 'wyliczRTP'],
         LogAudytowy::class => ['zapisz'],
@@ -77,6 +81,8 @@ final class DiagramKlasTest extends TestCase
         Token::class => ['token', 'expiresAt'],
         Przedmiot::class => ['id', 'nazwa', 'wartosc', 'rzadkosc'],
         Rzadkosc::class => ['nazwa', 'mnoznik'],
+        Skrzynka::class => ['id', 'nazwa', 'cena', 'ikona', 'aktywna'],
+        SkrzynkaPrzedmiot::class => ['id', 'waga'],
         Wedka::class => ['id', 'nazwa', 'kosztUzycia'],
         Losowanie::class => ['id', 'czas', 'typ', 'wynik'],
         LogAudytowy::class => ['id', 'akcja', 'czas'],
@@ -191,14 +197,93 @@ final class DiagramKlasTest extends TestCase
     /**
      * Słownik klas z diagramu, których jeszcze nie implementujemy — test
      * pilnuje, żeby nikt ich nie dodał po cichu w innej postaci (np. jako
-     * `CaseService`), tylko zbudował zgodnie ze specyfikacją.
+     * `OauthCodeService`), tylko zbudował zgodnie ze specyfikacją.
+     *
+     * Skrzynka i SkrzynkaPrzedmiot są już zaimplementowane (tryb «Otwarcie
+     * skrzynki», UC_CASE) — sprawdzają je testy wyżej i SkrzynkaTest.
      */
     public function testNieZaimplementowaneKlasyZDiagramuPozostajaNieobecne(): void
     {
-        foreach (['Skrzynka', 'SkrzynkaPrzedmiot', 'OauthKod'] as $nazwa) {
+        foreach (['OauthKod'] as $nazwa) {
             $this->assertFalse(
                 class_exists('MocnyDrop\\' . $nazwa),
                 $nazwa . ' nie jest jeszcze zaimplementowana — gdy się pojawi, dodaj ją do DiagramKlasTest::KLASY'
+            );
+        }
+    }
+
+    /**
+     * Realizacja interfejsu «Losowanie» z diagramu: przerywane strzałki
+     * Skrzynka ..|> ILosujacy (krawędź e13) i SkrzynkaPrzedmiot ..|> ILosujacy
+     * (krawędź e14).
+     */
+    public function testKlasyLosujaceRealizujaInterfejsILosujacy(): void
+    {
+        foreach ([Skrzynka::class, SkrzynkaPrzedmiot::class] as $klasa) {
+            $this->assertTrue(
+                is_subclass_of($klasa, ILosujacy::class),
+                $klasa . ' musi realizować interfejs ILosujacy (krawędzie e13/e14 diagramu)'
+            );
+
+            $zwrot = (new ReflectionClass($klasa))->getMethod('losuj')->getReturnType();
+
+            $this->assertTrue($zwrot instanceof ReflectionNamedType, $klasa . '::losuj() musi mieć typ zwracany');
+            $this->assertSame(Przedmiot::class, (string) $zwrot, $klasa . '::losuj() musi zwracać Przedmiot');
+        }
+    }
+
+    /**
+     * Sygnatury z diagramu, których nie da się sprawdzić samą listą metod:
+     *   Skrzynka::otworz(u : Uzytkownik) : Przedmiot
+     *   Administrator::edytujSkrzynke(s : Skrzynka)
+     *   Administrator::korygujSaldo(u : Uzytkownik, kwota : float)
+     */
+    public function testSygnaturyMetodZDiagramu(): void
+    {
+        $otworz = (new ReflectionClass(Skrzynka::class))->getMethod('otworz');
+        $parametry = $otworz->getParameters();
+
+        $this->assertSame(1, count($parametry), 'Skrzynka::otworz() przyjmuje dokładnie jeden parametr (u)');
+        $this->assertSame(Uzytkownik::class, (string) $parametry[0]->getType(), 'Parametr otworz() musi być typu Uzytkownik');
+        $this->assertSame(Przedmiot::class, (string) $otworz->getReturnType(), 'otworz() musi zwracać Przedmiot');
+
+        $edytuj = (new ReflectionClass(Administrator::class))->getMethod('edytujSkrzynke');
+        $parametryEdycji = $edytuj->getParameters();
+
+        $this->assertSame(Skrzynka::class, (string) $parametryEdycji[0]->getType(), 'edytujSkrzynke(s) musi przyjmować Skrzynka');
+
+        $koryguj = (new ReflectionClass(Administrator::class))->getMethod('korygujSaldo');
+        $parametryKorekty = $koryguj->getParameters();
+
+        $this->assertSame(2, count($parametryKorekty), 'korygujSaldo(u, kwota) ma dwa parametry');
+        $this->assertSame(Uzytkownik::class, (string) $parametryKorekty[0]->getType(), 'Pierwszy parametr korygujSaldo to Uzytkownik');
+        $this->assertSame('float', (string) $parametryKorekty[1]->getType(), 'Drugi parametr korygujSaldo to float');
+
+        $zbanuj = (new ReflectionClass(Administrator::class))->getMethod('zbanuj');
+        $this->assertSame(Uzytkownik::class, (string) $zbanuj->getParameters()[0]->getType(), 'zbanuj(u) przyjmuje Uzytkownik');
+
+        $eksport = (new ReflectionClass(Administrator::class))->getMethod('eksportujRaport');
+        $this->assertSame('string', (string) $eksport->getReturnType(), 'eksportujRaport() musi zwracać string');
+    }
+
+    /**
+     * TypLosowania pokrywa cztery tryby gry, a każdy z nich ma swój endpoint
+     * z diagramu PROJEKT (strona 2): open_case.php, fish.php, upgrade.php,
+     * trade_up.php.
+     */
+    public function testKazdyTrybGryMaEndpointZDiagramuProjekt(): void
+    {
+        $endpointy = [
+            TypLosowania::Skrzynka->value => 'api/open_case.php',
+            TypLosowania::Wedka->value => 'api/fish.php',
+            TypLosowania::Upgrader->value => 'api/upgrade.php',
+            TypLosowania::Trader->value => 'api/trade_up.php',
+        ];
+
+        foreach ($endpointy as $typ => $sciezka) {
+            $this->assertTrue(
+                is_file(dirname(__DIR__) . '/' . $sciezka),
+                'Tryb ' . $typ . ' musi mieć endpoint ' . $sciezka . ' (nazwa z diagramu PROJEKT)'
             );
         }
     }

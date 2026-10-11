@@ -133,6 +133,108 @@ final class Fixtures
     }
 
     /**
+     * Przedmiot w katalogu BEZ podpisywania go pod łowisko.
+     * Potrzebny trybom, które losują z katalogu (trader) albo tylko po nim
+     * chodzą (upgrader — «Wybór pożądanego przedmiotu celu z katalogu»).
+     */
+    public static function przedmiotKatalog(
+        PDO $db,
+        string $nazwa,
+        string $kod,
+        float $wartosc,
+        string $ikona = 'anchovy.png',
+        bool $aktywny = true
+    ): int {
+        $stmt = $db->prepare(
+            'INSERT INTO przedmioty (nazwa, rzadkosc_kod, wartosc, ikona, opis, czy_aktywny)
+             VALUES (?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->execute([$nazwa, $kod, $wartosc, $ikona, '', $aktywny ? 1 : 0]);
+
+        return (int) $db->lastInsertId();
+    }
+
+    /** Tworzy skrzynkę (klasa Skrzynka) i zwraca jej id. */
+    public static function skrzynka(
+        PDO $db,
+        string $nazwa = 'Skrzynka Testowa',
+        float $cena = 20.0,
+        bool $aktywna = true,
+        int $kolejnosc = 0
+    ): int {
+        $stmt = $db->prepare(
+            'INSERT INTO skrzynki (nazwa, opis, cena, ikona, aktywna, kolejnosc)
+             VALUES (?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->execute([$nazwa, 'Skrzynka testowa: ' . $nazwa, $cena, '', $aktywna ? 1 : 0, $kolejnosc]);
+
+        return (int) $db->lastInsertId();
+    }
+
+    /**
+     * Dodaje przedmiot do katalogu i od razu podpina go pod skrzynkę
+     * (asocjacja Skrzynka — SkrzynkaPrzedmiot z diagramu klas).
+     * $waga = NULL oznacza dziedziczenie wagi domyślnej poziomu rzadkości.
+     */
+    public static function przedmiotSkrzynki(
+        PDO $db,
+        int $skrzynkaId,
+        string $nazwa,
+        string $kod,
+        float $wartosc,
+        ?float $waga = null,
+        string $ikona = 'anchovy.png'
+    ): int {
+        $przedmiotId = self::przedmiotKatalog($db, $nazwa, $kod, $wartosc, $ikona);
+
+        $stmt = $db->prepare('INSERT INTO skrzynka_przedmioty (skrzynka_id, przedmiot_id, waga) VALUES (?, ?, ?)');
+        $stmt->execute([$skrzynkaId, $przedmiotId, $waga]);
+
+        return $przedmiotId;
+    }
+
+    /**
+     * Skrzynka z pulą dokładnie jak w README.md — odpowiednik readmeWedka().
+     */
+    public static function readmeSkrzynka(PDO $db, float $cena = 20.0): int
+    {
+        $skrzynkaId = self::skrzynka($db, 'Skrzynka README', $cena);
+
+        foreach (self::PULA_README as $item) {
+            self::przedmiotSkrzynki($db, $skrzynkaId, $item['nazwa'], $item['kod'], $item['wartosc'], null, $item['ikona']);
+        }
+
+        return $skrzynkaId;
+    }
+
+    /**
+     * Wpis w ekwipunku gracza z pominięciem losowania.
+     *
+     * Upgrader i trader zaczynają się od przedmiotów, które gracz JUŻ ma —
+     * nie ma powodu za każdym razem losować ich wędką w testach.
+     */
+    public static function wpisEkwipunku(PDO $db, int $userId, int $przedmiotId, ?float $wartosc = null): int
+    {
+        if ($wartosc === null) {
+            $stmt = $db->prepare('SELECT wartosc FROM przedmioty WHERE id = ?');
+            $stmt->execute([$przedmiotId]);
+
+            $wartosc = (float) $stmt->fetchColumn();
+        }
+
+        $stmt = $db->prepare('INSERT INTO ekwipunek (user_id, przedmiot_id, wartosc) VALUES (?, ?, ?)');
+        $stmt->execute([$userId, $przedmiotId, $wartosc]);
+
+        return (int) $db->lastInsertId();
+    }
+
+    /** Ustawia parametr mechaniki w tabeli `ustawienia` (np. marżę upgradera). */
+    public static function ustawienie(PDO $db, string $klucz, string $wartosc): void
+    {
+        self::setting($db, $klucz, $wartosc);
+    }
+
+    /**
      * Generator liczb losowych zwracający zaprogramowaną sekwencję.
      * Dzięki niemu testy ważonego losowania są w 100% powtarzalne.
      *

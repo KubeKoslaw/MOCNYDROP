@@ -138,6 +138,26 @@ abstract class TestCase
     }
 
     /**
+     * Sprawdzenie typu obiektu — potrzebne m.in. dla sygnatur z diagramu klas
+     * (Skrzynka::otworz() : Przedmiot, ILosujacy::losuj() : Przedmiot).
+     *
+     * @param class-string $expected
+     */
+    protected function assertInstanceOf(string $expected, mixed $value, string $message): void
+    {
+        $this->tick();
+
+        if (!($value instanceof $expected)) {
+            throw new AssertionFailed(sprintf(
+                '%s (oczekiwano %s, jest %s)',
+                $message,
+                $expected,
+                get_debug_type($value)
+            ));
+        }
+    }
+
+    /**
      * Przeciwieństwo assertNotNull().
      * Potrzebne m.in. dla Token::uwierzytelnij() i Token::bearerToken(),
      * które sygnalizują odrzucenie przez null, a nie przez wyjątek.

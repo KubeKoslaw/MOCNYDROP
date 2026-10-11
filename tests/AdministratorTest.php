@@ -9,6 +9,7 @@ use MocnyDrop\ApiException;
 use MocnyDrop\FishingService;
 use MocnyDrop\LogAudytowy;
 use MocnyDrop\Portfel;
+use MocnyDrop\Skrzynka;
 use MocnyDrop\Token;
 use MocnyDrop\Uzytkownik;
 
@@ -154,23 +155,146 @@ final class AdministratorTest extends TestCase
         }
     }
 
-    /** Tryb skrzynek nie jest zaimplementowany — 501 zamiast udawania działania. */
-    public function testEdytujSkrzynkeZglaszaBrakImplementacji(): void
+    /**
+     * «Kreator i Edytor Skrzynek» — UC_ADM1: ta sama metoda tworzy i aktualizuje.
+     * Zapis skrzynki i jej puli (dropy + wagi) jest jedną transakcją.
+     */
+    public function testEdytujSkrzynkeZapisujeNowaSkrzynkeZPula(): void
     {
         $admin = $this->admin();
 
-        $this->assertThrows(
-            ApiException::class,
-            fn () => $admin->edytujSkrzynke(null),
-            'edytujSkrzynke() musi zgłosić, że tryb skrzynek nie istnieje',
-            'cases_not_implemented'
+        $anchovis = Fixtures::przedmiotKatalog($this->db, 'Anchois', 'pospolita', 2.0);
+        $jesiotr = Fixtures::przedmiotKatalog($this->db, 'Jesiotr', 'niesamowita', 400.0);
+
+        $skrzynka = Skrzynka::nowa('Skrzynka Testowa', 25.0, '', 'Opis skrzynki');
+        $skrzynka->pulaDoZapisu = [
+            ['przedmiot_id' => $anchovis, 'waga' => 50.0],
+            ['przedmiot_id' => $jesiotr, 'waga' => null],
+        ];
+
+        $this->assertSame(0, $skrzynka->id, 'Przed zapisem skrzynka nie ma id');
+
+        $admin->edytujSkrzynke($skrzynka);
+
+        $this->assertTrue($skrzynka->id > 0, 'edytujSkrzynke() musi nadać id nowej skrzynce');
+
+        $zBazy = Skrzynka::wymagaj($skrzynka->id, $this->db);
+
+        $this->assertSame('Skrzynka Testowa', $zBazy->nazwa, 'Nazwa skrzynki w bazie');
+        $this->assertFloat(25.0, $zBazy->cena, 'Cena skrzynki w bazie');
+        $this->assertTrue($zBazy->czyAktywna(), 'Nowa skrzynka jest domyślnie aktywna');
+        $this->assertCount(2, $zBazy->pula($this->db), 'Pula skrzynki ma dwa dropy');
+
+        // Waga NULL = dziedziczenie waga_domyslna poziomu rzadkości (Niesamowita = 1).
+        // pula() jest sortowana po kolejności rzadkości: [0] Anchois, [1] Jesiotr.
+        $pula = $zBazy->pula($this->db);
+
+        $this->assertFloat(50.0, (float) $pula[0]['waga'], 'Jawna waga z panelu admina');
+        $this->assertFloat(1.0, (float) $pula[1]['waga'], 'Pusta waga dziedziczy wagę domyślną poziomu');
+
+        $akcje = array_map(
+            static fn (array $wpis): string => $wpis['akcja'],
+            LogAudytowy::ostatnie(5, $this->db)
         );
 
-        try {
-            $admin->edytujSkrzynke(null);
-        } catch (ApiException $e) {
-            $this->assertSame(501, $e->httpStatus(), 'Brak implementacji = HTTP 501');
-        }
+        $this->assertSame(['skrzynka_utworzona'], $akcje, 'Zapis skrzynki zostawia ślad w logu audytowym');
+    }
+
+    public function testEdytujSkrzynkeAktualizujeIstniejaca(): void
+    {
+        $admin = $this->admin();
+        $id = Fixtures::skrzynka($this->db, 'Stara Nazwa', 10.0);
+
+        $zmieniona = new Skrzynka('Nowa Nazwa', 15.5, '', false, '', 0, $id, $this->db);
+
+        $admin->edytujSkrzynke($zmieniona);
+
+        $zBazy = Skrzynka::wymagaj($id, $this->db);
+
+        $this->assertSame('Nowa Nazwa', $zBazy->nazwa, 'Nazwa po edycji');
+        $this->assertFloat(15.5, $zBazy->cena, 'Cena po edycji');
+        $this->assertFalse($zBazy->czyAktywna(), 'Wyłączenie skrzynki (aktywna = 0) z diagramu PROJEKT');
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM skrzynki')->fetchColumn(), 'Edycja nie może zduplikować skrzynki');
+    }
+
+    /** Przypadek rozszerzający ADM1_ERR: «Błędne wagi lub ujemna cena». */
+    public function testEdytujSkrzynkeOdrzucaUjemnaCeneIBledneWagi(): void
+    {
+        $admin = $this->admin();
+        $anchovis = Fixtures::przedmiotKatalog($this->db, 'Anchois', 'pospolita', 2.0);
+
+        $ujemna = Skrzynka::nowa('Zła Skrzynka', -5.0);
+
+        $this->assertThrows(
+            ApiException::class,
+            fn () => $admin->edytujSkrzynke($ujemna),
+            'Ujemna cena musi być odrzucona (ADM1_ERR)',
+            'invalid_price'
+        );
+
+        $zlaWaga = Skrzynka::nowa('Zła Waga', 10.0);
+        $zlaWaga->pulaDoZapisu = [['przedmiot_id' => $anchovis, 'waga' => -1.0]];
+
+        $this->assertThrows(
+            ApiException::class,
+            fn () => $admin->edytujSkrzynke($zlaWaga),
+            'Ujemna waga dropu musi być odrzucona (ADM1_ERR)',
+            'invalid_weight'
+        );
+
+        $pusta = Skrzynka::nowa('', 10.0);
+
+        $this->assertThrows(
+            ApiException::class,
+            fn () => $admin->edytujSkrzynke($pusta),
+            'Skrzynka bez nazwy musi być odrzucona',
+            'invalid_case_name'
+        );
+
+        $this->assertSame(
+            0,
+            (int) $this->db->query('SELECT COUNT(*) FROM skrzynki')->fetchColumn(),
+            'Odrzucone zapisy nie mogą zostawić skrzynki w bazie'
+        );
+        $this->assertSame(
+            0,
+            (int) $this->db->query('SELECT COUNT(*) FROM skrzynka_przedmioty')->fetchColumn(),
+            'Odrzucony zapis nie może zostawić połowy puli (transakcyjność)'
+        );
+    }
+
+    public function testEdytujSkrzynkeOdrzucaZduplikowanaNazwe(): void
+    {
+        $admin = $this->admin();
+
+        Fixtures::skrzynka($this->db, 'Taka Sama', 10.0);
+
+        $this->assertThrows(
+            ApiException::class,
+            fn () => $admin->edytujSkrzynke(Skrzynka::nowa('Taka Sama', 20.0)),
+            'Nazwa skrzynki jest UNIQUE — duplikat musi być odrzucony',
+            'case_name_taken'
+        );
+    }
+
+    public function testOdbanujZdejmujeBlokade(): void
+    {
+        $admin = $this->admin();
+        $gracz = $this->gracz();
+
+        $admin->zbanuj($gracz);
+
+        $this->assertTrue($gracz->czyZablokowany(), 'Konto jest zablokowane po banie');
+
+        $admin->odbanuj($gracz);
+
+        $this->assertFalse($gracz->czyZablokowany(), 'odbanuj() musi zdjąć blokadę');
+        $this->assertTrue($gracz->zaloguj(Fixtures::HASLO), 'Odblokowane konto może się zalogować');
+        $this->assertSame(
+            'odblokowanie',
+            LogAudytowy::ostatnie(1, $this->db)[0]['akcja'],
+            'Odblokowanie zostawia wpis w logu audytowym'
+        );
     }
 
     public function testEksportujRaportZwracaCsv(): void
