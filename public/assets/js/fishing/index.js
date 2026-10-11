@@ -21,10 +21,10 @@ export { ApiError, TOKEN_KEY, createApi, readToken } from './api.js';
 
 export {
   ContractError,
-  REQUIRED_FISH_FIELDS,
+  REQUIRED_PRZEDMIOT_FIELDS,
   isContractValid,
   reelWinnerMismatch,
-  validateCastPayload,
+  validateFishPayload,
 } from './contract.js';
 
 export {

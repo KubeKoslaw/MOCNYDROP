@@ -10,9 +10,13 @@ declare(strict_types=1);
  *   php database/topup.php --all <kwota>       doładowuje każde konto
  *   php database/topup.php --list              pokazuje konta i salda
  *
- * Po co: w grze nie ma endpointu doładowania (monety zdobywa się sprzedażą ryb),
- * więc po wyczerpaniu salda startowego testowanie pętli "zarzut → sprzedaż"
- * wymagałoby kasowania bazy. Ten skrypt pozwala ją odblokować bez ruszania API.
+ * Po co: w grze nie ma endpointu doładowania (monety zdobywa się sprzedażą
+ * przedmiotów), więc po wyczerpaniu salda startowego testowanie pętli
+ * „zarzut → sprzedaż" wymagałoby kasowania bazy. Ten skrypt pozwala ją
+ * odblokować bez ruszania API.
+ *
+ * Pieniądze leżą w tabeli `portfele` (klasa Portfel z diagramu klas), więc
+ * skrypt idzie przez Portfel::dodajSrodki() zamiast pisać UPDATE ręcznie.
  *
  * Zabezpieczenie: działa wyłącznie z CLI (jak database/migrate.php), więc nie da
  * się go wywołać przez HTTP i nie jest dziurą w ekonomii gry.
@@ -21,6 +25,8 @@ declare(strict_types=1);
  */
 
 use MocnyDrop\Database;
+use MocnyDrop\Portfel;
+use MocnyDrop\Uzytkownik;
 
 require_once dirname(__DIR__) . '/backend/bootstrap.php';
 
@@ -34,13 +40,24 @@ $db = Database::connection();
 
 /** @return list<array{id: int, login: string, saldo: float}> */
 $allUsers = static function () use ($db): array {
-    $rows = $db->query('SELECT id, login, saldo FROM uzytkownicy ORDER BY id ASC')->fetchAll();
+    $rows = $db->query(
+        'SELECT u.id, u.login, COALESCE(p.saldo, 0) AS saldo
+         FROM uzytkownicy u
+         LEFT JOIN portfele p ON p.user_id = u.id
+         ORDER BY u.id ASC'
+    )->fetchAll();
 
     return array_map(static fn (array $r): array => [
         'id' => (int) $r['id'],
         'login' => (string) $r['login'],
         'saldo' => (float) $r['saldo'],
     ], $rows);
+};
+
+$printAll = static function () use ($allUsers): void {
+    foreach ($allUsers() as $user) {
+        echo sprintf("  #%-4d %-20s %10.2f\n", $user['id'], $user['login'], $user['saldo']);
+    }
 };
 
 if ($args === [] || in_array('--help', $args, true) || in_array('-h', $args, true)) {
@@ -52,17 +69,12 @@ if ($args === [] || in_array('--help', $args, true) || in_array('-h', $args, tru
 }
 
 if ($args[0] === '--list') {
-    $users = $allUsers();
-
-    if ($users === []) {
+    if ($allUsers() === []) {
         echo "Brak kont. Zarejestruj gracza: POST /api/register.php\n";
         exit(0);
     }
 
-    foreach ($users as $user) {
-        echo sprintf("  #%-4d %-20s %10.2f\n", $user['id'], $user['login'], $user['saldo']);
-    }
-
+    $printAll();
     exit(0);
 }
 
@@ -76,34 +88,29 @@ if (!is_numeric($kwota) || (float) $kwota <= 0) {
 $kwota = round((float) $kwota, 2);
 
 if ($args[0] === '--all') {
-    $stmt = $db->prepare('UPDATE uzytkownicy SET saldo = saldo + ?');
-    $stmt->execute([$kwota]);
+    $ile = 0;
 
-    echo sprintf('Doładowano wszystkie konta o %.2f monet.%s', $kwota, PHP_EOL);
+    foreach ($allUsers() as $user) {
+        Portfel::dlaUzytkownika($user['id'], $db)->dodajSrodki($kwota);
+        $ile++;
+    }
+
+    echo sprintf('Doładowano %d kont(a) o %.2f monet.%s', $ile, $kwota, PHP_EOL);
 } else {
     $login = trim($args[0]);
+    $uzytkownik = Uzytkownik::szukaj($login, $db);
 
-    $stmt = $db->prepare('SELECT id, saldo FROM uzytkownicy WHERE login = ?');
-    $stmt->execute([$login]);
-    $user = $stmt->fetch();
-
-    if ($user === false) {
+    if ($uzytkownik === null) {
         fwrite(STDERR, 'Nie ma konta o loginie "' . $login . '".' . PHP_EOL);
         exit(1);
     }
 
-    $stmt = $db->prepare('UPDATE uzytkownicy SET saldo = saldo + ? WHERE id = ?');
-    $stmt->execute([$kwota, (int) $user['id']]);
+    $portfel = $uzytkownik->portfel($db);
+    $przed = $portfel->saldo;
 
-    echo sprintf(
-        '%s: %.2f -> %.2f%s',
-        $login,
-        (float) $user['saldo'],
-        (float) $user['saldo'] + $kwota,
-        PHP_EOL
-    );
+    $portfel->dodajSrodki($kwota);
+
+    echo sprintf('%s: %.2f -> %.2f%s', $login, $przed, $portfel->saldo, PHP_EOL);
 }
 
-foreach ($allUsers() as $user) {
-    echo sprintf("  #%-4d %-20s %10.2f\n", $user['id'], $user['login'], $user['saldo']);
-}
+$printAll();

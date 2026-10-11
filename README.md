@@ -16,7 +16,7 @@ Strona z elementami hazardu z nagrodami o różnych wartościach, oparta na wirt
 ## Szybki start
 
 ```bash
-php database/migrate.php --fresh   # baza + dane startowe (6 łowisk, 54 ryby)
+php database/migrate.php --fresh   # baza + dane startowe (6 wędek, 54 przedmioty)
 php -S localhost:8000              # serwer
 ```
 

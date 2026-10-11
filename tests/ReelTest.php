@@ -28,7 +28,7 @@ final class ReelTest extends TestCase
         $reel = Reel::build($this->pula(), $this->wygrana(), 60, 54);
 
         $this->assertSame('Marlin Błękitny', $reel[54]['nazwa'], 'Pod indeksem wygranej musi być wygrana ryba');
-        $this->assertSame(4, $reel[54]['ryba_id'], 'Pod indeksem wygranej musi być poprawne id ryby');
+        $this->assertSame(4, $reel[54]['przedmiot_id'], 'Pod indeksem wygranej musi być poprawne id przedmioty');
     }
 
     public function testWygranaZawszeJestNaSwoimMiejscuNiezaleznieOdGeneratora(): void
@@ -137,7 +137,7 @@ final class ReelTest extends TestCase
     private function element(int $id, string $nazwa, string $kod, string $rzadkosc, string $kolor, float $wartosc, string $ikona): array
     {
         return [
-            'ryba_id' => $id,
+            'przedmiot_id' => $id,
             'nazwa' => $nazwa,
             'rzadkosc_kod' => $kod,
             'rzadkosc_nazwa' => $rzadkosc,

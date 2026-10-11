@@ -6,7 +6,7 @@ namespace MocnyDrop\Tests;
 
 use MocnyDrop\ApiException;
 use MocnyDrop\Database;
-use MocnyDrop\Rarity;
+use MocnyDrop\Rzadkosc;
 use PDO;
 use Throwable;
 
@@ -34,16 +34,16 @@ abstract class TestCase
 
         Database::setConnection($this->db);
 
-        // Rarity cache'uje poziomy rzadkości per proces. Bez czyszczenia
+        // Rzadkosc cache'uje poziomy rzadkości per proces. Bez czyszczenia
         // pierwszy test "zamroziłby" dane i reszta czytałaby je z cache.
-        Rarity::clearCache();
+        Rzadkosc::clearCache();
     }
 
     public function tearDown(): void
     {
         Database::setConnection(null);
         Database::reset();
-        Rarity::clearCache();
+        Rzadkosc::clearCache();
     }
 
     public function assertionCount(): int
@@ -139,7 +139,7 @@ abstract class TestCase
 
     /**
      * Przeciwieństwo assertNotNull().
-     * Potrzebne m.in. dla Auth::authenticate() i Auth::bearerToken(),
+     * Potrzebne m.in. dla Token::uwierzytelnij() i Token::bearerToken(),
      * które sygnalizują odrzucenie przez null, a nie przez wyjątek.
      */
     protected function assertNull(mixed $value, string $message): void

@@ -1,7 +1,7 @@
 /**
  * public/assets/js/fishing/contract.js
  *
- * Walidacja odpowiedzi `api/cast.php` po stronie frontendu.
+ * Walidacja odpowiedzi `api/fish.php` po stronie frontendu.
  *
  * Dlaczego osobny moduł (a nie metoda komponentu): to czysta funkcja bez DOM,
  * więc można ją uruchomić w Node (`dev/check-fishing.mjs`) i sprawdzić na
@@ -10,7 +10,7 @@
  * Kontrakt (backend/Reel.php + backend/FishingService.php):
  *   - `reel` ma `reel_dlugosc` pozycji,
  *   - wygrana ryba leży pod `reel_indeks_wygranej`,
- *   - `reel[reel_indeks_wygranej]` to TA SAMA ryba co `zlowiona_ryba`,
+ *   - `reel[reel_indeks_wygranej]` to TA SAMA ryba co `przedmiot`,
  *   - wynik jest ustalony na serwerze, więc frontend nic nie losuje.
  *
  * Właściciel: @KubeKoslaw (Core Backend)
@@ -27,9 +27,9 @@ export class ContractError extends Error {
   }
 }
 
-/** Pola `zlowiona_ryba`, bez których karta wygranej nie miałaby czego pokazać. */
-export const REQUIRED_FISH_FIELDS = Object.freeze([
-  'ryba_id',
+/** Pola `przedmiot`, bez których karta wygranej nie miałaby czego pokazać. */
+export const REQUIRED_PRZEDMIOT_FIELDS = Object.freeze([
+  'przedmiot_id',
   'nazwa',
   'rzadkosc',
   'rzadkosc_kod',
@@ -39,28 +39,28 @@ export const REQUIRED_FISH_FIELDS = Object.freeze([
 ]);
 
 /**
- * Sprawdza payload z cast.php i zwraca `zlowiona_ryba`.
+ * Sprawdza payload z fish.php i zwraca `przedmiot`.
  * Rzuca ContractError, gdy odpowiedź nie nadaje się do animacji — wolimy
  * czytelny błąd niż ciche "animujmy cokolwiek".
  *
  * @param {any} payload
  * @returns {Record<string, any>}
  */
-export function validateCastPayload(payload) {
+export function validateFishPayload(payload) {
   if (!payload || typeof payload !== 'object') {
     throw new ContractError('Brak payloadu z wynikiem połowu.');
   }
 
-  const fish = payload.zlowiona_ryba;
+  const fish = payload.przedmiot;
 
   if (!fish || typeof fish !== 'object') {
-    throw new ContractError('Odpowiedź nie zawiera obiektu `zlowiona_ryba`.');
+    throw new ContractError('Odpowiedź nie zawiera obiektu `przedmiot`.');
   }
 
-  const missing = REQUIRED_FISH_FIELDS.filter((field) => fish[field] === undefined || fish[field] === null);
+  const missing = REQUIRED_PRZEDMIOT_FIELDS.filter((field) => fish[field] === undefined || fish[field] === null);
 
   if (missing.length > 0) {
-    throw new ContractError('W `zlowiona_ryba` brakuje pól: ' + missing.join(', ') + '.');
+    throw new ContractError('W `przedmiot` brakuje pól: ' + missing.join(', ') + '.');
   }
 
   if (!Array.isArray(payload.reel) || payload.reel.length === 0) {
@@ -86,7 +86,7 @@ export function validateCastPayload(payload) {
   // więc tylko ostrzegamy (wynik połowu i tak jest już zapisany w bazie).
   ['saldo_przed', 'saldo_po'].forEach((field) => {
     if (typeof payload[field] !== 'number') {
-      console.warn('[fishing-contract] brak liczbowego `' + field + '` w odpowiedzi cast.php');
+      console.warn('[fishing-contract] brak liczbowego `' + field + '` w odpowiedzi fish.php');
     }
   });
 
@@ -95,7 +95,7 @@ export function validateCastPayload(payload) {
 
 /**
  * Miękka kontrola spójności: wygrana pozycja paska ma być tą samą rybą co
- * `zlowiona_ryba`. Zwraca komunikat ostrzeżenia albo null, gdy jest zgodne.
+ * `przedmiot`. Zwraca komunikat ostrzeżenia albo null, gdy jest zgodne.
  *
  * To wczesny alarm, gdyby ktoś zmienił backend/Reel.php albo ustawienia
  * `reel_indeks_wygranej` bez aktualizacji frontendu.
@@ -103,19 +103,19 @@ export function validateCastPayload(payload) {
 export function reelWinnerMismatch(payload) {
   if (!payload || !Array.isArray(payload.reel)) { return null; }
 
-  const fish = payload.zlowiona_ryba;
+  const fish = payload.przedmiot;
   const index = payload.reel_indeks_wygranej;
 
   if (!fish || !Number.isInteger(index)) { return null; }
 
   const winner = payload.reel[index];
 
-  if (!winner || winner.ryba_id === undefined || fish.ryba_id === undefined) { return null; }
+  if (!winner || winner.przedmiot_id === undefined || fish.przedmiot_id === undefined) { return null; }
 
-  if (Number(winner.ryba_id) === Number(fish.ryba_id)) { return null; }
+  if (Number(winner.przedmiot_id) === Number(fish.przedmiot_id)) { return null; }
 
-  return 'reel[' + index + '].ryba_id (' + winner.ryba_id + ') != zlowiona_ryba.ryba_id ('
-    + fish.ryba_id + ')';
+  return 'reel[' + index + '].przedmiot_id (' + winner.przedmiot_id + ') != przedmiot.przedmiot_id ('
+    + fish.przedmiot_id + ')';
 }
 
 /**
@@ -124,7 +124,7 @@ export function reelWinnerMismatch(payload) {
  */
 export function isContractValid(payload) {
   try {
-    validateCastPayload(payload);
+    validateFishPayload(payload);
   } catch (error) {
     return false;
   }

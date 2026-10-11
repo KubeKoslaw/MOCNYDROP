@@ -22,6 +22,7 @@ final class Settings
 {
     /** Klucze używane przez backend — jedna lista, żeby nie szukać po kodzie. */
     public const KEY_START_BALANCE = 'saldo_startowe';
+    public const KEY_CURRENCY = 'waluta';
     public const KEY_REEL_LENGTH = 'reel_dlugosc';
     public const KEY_REEL_WINNER_INDEX = 'reel_indeks_wygranej';
     public const KEY_TOKEN_HOURS = 'token_waznosc_godz';

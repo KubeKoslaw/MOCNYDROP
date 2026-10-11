@@ -76,6 +76,16 @@ final class ApiException extends RuntimeException
         return new self($message, $kod, 409);
     }
 
+    /**
+     * 501 — element opisany w diagramach, ale jeszcze niezaimplementowany
+     * (np. Administrator::edytujSkrzynke przed zbudowaniem trybu skrzynek).
+     * Osobny kod, żeby frontend odróżnił „zepsute" od „jeszcze nie ma".
+     */
+    public static function notImplemented(string $message, string $kod = 'not_implemented'): self
+    {
+        return new self($message, $kod, 501);
+    }
+
     /** Spójny format kwot w komunikatach — 2 miejsca, bez ogonka ".0". */
     public static function money(float $amount): string
     {

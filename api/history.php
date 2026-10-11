@@ -8,20 +8,22 @@ declare(strict_types=1);
  *
  * Query (opcjonalne): ?limit=20  (1–100, domyślnie 20)
  *
- * Historia połowów gracza + rozkład trafień per poziom rzadkości.
+ * Historia losowań gracza (asocjacja Uzytkownik — Losowanie «historia» z
+ * diagramu klas) + rozkład trafień per poziom rzadkości.
  *
  * Właściciel: @KubeKoslaw (Core Backend)
  */
 
-use MocnyDrop\Auth;
-use MocnyDrop\HistoryRepository;
 use MocnyDrop\Json;
+use MocnyDrop\Losowanie;
+use MocnyDrop\Token;
+use MocnyDrop\TypLosowania;
 
 require_once __DIR__ . '/_bootstrap.php';
 
 Json::requireMethod('GET');
 
-$user = Auth::requireAuth();
+$uzytkownik = Token::wymagajZalogowania();
 
 $rawLimit = $_GET['limit'] ?? '20';
 $limit = is_scalar($rawLimit) && preg_match('/^\d+$/', trim((string) $rawLimit)) === 1
@@ -29,6 +31,7 @@ $limit = is_scalar($rawLimit) && preg_match('/^\d+$/', trim((string) $rawLimit))
     : 20;
 
 Json::success([
-    'historia' => HistoryRepository::recent($user['id'], $limit),
-    'rozbicie_rzadkosci' => HistoryRepository::rarityBreakdown($user['id']),
+    'historia' => Losowanie::historia($uzytkownik->id, $limit),
+    'rozbicie_rzadkosci' => Losowanie::rozbicieRzadkosci($uzytkownik->id),
+    'rtp' => Losowanie::rtpDlaTypu(TypLosowania::Wedka),
 ]);

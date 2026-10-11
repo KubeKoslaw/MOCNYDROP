@@ -17,13 +17,17 @@ use PDO;
  * Ikony wskazują prawdziwe pliki z assets/icons/, żeby testy sprawdzały
  * też poprawność ścieżek, a nie tylko logikę.
  *
+ * Nazwy fixture odzwierciedlają klasy z diagramu klas: `user()` tworzy
+ * Uzytkownik wraz z Portfelem (kompozycja 1:1), `wedka()` — Wedka,
+ * `przedmiot()` — Przedmiot w puli wędki.
+ *
  * Właściciel: @KubeKoslaw (Core Backend)
  */
 final class Fixtures
 {
     /**
      * Pula odpowiadająca dokładnie tabeli wag z README.md:
-     * jedna ryba na każdy z 6 poziomów rzadkości, wagi dziedziczone (NULL).
+     * jeden przedmiot na każdy z 6 poziomów rzadkości, wagi dziedziczone (NULL).
      *
      * suma wag = 50 + 30 + 15 + 4 + 1 + 0.001 = 100.001
      *
@@ -40,42 +44,59 @@ final class Fixtures
 
     public const HASLO = 'haslo1234';
 
-    /** Tworzy gracza z podanym saldem. @return array{id: int, login: string, password: string} */
-    public static function user(PDO $db, string $login = 'tester', float $saldo = 1000.0): array
+    /**
+     * Tworzy gracza (Uzytkownik) razem z Portfelem o podanym saldzie.
+     *
+     * @return array{id: int, login: string, password: string}
+     */
+    public static function user(PDO $db, string $login = 'tester', float $saldo = 1000.0, string $rola = 'user'): array
     {
         $stmt = $db->prepare(
-            'INSERT INTO uzytkownicy (login, email, haslo_hash, rola, saldo)
-             VALUES (?, ?, ?, ?, ?)'
+            'INSERT INTO uzytkownicy (login, email, haslo_hash, zablokowany, rola)
+             VALUES (?, ?, ?, 0, ?)'
         );
         $stmt->execute([
             $login,
             strtolower($login) . '@test.local',
             password_hash(self::HASLO, PASSWORD_DEFAULT),
-            'user',
-            $saldo,
+            $rola,
         ]);
 
-        return ['id' => (int) $db->lastInsertId(), 'login' => $login, 'password' => self::HASLO];
+        $userId = (int) $db->lastInsertId();
+
+        // Kompozycja Uzytkownik ◆— Portfel (1:1): konto bez portfela nie istnieje.
+        $stmt = $db->prepare('INSERT INTO portfele (user_id, saldo, waluta) VALUES (?, ?, ?)');
+        $stmt->execute([$userId, $saldo, 'monety']);
+
+        return ['id' => $userId, 'login' => $login, 'password' => self::HASLO];
     }
 
-    public static function spot(PDO $db, string $nazwa = 'Jezioro', float $koszt = 10.0, int $kolejnosc = 0): int
+    /** Wpisuje blokadę konta (atrybut `zablokowany` z diagramu). */
+    public static function zablokuj(PDO $db, int $userId, bool $zablokowany = true): void
+    {
+        $stmt = $db->prepare('UPDATE uzytkownicy SET zablokowany = ? WHERE id = ?');
+        $stmt->execute([$zablokowany ? 1 : 0, $userId]);
+    }
+
+    /** Tworzy wędkę (klasa Wedka) i zwraca jej id. */
+    public static function wedka(PDO $db, string $nazwa = 'Wędka Testowa', float $koszt = 10.0, int $kolejnosc = 0): int
     {
         $stmt = $db->prepare(
-            'INSERT INTO lowiska (nazwa, opis, koszt_zarzutu, ikona, czy_aktywne, kolejnosc)
+            'INSERT INTO wedki (nazwa, opis, koszt_uzycia, ikona, czy_aktywna, kolejnosc)
              VALUES (?, ?, ?, ?, 1, ?)'
         );
-        $stmt->execute([$nazwa, 'Łowisko testowe: ' . $nazwa, $koszt, '', $kolejnosc]);
+        $stmt->execute([$nazwa, 'Wędka testowa: ' . $nazwa, $koszt, '', $kolejnosc]);
 
         return (int) $db->lastInsertId();
     }
 
     /**
-     * Dodaje rybę do katalogu i od razu podpina ją pod łowisko.
+     * Dodaje przedmiot do katalogu i od razu podpina go pod wędkę.
      * $waga = NULL oznacza dziedziczenie wagi domyślnej poziomu rzadkości.
      */
-    public static function fish(
+    public static function przedmiot(
         PDO $db,
-        int $spotId,
+        int $wedkaId,
         string $nazwa,
         string $kod,
         float $wartosc,
@@ -83,32 +104,32 @@ final class Fixtures
         string $ikona = 'anchovy.png'
     ): int {
         $stmt = $db->prepare(
-            'INSERT INTO ryby (nazwa, rzadkosc_kod, wartosc, ikona, opis, czy_aktywna)
+            'INSERT INTO przedmioty (nazwa, rzadkosc_kod, wartosc, ikona, opis, czy_aktywny)
              VALUES (?, ?, ?, ?, ?, 1)'
         );
         $stmt->execute([$nazwa, $kod, $wartosc, $ikona, '']);
 
-        $rybaId = (int) $db->lastInsertId();
+        $przedmiotId = (int) $db->lastInsertId();
 
-        $stmt = $db->prepare('INSERT INTO lowisko_ryby (lowisko_id, ryba_id, waga) VALUES (?, ?, ?)');
-        $stmt->execute([$spotId, $rybaId, $waga]);
+        $stmt = $db->prepare('INSERT INTO wedka_przedmioty (wedka_id, przedmiot_id, waga) VALUES (?, ?, ?)');
+        $stmt->execute([$wedkaId, $przedmiotId, $waga]);
 
-        return $rybaId;
+        return $przedmiotId;
     }
 
     /**
-     * Łowisko z pulą dokładnie jak w README.md.
+     * Wędka z pulą dokładnie jak w README.md.
      * Główna fixture testów rozkładu losowania.
      */
-    public static function readmeSpot(PDO $db, float $koszt = 10.0): int
+    public static function readmeWedka(PDO $db, float $koszt = 10.0): int
     {
-        $spotId = self::spot($db, 'Jezioro README', $koszt);
+        $wedkaId = self::wedka($db, 'Wędka README', $koszt);
 
-        foreach (self::PULA_README as $fish) {
-            self::fish($db, $spotId, $fish['nazwa'], $fish['kod'], $fish['wartosc'], null, $fish['ikona']);
+        foreach (self::PULA_README as $item) {
+            self::przedmiot($db, $wedkaId, $item['nazwa'], $item['kod'], $item['wartosc'], null, $item['ikona']);
         }
 
-        return $spotId;
+        return $wedkaId;
     }
 
     /**

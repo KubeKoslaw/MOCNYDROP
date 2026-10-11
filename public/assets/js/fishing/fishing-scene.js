@@ -8,10 +8,10 @@
  *   idle -> requesting -> casting -> waiting -> bite -> reeling -> reveal
  *
  * Kontrakt z backendem (bez zmian w logice losowania):
- *   1. najpierw POST api/cast.php i CZEKAMY na odpowiedź,
+ *   1. najpierw POST api/fish.php i CZEKAMY na odpowiedź,
  *   2. potem animacja: pod wodą przewija się `reel` i zatrzymuje dokładnie na
  *      `reel_indeks_wygranej` — to jest moment brania,
- *   3. dopiero po braniu wyciągamy `zlowiona_ryba` i pokazujemy kartę,
+ *   3. dopiero po braniu wyciągamy `przedmiot` i pokazujemy kartę,
  *   4. saldo aktualizujemy z `saldo_po`.
  *
  * W przeglądarce nie ma ani jednego losowania wyniku — `Math.random()` używamy
@@ -48,7 +48,7 @@ import {
 } from './timeline.js';
 import { ReelLane, safeIconUrl } from './reel-lane.js';
 import { ApiError, createApi } from './api.js';
-import { reelWinnerMismatch, validateCastPayload } from './contract.js';
+import { reelWinnerMismatch, validateFishPayload } from './contract.js';
 
 /**
  * Szablon sceny. Celowo jako string + innerHTML: komponent nie ma zależności
@@ -67,7 +67,7 @@ const TEMPLATE = `
     <div class="fs-wave fs-wave--a"></div>
     <div class="fs-wave fs-wave--b"></div>
 
-    <!-- podwodny pasek ruletki: pole "reel" z api/cast.php (w tym komentarzu
+    <!-- podwodny pasek ruletki: pole "reel" z api/fish.php (w tym komentarzu
          nie uzywamy backtickow - jestesmy wewnatrz template literal) -->
     <div class="fs-lane" data-ref="lane" aria-hidden="true">
       <div class="fs-lane-track" data-ref="lane-track"></div>
@@ -198,11 +198,11 @@ function percent(value) {
  *   `phasechange` { phase }         — każda zmiana stanu (HUD / debugowanie)
  *   `catch`       { payload, fish } — po wyłowieniu (tu strona aktualizuje saldo)
  *   `error`       { kod, message }  — błąd API albo walidacji payloadu
- *   `castrequest` { spotId }        — klik w przycisk bez wybranego łowiska
+ *   `castrequest` { rodId }        — klik w przycisk bez wybranej wędki
  */
 export class FishingScene extends HTMLElement {
   static get observedAttributes() {
-    return ['spot-id', 'spot-name', 'cost', 'label', 'reduced', 'show-lane', 'api-base', 'token-key'];
+    return ['rod-id', 'rod-name', 'cost', 'label', 'reduced', 'show-lane', 'api-base', 'token-key'];
   }
 
   /* Pola prywatne muszą być zadeklarowane — przypisanie do niezadeklarowanego
@@ -211,7 +211,7 @@ export class FishingScene extends HTMLElement {
   #busy = false;
   #runPromise = null;
   #phase = PHASES.IDLE;
-  #spotId = null;
+  #rodId = null;
   #closeWaiter = null;
   #resizeObserver = null;
   #reduced = false;
@@ -510,7 +510,7 @@ export class FishingScene extends HTMLElement {
       this.refs.castBtn.textContent = label;
     }
 
-    const name = this.getAttribute('spot-name');
+    const name = this.getAttribute('rod-name');
     const cost = this.getAttribute('cost');
 
     this.refs.cost.textContent = '';
@@ -531,17 +531,17 @@ export class FishingScene extends HTMLElement {
   #onCastClick() {
     if (this.#busy || this.#phase !== PHASES.IDLE) { return; }
 
-    if (this.#spotId === null) {
-      // Strona nie wybrała jeszcze łowiska — niech sama zdecyduje (np. listą kafli).
+    if (this.#rodId === null) {
+      // Strona nie wybrała jeszcze wędki — niech sama zdecyduje (np. listą kafli).
       this.dispatchEvent(new CustomEvent('castrequest', {
-        detail: { spotId: null },
+        detail: { rodId: null },
         bubbles: true,
       }));
 
       return;
     }
 
-    this.cast(this.#spotId);
+    this.cast(this.#rodId);
   }
 
   /* --- fazy ------------------------------------------------------------- */
@@ -573,7 +573,7 @@ export class FishingScene extends HTMLElement {
 
   get busy() { return this.#busy; }
 
-  get spotId() { return this.#spotId; }
+  get rodId() { return this.#rodId; }
 
   get reduced() { return this.#reduced; }
 
@@ -687,20 +687,20 @@ export class FishingScene extends HTMLElement {
   /* --- API publiczne komponentu ----------------------------------------- */
 
   /**
-   * Wybiera łowisko (bez zarzutu) — np. po kliknięciu kafla z listy łowisk.
+   * Wybiera wędkę (bez zarzutu) — np. po kliknięciu kafla z listy wędek.
    * Dzięki temu przycisk w scenie wie, gdzie rzucać, a pod spodem widać koszt.
    *
-   * @param {number|string|null} spotId
+   * @param {number|string|null} rodId
    * @param {{ nazwa?: string, koszt?: number|string }} [meta]
    */
-  select(spotId, meta = {}) {
-    this.#spotId = (spotId === null || spotId === undefined || spotId === '')
+  select(rodId, meta = {}) {
+    this.#rodId = (rodId === null || rodId === undefined || rodId === '')
       ? null
-      : Number(spotId);
+      : Number(rodId);
 
-    if (meta.nazwa !== undefined) { this.setAttribute('spot-name', String(meta.nazwa)); }
+    if (meta.nazwa !== undefined) { this.setAttribute('rod-name', String(meta.nazwa)); }
     if (meta.koszt !== undefined) { this.setAttribute('cost', String(meta.koszt)); }
-    if (this.#spotId !== null) { this.setAttribute('spot-id', String(this.#spotId)); }
+    if (this.#rodId !== null) { this.setAttribute('rod-id', String(this.#rodId)); }
 
     this.#syncLabels();
 
@@ -708,18 +708,18 @@ export class FishingScene extends HTMLElement {
   }
 
   /**
-   * Pełny obieg: POST api/cast.php -> animacja -> karta wygranej.
+   * Pełny obieg: POST api/fish.php -> animacja -> karta wygranej.
    * Promise rozwiązuje się po zamknięciu karty (albo zwraca null po błędzie).
    *
    * Kolejność jest wymuszona przez kontrakt backendu: NAJPIERW odpowiedź,
    * POTEM animacja. Przerwanie animacji nie zmienia wyniku — ryba jest już
    * w ekwipunku i w historii połowów.
    */
-  async cast(spotId = this.#spotId) {
-    const id = Number(spotId);
+  async cast(rodId = this.#rodId) {
+    const id = Number(rodId);
 
     if (!Number.isFinite(id)) {
-      this.#fail(new ApiError('Nie wybrano łowiska.', 'missing_field', 0));
+      this.#fail(new ApiError('Nie wybrano wędki.', 'missing_field', 0));
       return null;
     }
 
@@ -841,17 +841,17 @@ export class FishingScene extends HTMLElement {
   /* --- karta wygranej i błędy ------------------------------------------- */
 
   /**
-   * Wypełnia kartę danymi z `zlowiona_ryba`. Kolory rzadkości bierzemy z API
+   * Wypełnia kartę danymi z `przedmiot`. Kolory rzadkości bierzemy z API
    * (pole `kolor`), a nie z CSS — zmiana w bazie trafia na stronę bez redeployu.
    */
   #fillCard(payload) {
-    const fish = payload.zlowiona_ryba;
+    const fish = payload.przedmiot;
     const refs = this.refs;
     const color = String(fish.kolor || '#22d3ee');
 
     refs.card.style.setProperty('--fs-rarity', color);
-    refs.cardKicker.textContent = payload.lowisko && payload.lowisko.nazwa
-      ? 'Złowiono • ' + payload.lowisko.nazwa
+    refs.cardKicker.textContent = payload.wedka && payload.wedka.nazwa
+      ? 'Złowiono • ' + payload.wedka.nazwa
       : 'Złowiono';
 
     const icon = safeIconUrl(fish.ikona);
@@ -867,7 +867,7 @@ export class FishingScene extends HTMLElement {
 
     const cost = payload.rzut && payload.rzut.koszt !== undefined
       ? payload.rzut.koszt
-      : (payload.lowisko ? payload.lowisko.koszt_zarzutu : 0);
+      : (payload.wedka ? payload.wedka.koszt_uzycia : 0);
 
     refs.cardCost.textContent = money(cost) + ' monet';
 
@@ -953,7 +953,7 @@ export class FishingScene extends HTMLElement {
 
   /** "Zarzuć ponownie" z karty wygranej — najpierw domykamy bieżący bieg. */
   async #again() {
-    const spotId = this.#spotId;
+    const rodId = this.#rodId;
     const run = this.#runPromise;
 
     this.#closeReveal();
@@ -966,8 +966,8 @@ export class FishingScene extends HTMLElement {
       }
     }
 
-    if (spotId !== null) {
-      await this.cast(spotId);
+    if (rodId !== null) {
+      await this.cast(rodId);
     } else {
       this.#onCastClick();
     }
@@ -979,13 +979,13 @@ export class FishingScene extends HTMLElement {
      komponentu) — wtedy sekwencja przerywa bez dotykania DOM.               */
 
   /**
-   * Pilnuje kontraktu z api/cast.php — reguły mieszkają w contract.js, żeby dało
+   * Pilnuje kontraktu z api/fish.php — reguły mieszkają w contract.js, żeby dało
    * się je uruchomić w Node (dev/check-fishing.mjs) na prawdziwej odpowiedzi API.
    * Gdyby backend zwrócił pasek bez wygranej pozycji, animacja nie miałaby czego
    * pokazać — wolimy czytelny błąd niż ciche "wylosujmy coś sobie sami".
    */
   #validate(payload) {
-    const fish = validateCastPayload(payload);
+    const fish = validateFishPayload(payload);
     const mismatch = reelWinnerMismatch(payload);
 
     // Miękka kontrola spójności: wygrana pozycja paska ma być tą samą rybą.
@@ -1073,7 +1073,7 @@ export class FishingScene extends HTMLElement {
   /**
    * Oczekiwanie na branie = przewijanie paska `reel` pod wodą.
    * Pasek zatrzymuje się na `reel_indeks_wygranej` i TO jest sygnał brania —
-   * dokładnie tak, jak umówione w backend/Reel.php i api/cast.php.
+   * dokładnie tak, jak umówione w backend/Reel.php i api/fish.php.
    */
   async #runWaiting(payload, token) {
     this.#setPhase(PHASES.WAITING);

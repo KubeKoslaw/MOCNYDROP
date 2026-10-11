@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace MocnyDrop\Tests;
 
-use MocnyDrop\Rarity;
+use MocnyDrop\Rzadkosc;
 
 /**
- * tests/RarityTest.php
+ * tests/RzadkoscTest.php
  *
  * Testy słownika rzadkości.
  *
@@ -18,7 +18,7 @@ use MocnyDrop\Rarity;
  *
  * Właściciel: @KubeKoslaw (Core Backend)
  */
-final class RarityTest extends TestCase
+final class RzadkoscTest extends TestCase
 {
     /** Wagi przepisane 1:1 z tabeli w README.md. */
     private const WAGI_README = [
@@ -32,7 +32,7 @@ final class RarityTest extends TestCase
 
     public function testSchematZawieraSzescPoziomowZReadme(): void
     {
-        $all = Rarity::all($this->db);
+        $all = Rzadkosc::wszystkie($this->db);
 
         $this->assertCount(6, $all, 'README.md definiuje dokładnie 6 poziomów rzadkości');
         $this->assertSame(array_keys(self::WAGI_README), array_keys($all), 'Kody poziomów i ich kolejność');
@@ -41,7 +41,7 @@ final class RarityTest extends TestCase
     public function testWagiSaZgodneZReadme(): void
     {
         foreach (self::WAGI_README as $kod => $waga) {
-            $this->assertFloat($waga, Rarity::defaultWeight($kod, $this->db), 'Waga poziomu ' . $kod);
+            $this->assertFloat($waga, Rzadkosc::wagaDomyslna($kod, $this->db), 'Waga poziomu ' . $kod);
         }
     }
 
@@ -51,9 +51,9 @@ final class RarityTest extends TestCase
      */
     public function testWagaUltraRzadkiejNieJestZaokraglanaDoZera(): void
     {
-        $waga = Rarity::defaultWeight('ultra', $this->db);
+        $waga = Rzadkosc::wagaDomyslna('ultra', $this->db);
 
-        $this->assertTrue($waga > 0.0, 'Waga poziomu ULTRA musi być dodatnia — 0 oznaczałoby utratę ryby z gry');
+        $this->assertTrue($waga > 0.0, 'Waga poziomu ULTRA musi być dodatnia — 0 oznaczałoby utratę przedmiotów z gry');
         $this->assertFloat(0.001, $waga, 'Waga poziomu ULTRA musi być ułamkowa');
         $this->assertTrue($waga < 1.0, 'Waga ULTRA musi być mniejsza od wagi poziomu Niesamowita');
     }
@@ -61,8 +61,8 @@ final class RarityTest extends TestCase
     public function testSumaWagZReadme(): void
     {
         $suma = array_sum(array_map(
-            static fn (array $r): float => (float) $r['waga_domyslna'],
-            Rarity::all($this->db)
+            static fn (Rzadkosc $r): float => $r->wagaDomyslna,
+            Rzadkosc::wszystkie($this->db)
         ));
 
         $this->assertFloat(100.001, $suma, 'Suma wag domyślnych — tyle ile w tabeli README.md');
@@ -70,13 +70,13 @@ final class RarityTest extends TestCase
 
     public function testKolejnoscJestRosnaca(): void
     {
-        // array_values(): Rarity::all() jest kluczowane kodem poziomu, a array_map
+        // array_values(): Rzadkosc::wszystkie() jest kluczowane kodem poziomu, a array_map
         // zachowuje klucze. sort() natomiast numeruje od zera — bez array_values()
         // assertSame() porównywałoby [pospolita=>1, ...] z [0=>1, ...] i test
         // oblewałby się mimo poprawnej kolejności.
         $kolejnosci = array_values(array_map(
-            static fn (array $r): int => (int) $r['kolejnosc'],
-            Rarity::all($this->db)
+            static fn (Rzadkosc $r): int => $r->kolejnosc,
+            Rzadkosc::wszystkie($this->db)
         ));
 
         $posortowane = $kolejnosci;
@@ -89,27 +89,27 @@ final class RarityTest extends TestCase
     /** Frontend bierze kolory z API, więc muszą być w poprawnym formacie CSS. */
     public function testKolorySaWFormacieHex(): void
     {
-        foreach (Rarity::all($this->db) as $kod => $rzadkosc) {
+        foreach (Rzadkosc::wszystkie($this->db) as $kod => $rzadkosc) {
             $this->assertTrue(
-                preg_match('/^#[0-9a-fA-F]{6}$/', (string) $rzadkosc['kolor']) === 1,
-                'Kolor poziomu ' . $kod . ' musi być w formacie #RRGGBB, jest: ' . $rzadkosc['kolor']
+                preg_match('/^#[0-9a-fA-F]{6}$/', $rzadkosc->kolor) === 1,
+                'Kolor poziomu ' . $kod . ' musi być w formacie #RRGGBB, jest: ' . $rzadkosc->kolor
             );
         }
     }
 
     public function testNazwyPoziomowSaZgodneZReadme(): void
     {
-        $this->assertSame('Pospolita', Rarity::label('pospolita', $this->db), 'Nazwa poziomu 1');
-        $this->assertSame('ULTRA MEGA NIESAMOWITA', Rarity::label('ultra', $this->db), 'Nazwa poziomu 6');
+        $this->assertSame('Pospolita', Rzadkosc::get('pospolita', $this->db)->nazwa, 'Nazwa poziomu 1');
+        $this->assertSame('ULTRA MEGA NIESAMOWITA', Rzadkosc::get('ultra', $this->db)->nazwa, 'Nazwa poziomu 6');
     }
 
     public function testNieznanyPoziomRzucaWyjatek(): void
     {
-        $this->assertFalse(Rarity::exists('legendarna', $this->db), 'Poziom "Legendarna" z porzuconego brancha nie istnieje w aktualnym schemacie');
+        $this->assertFalse(Rzadkosc::exists('legendarna', $this->db), 'Poziom "Legendarna" z porzuconego brancha nie istnieje w aktualnym schemacie');
 
         $this->assertThrows(
             \RuntimeException::class,
-            fn (): string => Rarity::label('nie_ma_takiego', $this->db),
+            fn (): string => Rzadkosc::get('nie_ma_takiego', $this->db)->nazwa,
             'Nieznany kod rzadkości powinien rzucić wyjątek'
         );
     }
@@ -117,10 +117,22 @@ final class RarityTest extends TestCase
     /** Cache musi być czyszczony między testami, inaczej czytałyby starą bazę. */
     public function testCacheNiePrzeciekaMiedzyBazami(): void
     {
-        $przed = Rarity::all($this->db);
+        $przed = Rzadkosc::wszystkie($this->db);
 
-        Rarity::clearCache();
+        Rzadkosc::clearCache();
 
-        $this->assertSame($przed, Rarity::all($this->db), 'Po wyczyszczeniu cache wynik musi być identyczny');
+        // Porównujemy kształt API, a nie tożsamość obiektów: po czyszczeniu
+        // cache Rzadkosc::wszystkie() zwraca NOWE instancje, więc === na
+        // obiektach zawsze by oblalo test mimo identycznych danych.
+        $doApi = static fn (array $zbiór): array => array_map(
+            static fn (Rzadkosc $r): array => $r->doApi(),
+            $zbiór
+        );
+
+        $this->assertSame(
+            $doApi($przed),
+            $doApi(Rzadkosc::wszystkie($this->db)),
+            'Po wyczyszczeniu cache wynik musi być identyczny'
+        );
     }
 }

@@ -6,7 +6,7 @@
  * "czucie" łowienia bez dotykania logiki komponentu.
  *
  * WAŻNE: nie ma tu żadnego losowania wyniku. Wynik przychodzi z serwera
- * (api/cast.php), a te stałe opisują wyłącznie prezentację.
+ * (api/fish.php), a te stałe opisują wyłącznie prezentację.
  *
  * Właściciel: @KubeKoslaw (Core Backend)
  */
@@ -14,7 +14,7 @@
 /** Fazy sceny — trafiają do `data-phase` na `.fs-stage`. */
 export const PHASES = Object.freeze({
   IDLE: 'idle',             // tafl wody, spławik wisi, przycisk aktywny
-  REQUESTING: 'requesting', // klik -> czekamy na odpowiedź api/cast.php
+  REQUESTING: 'requesting', // klik -> czekamy na odpowiedź api/fish.php
   CASTING: 'casting',       // zamach, lot spławika, plusk
   WAITING: 'waiting',       // fale + podwodna parada ryb (pasek `reel`)
   BITE: 'bite',             // gwałtowne zanurzenie spławika i zacięcie

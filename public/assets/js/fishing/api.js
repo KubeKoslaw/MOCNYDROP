@@ -8,7 +8,7 @@
  *   błąd:   { "success": false, "error": "...", "kod": "..." }
  *
  * Frontend rozróżnia błędy po `kod`, nie po tekście — tekst może się zmienić,
- * kod jest częścią kontraktu (insufficient_funds, spot_empty, spot_inactive,
+ * kod jest częścią kontraktu (insufficient_funds, rod_empty, rod_inactive,
  * already_sold, invalid_token...).
  *
  * Właściciel: @KubeKoslaw (Core Backend)
@@ -59,7 +59,7 @@ export function createApi(options = {}) {
   const url = (path) => baseUrl.replace(/\/$/, '') + '/' + String(path).replace(/^\//, '');
 
   /**
-   * @param {string} path                            np. 'cast.php'
+   * @param {string} path                            np. 'fish.php'
    * @param {{ method?: string, body?: unknown }} [init]
    */
   async function request(path, init = {}) {
@@ -101,16 +101,16 @@ export function createApi(options = {}) {
     request,
 
     /**
-     * POST cast.php — zarzut wędką.
-     * Zwraca pełny payload (zlowiona_ryba, reel, reel_indeks_wygranej, saldo_po).
+     * POST fish.php — zarzut wędką.
+     * Zwraca pełny payload (przedmiot, reel, reel_indeks_wygranej, saldo_po).
      */
-    cast(spotId) {
-      return request('cast.php', { method: 'POST', body: { lowisko_id: Number(spotId) } });
+    cast(rodId) {
+      return request('fish.php', { method: 'POST', body: { wedka_id: Number(rodId) } });
     },
 
-    /** GET spots.php — łowiska z pulami ryb i słownikiem rzadkości. */
-    spots() {
-      return request('spots.php');
+    /** GET wedki.php — wędki z pulami przedmiotów i słownikiem rzadkości. */
+    rods() {
+      return request('wedki.php');
     },
   };
 }
