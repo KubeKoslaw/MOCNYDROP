@@ -10,8 +10,44 @@ Strona z elementami hazardu z nagrodami o różnych wartościach, oparta na wirt
 
 ## Wymagania
 
-- XAMPP (Apache + PHP + SQLite)
+- PHP 8.2+ z rozszerzeniem `pdo_sqlite` (XAMPP ma je w zestawie)
 - Dowolne IDE wspierające powyższe języki programowania *(Rekomendowane: VSCode, VSCodium, Apache NetBeans, PhpStorm itp.)*
+
+## Szybki start
+
+```bash
+php database/migrate.php --fresh   # baza + dane startowe (6 łowisk, 54 ryby)
+php -S localhost:8000              # serwer
+```
+
+Gra: <http://localhost:8000/dev/playground.html>
+
+Animacja łowienia (mock, bez logowania): <http://localhost:8000/dev/fishing-demo.html>
+
+`dev/playground.html` to tymczasowa konsola developerska do testowania API —
+docelowy layout powstanie w `public/`. Szczegóły (instalacja PHP na różnych
+systemach, XAMPP, testy, reset bazy, doładowywanie salda) są w
+[INSTRUKCJA_DLA_ZESPOLU.md](INSTRUKCJA_DLA_ZESPOLU.md#2-jak-uruchomić-lokalnie).
+
+## Animacja łowienia
+
+Zamiast otwierania skrzynki gracz łowi rybę wędką: tafla wody ze spławikiem,
+zarzut, oczekiwanie na branie, zacięcie, wyciąganie zdobyczy z wody i karta
+z wylosowanym dropem.
+
+```
+idle -> requesting -> casting -> waiting -> bite -> reeling -> reveal
+```
+
+- **Komponent:** `<fishing-scene>` — czysty HTML/CSS/JS (custom element + moduły ES,
+  bez bundlera i bez zależności), `public/assets/js/fishing/` + `public/assets/css/fishing-scene.css`.
+- **Logika losowania bez zmian:** wynik ustala serwer, a pasek `reel` z API płynie
+  pod wodą i zatrzymuje się na `reel_indeks_wygranej` — to jest moment brania.
+  W przeglądarce nie ma żadnego losowania dropu.
+- **Responsywność:** kadr 16:9 (mobile 4:5), rozmiary w `cqw` + `clamp()`,
+  obsługa `prefers-reduced-motion`.
+- Dokumentacja komponentu (atrybuty, zdarzenia, zmienne CSS, strojenie czasów):
+  [INSTRUKCJA_DLA_ZESPOLU.md — sekcja 7](INSTRUKCJA_DLA_ZESPOLU.md#7-animacja-łowienia--komponent-fishing-scene).
 
 ## Zespół
 
@@ -23,6 +59,10 @@ Podział obowiązków:
 | @moxmar26 | Treść, dane testowe i dokumentacja | 
 | @jgpostrach | JavaScript / Walidacja i interakcje |
 | @THOPA174 | Layout w HTML/CSS |
+
+> 💡 **Instrukcja dla zespołu:** architektura backendu, schemat bazy, podział
+> zadań i ściągawka z endpointów API są w pliku
+> [INSTRUKCJA_DLA_ZESPOLU.md](INSTRUKCJA_DLA_ZESPOLU.md).
 
 ## Jak to działa
 

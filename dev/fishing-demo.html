@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Strona leży w dev/, a moduły i ikony względem katalogu głównego projektu.
+     Dzięki <base> zarówno './public/assets/js/...' jak i 'assets/icons/x.png'
+     działają bez zmian z `php -S localhost:8000` i z XAMPP. -->
+<base href="../">
+<title>MOCNY DROP — scena łowienia (harness animacji)</title>
+<style>
+  :root {
+    --bg: #0b1220; --panel: #131c2e; --panel2: #1b2740; --line: #26344f;
+    --txt: #e6edf7; --muted: #8ea0bd; --accent: #22d3ee;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--txt); font: 15px/1.5 system-ui, "Segoe UI", Roboto, sans-serif; }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    padding: 14px 22px; background: var(--panel); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 5; flex-wrap: wrap;
+  }
+  .brand { font-weight: 700; font-size: 18px; }
+  .tag { font-size: 11px; font-weight: 600; color: var(--accent); border: 1px solid var(--accent);
+    border-radius: 999px; padding: 1px 8px; margin-left: 8px; vertical-align: middle; }
+  main { display: grid; gap: 16px; padding: 16px 22px 40px;
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); align-items: start; }
+  .wide { grid-column: 1 / -1; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  h2 { margin: 0 0 12px; font-size: 15px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .row:last-child { margin-bottom: 0; }
+  label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  select, input[type="number"] {
+    background: #0d1524; border: 1px solid var(--line); color: var(--txt);
+    border-radius: 8px; padding: 7px 9px; min-width: 120px;
+  }
+  button { background: var(--accent); color: #052028; border: 0; border-radius: 8px;
+    padding: 9px 14px; font-weight: 700; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--txt); border: 1px solid var(--line); font-weight: 600; }
+  button.small { padding: 5px 10px; font-size: 12.5px; }
+  .hint { color: var(--muted); font-size: 12.5px; margin: 10px 0 0; }
+  code { background: #0d1524; padding: 1px 5px; border-radius: 4px; color: #a5e9f7; }
+  /* Rama sceny: szerokość ustawiana przyciskami — sprawdza skalowanie cqw/clamp.
+     UWAGA: geometria "mobilna" komponentu jest na @media (max-width: 640px),
+     więc pełny test mobile = DevTools device mode albo wąskie okno. */
+  .stage-frame { width: 100%; max-width: 900px; margin: 0 auto; transition: width .25s ease; }
+  pre { background: #0d1524; border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px; overflow: auto; font-size: 12px; margin: 0; }
+  ol#log { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--muted);
+    max-height: 220px; overflow: auto; }
+  ol#log li b { color: var(--txt); font-weight: 600; }
+  .ok { color: #4ade80; } .bad { color: #f87171; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🎣 Scena łowienia<span class="tag">harness animacji</span></div>
+  <div><a href="dev/playground.html" style="color:var(--accent)">← konsola API</a></div>
+</header>
+
+<main>
+  <section class="card wide">
+    <h2>Komponent &lt;fishing-scene&gt;</h2>
+
+    <div class="stage-frame" id="frame">
+      <!-- Ten sam komponent, którego używa konsola i docelowy layout w public/ -->
+      <fishing-scene id="scene" show-lane></fishing-scene>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <span class="hint" style="margin:0">Szerokość kontenera:</span>
+      <button class="ghost small" data-width="360">360 px</button>
+      <button class="ghost small" data-width="600">600 px</button>
+      <button class="ghost small" data-width="900">900 px</button>
+      <button class="ghost small" data-width="">pełna</button>
+      <span class="hint">Faza: <code id="phase">idle</code></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Mock połowu (bez logowania)</h2>
+
+    <div class="row">
+      <label>Łowisko
+        <select id="spot"></select>
+      </label>
+      <label>Wylosowana ryba
+        <select id="fish"></select>
+      </label>
+    </div>
+
+    <div class="row">
+      <label>reel_dlugosc
+        <input type="number" id="length" value="60" min="4" max="200">
+      </label>
+      <label>reel_indeks_wygranej
+        <input type="number" id="winner" value="54" min="0" max="199">
+      </label>
+    </div>
+
+    <div class="row">
+      <button id="play">Odtwórz pełny cykl</button>
+      <button id="reset" class="ghost">Reset</button>
+    </div>
+
+    <div class="row">
+      <label><input type="checkbox" id="lane" checked> pasek ryb pod wodą (<code>show-lane</code>)</label>
+      <label><input type="checkbox" id="reduced"> ograniczony ruch (<code>reduced</code>)</label>
+    </div>
+
+    <p class="hint">
+      Mock korzysta z prawdziwych ryb i kolorów rzadkości z <code>api/spots.php</code>
+      (endpoint publiczny), ale NIE zapisuje nic w bazie i nie pobiera monet.
+      Zwycięzcę wybierasz ręcznie, żeby obejrzeć każdy poziom rzadkości.
+      Do testu z prawdziwym zapisem służy <a href="dev/playground.html" style="color:var(--accent)">konsola API</a>.
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Kontrakt z backendem</h2>
+    <pre id="contract">—</pre>
+    <p class="hint">
+      Komponent wymaga, żeby <code>reel[reel_indeks_wygranej]</code> był tą samą
+      rybą co <code>zlowiona_ryba</code>. Pasek zatrzymuje się dokładnie na tej
+      pozycji i wtedy następuje branie.
+    </p>
+  </section>
+
+  <section class="card wide">
+    <h2>Dziennik zdarzeń</h2>
+    <ol id="log"></ol>
+  </section>
+</main>
+
+<script type="module">
+/**
+ * dev/fishing-demo.html — harness animacji <fishing-scene>.
+ *
+ * Po co: strojenie animacji (czasy, kąty wędziska, responsywność, kolory
+ * rzadkości) bez logowania, bez bazy i bez wydawania monet. Mock jest zbudowany
+ * z PRAWDZIWYCH ryb i kolorów z api/spots.php, ale zwycięzcę wybierasz ręcznie.
+ *
+ * To NIE jest frontend docelowy — patrz INSTRUKCJA_DLA_ZESPOLU.md, sekcja
+ * o komponencie. Do testu pełnego obiegu (z zapisem w bazie) służy
+ * dev/playground.html.
+ *
+ * Właściciel: @KubeKoslaw (Core Backend)
+ */
+
+import { PHASES } from './public/assets/js/fishing/index.js';
+
+const $ = (id) => document.getElementById(id);
+
+await customElements.whenDefined('fishing-scene');
+
+const scene = $('scene');
+const frame = $('frame');
+
+// Wygodne dla zespołu: `scene.play(...)` i `scene.reset()` z konsoli przeglądarki.
+window.scene = scene;
+
+let spots = [];
+let pool = [];
+
+/* --- pula zapasowa (gdy api/spots.php jest niedostępne, np. file://) -------
+   Kolory i nazwy rzadkości 1:1 z tabeli `rzadkosci` w database/schema.sql. */
+const FALLBACK_POOL = [
+  { ryba_id: 1, nazwa: 'Zielony Glon', rzadkosc: 'Pospolita', rzadkosc_kod: 'pospolita',
+    kolor: '#94a3b8', wartosc: 1, ikona: 'assets/icons/green_seaweed.png', szansa_procent: 40 },
+  { ryba_id: 2, nazwa: 'Anchois', rzadkosc: 'Pospolita', rzadkosc_kod: 'pospolita',
+    kolor: '#94a3b8', wartosc: 3, ikona: 'assets/icons/anchovy.png', szansa_procent: 30 },
+  { ryba_id: 3, nazwa: 'Płoć', rzadkosc: 'Przeciętna', rzadkosc_kod: 'przecietna',
+    kolor: '#22c55e', wartosc: 8, ikona: 'assets/icons/roach.png', szansa_procent: 14 },
+  { ryba_id: 4, nazwa: 'Okoń', rzadkosc: 'Niezła', rzadkosc_kod: 'niezla',
+    kolor: '#3b82f6', wartosc: 22, ikona: 'assets/icons/largemouth_bass.png', szansa_procent: 9 },
+  { ryba_id: 5, nazwa: 'Złoty Karp', rzadkosc: 'Mityczna', rzadkosc_kod: 'mityczna',
+    kolor: '#a855f7', wartosc: 120, ikona: 'assets/icons/golden_carp.png', szansa_procent: 4 },
+  { ryba_id: 6, nazwa: 'Jesiotr', rzadkosc: 'Niesamowita', rzadkosc_kod: 'niesamowita',
+    kolor: '#eab308', wartosc: 400, ikona: 'assets/icons/sturgeon.png', szansa_procent: 1 },
+  { ryba_id: 7, nazwa: 'Ryba Otchłani', rzadkosc: 'ULTRA MEGA NIESAMOWITA', rzadkosc_kod: 'ultra',
+    kolor: '#22d3ee', wartosc: 25000, ikona: 'assets/icons/void_fish.png', szansa_procent: 0.001 },
+];
+
+function log(message, isError = false) {
+  const item = document.createElement('li');
+  const time = new Date().toLocaleTimeString('pl-PL');
+
+  item.innerHTML = '<b>' + time + '</b> ';
+  item.appendChild(document.createTextNode(message));
+
+  if (isError) { item.className = 'bad'; }
+
+  const list = $('log');
+
+  list.prepend(item);
+
+  while (list.children.length > 60) { list.lastElementChild.remove(); }
+}
+
+/* --- dane z API (endpoint publiczny, bez tokenu) -------------------------- */
+
+async function loadSpots() {
+  try {
+    const response = await fetch('api/spots.php');
+    const data = await response.json();
+
+    if (!data.success) { throw new Error(data.error || 'brak success'); }
+
+    spots = (data.lowiska || []).filter((spot) => Array.isArray(spot.ryby) && spot.ryby.length > 0);
+  } catch (error) {
+    log('api/spots.php niedostępne (' + error.message + ') — używam puli zapasowej.', true);
+    spots = [];
+  }
+
+  if (spots.length === 0) {
+    spots = [{ id: 0, nazwa: 'Pula zapasowa (offline)', koszt_zarzutu: 10, ryby: FALLBACK_POOL }];
+  }
+
+  const select = $('spot');
+
+  select.replaceChildren();
+
+  spots.forEach((spot) => {
+    const option = document.createElement('option');
+
+    option.value = String(spot.id);
+    option.textContent = spot.nazwa + ' (' + spot.ryby.length + ' ryb, '
+      + Number(spot.koszt_zarzutu).toFixed(0) + ' monet)';
+    select.appendChild(option);
+  });
+
+  // Ostatnie łowisko ma najrzadsze ryby — najwygodniej testować "ultra".
+  select.value = String(spots[spots.length - 1].id);
+  onSpotChange();
+}
+
+function currentSpot() {
+  return spots.find((spot) => String(spot.id) === $('spot').value) || spots[0];
+}
+
+function onSpotChange() {
+  pool = currentSpot().ryby.slice().sort((a, b) => Number(a.wartosc) - Number(b.wartosc));
+
+  const select = $('fish');
+
+  select.replaceChildren();
+
+  pool.forEach((fish) => {
+    const option = document.createElement('option');
+
+    option.value = String(fish.ryba_id);
+    option.textContent = fish.nazwa + ' — ' + fish.rzadkosc + ' (' + Number(fish.wartosc).toFixed(0) + ')';
+    select.appendChild(option);
+  });
+
+  select.selectedIndex = Math.min(2, pool.length - 1);
+  log('Pula: ' + currentSpot().nazwa + ' (' + pool.length + ' ryb).');
+}
+
+/* --- mock payloadu w kształcie odpowiedzi api/cast.php -------------------- */
+
+/** Ryba z puli -> pozycja paska (te same pola co backend/Reel.php::strip). */
+function toReelItem(fish) {
+  return {
+    ryba_id: Number(fish.ryba_id),
+    nazwa: String(fish.nazwa),
+    ikona: String(fish.ikona || ''),
+    rzadkosc: String(fish.rzadkosc || ''),
+    rzadkosc_kod: String(fish.rzadkosc_kod || ''),
+    kolor: String(fish.kolor || ''),
+    wartosc: Number(fish.wartosc || 0),
+  };
+}
+
+function buildMockPayload() {
+  const spot = currentSpot();
+  const winner = pool.find((fish) => String(fish.ryba_id) === $('fish').value) || pool[0];
+  const length = Math.max(4, Number($('length').value) || 60);
+  const winnerIndex = Math.min(length - 1, Math.max(0, Number($('winner').value) || 0));
+  const reel = [];
+
+  for (let i = 0; i < length; i += 1) {
+    // Wygrana pozycja = wybrana ryba; reszta to szum wizualny z tej samej puli
+    // (dokładnie tak samo jak backend/Reel.php).
+    reel.push(i === winnerIndex
+      ? toReelItem(winner)
+      : toReelItem(pool[Math.floor(Math.random() * pool.length)]));
+  }
+
+  const cost = Number(spot.koszt_zarzutu || 0);
+
+  return {
+    success: true,
+    rzut: { id: 0, koszt: cost },
+    lowisko: { id: Number(spot.id), nazwa: spot.nazwa, koszt_zarzutu: cost },
+    zlowiona_ryba: {
+      ekwipunek_id: 0,
+      ryba_id: Number(winner.ryba_id),
+      nazwa: winner.nazwa,
+      rzadkosc: winner.rzadkosc,
+      rzadkosc_kod: winner.rzadkosc_kod,
+      kolor: winner.kolor,
+      wartosc: Number(winner.wartosc),
+      ikona: winner.ikona || '',
+      szansa_procent: Number(winner.szansa_procent || 0),
+    },
+    saldo_przed: 1000,
+    saldo_po: 1000 - cost,
+    reel,
+    reel_dlugosc: length,
+    reel_indeks_wygranej: winnerIndex,
+    message: 'Złowiono: ' + winner.nazwa + ' (' + winner.rzadkosc + ')!',
+  };
+}
+
+/** Escaping HTML — nazwy ryb pochodzą z seeda, a harness nie musi im ufać. */
+function esc(value) {
+  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+  return String(value ?? '').replace(/[&<>"']/g, (c) => map[c]);
+}
+
+/** Pokazuje, że umowa reel[indeks] == zlowiona_ryba jest spełniona. */
+function renderContract(payload) {
+  const fish = payload.zlowiona_ryba;
+  const item = payload.reel[payload.reel_indeks_wygranej];
+  const ok = Number(item.ryba_id) === Number(fish.ryba_id);
+  const verdict = ok
+    ? '<span class="ok">ZGODNE ✔</span>'
+    : '<span class="bad">ROZJAZD ✘</span>';
+
+  $('contract').innerHTML = [
+    'reel_dlugosc:              ' + payload.reel_dlugosc,
+    'reel_indeks_wygranej:      ' + payload.reel_indeks_wygranej,
+    'reel[i].ryba_id:           ' + item.ryba_id + '  (' + esc(item.nazwa) + ')',
+    'zlowiona_ryba.ryba_id:     ' + fish.ryba_id + '  (' + esc(fish.nazwa) + ')',
+    'rzadkosc / kolor:          ' + esc(fish.rzadkosc) + ' / ' + esc(fish.kolor),
+    'saldo_przed -&gt; saldo_po:   ' + payload.saldo_przed + ' -&gt; ' + payload.saldo_po,
+    verdict,
+  ].join('\n');
+
+  return ok;
+}
+
+/* --- zdarzenia i sterowanie ---------------------------------------------- */
+
+scene.addEventListener('phasechange', (event) => {
+  $('phase').textContent = event.detail.phase;
+
+  // Logujemy tylko kamienie milowe — inaczej dziennik zalewa szum.
+  if ([PHASES.CASTING, PHASES.BITE, PHASES.REELING, PHASES.REVEAL].includes(event.detail.phase)) {
+    log('faza: ' + event.detail.phase);
+  }
+});
+
+scene.addEventListener('catch', (event) => {
+  const fish = event.detail.fish;
+
+  log('Złowiono: ' + fish.nazwa + ' (' + fish.rzadkosc + ', '
+    + Number(fish.wartosc).toFixed(2) + ' monet, szansa '
+    + Number(fish.szansa_procent).toFixed(3) + '%).');
+});
+
+scene.addEventListener('error', (event) => {
+  log('Błąd: ' + event.detail.message + ' (kod: ' + event.detail.kod + ')', true);
+});
+
+$('spot').addEventListener('change', onSpotChange);
+
+$('play').addEventListener('click', async () => {
+  const payload = buildMockPayload();
+
+  if (!renderContract(payload)) {
+    log('Mock niespójny z kontraktem — popraw dane.', true);
+  }
+
+  $('play').disabled = true;
+  log('Start: ' + payload.zlowiona_ryba.nazwa + ' (indeks ' + payload.reel_indeks_wygranej + '/' + payload.reel_dlugosc + ').');
+
+  const result = await scene.play(payload);
+
+  $('play').disabled = false;
+  log(result ? 'Cykl zakończony (karta zamknięta).' : 'Cykl przerwany albo zakończony błędem.', !result);
+});
+
+$('reset').addEventListener('click', () => {
+  scene.reset();
+  log('Reset sceny.');
+});
+
+$('lane').addEventListener('change', (event) => {
+  if (event.target.checked) {
+    scene.setAttribute('show-lane', '');
+  } else {
+    scene.removeAttribute('show-lane');
+  }
+
+  log('Pasek pod wodą: ' + (event.target.checked ? 'włączony' : 'wyłączony'));
+});
+
+$('reduced').addEventListener('change', (event) => {
+  if (event.target.checked) {
+    scene.setAttribute('reduced', '');
+  } else {
+    scene.removeAttribute('reduced');
+  }
+
+  log('Ograniczony ruch: ' + (event.target.checked ? 'tak' : 'nie'));
+});
+
+document.querySelectorAll('[data-width]').forEach((button) => {
+  button.addEventListener('click', () => {
+    frame.style.width = button.dataset.width ? button.dataset.width + 'px' : '100%';
+    log('Szerokość kontenera: ' + (button.dataset.width || 'pełna') + '.');
+  });
+});
+
+await loadSpots();
+log('Gotowe. Kliknij "Odtwórz pełny cykl".');
+
+/* --- tryb automatyczny (headless / demo bez klikania) ----------------------
+   ?auto=1                     odtwarza pełny cykl po załadowaniu
+   ?auto=1&rarity=ultra        wybiera rybę o zadanym kodzie rzadkości
+   ?auto=1&close=1             domyka kartę wygranej (cały obieg do idle)     */
+const params = new URLSearchParams(location.search);
+
+if (params.get('auto')) {
+  const rarity = String(params.get('rarity') || '').toLowerCase();
+
+  if (rarity !== '') {
+    const found = pool.find((fish) => String(fish.rzadkosc_kod).toLowerCase() === rarity);
+
+    if (found) {
+      $('fish').value = String(found.ryba_id);
+      log('Wybrano rzadkość: ' + found.rzadkosc + ' -> ' + found.nazwa);
+    } else {
+      log('Brak ryby o rzadkości "' + rarity + '" w tej puli.', true);
+    }
+  }
+
+  if (params.get('close')) {
+    scene.addEventListener('phasechange', (event) => {
+      if (event.detail.phase !== 'reveal') { return; }
+
+      setTimeout(() => {
+        const button = scene.querySelector('[data-ref="close-btn"]');
+
+        if (button) { button.click(); }
+      }, 150);
+    });
+  }
+
+  // Chwila na pomiar geometrii (ResizeObserver + offsetWidth) przed startem.
+  setTimeout(() => { $('play').click(); }, 400);
+}
+</script>
+</body>
+</html>

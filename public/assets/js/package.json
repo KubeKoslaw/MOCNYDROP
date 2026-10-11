@@ -1,0 +1,6 @@
+{
+  "//": "Frontend MOCNY DROP to natywne moduly ES (bez bundlera, bez npm install). Ten plik mowi Node, ze *.js w tym katalogu i nizej to ESM - dzieki temu krok 'Skladnia JS (node --check)' w .github/workflows/ci.yml parsuje je poprawnie na kazdej wersji Node (bez detekcji skladni modulow). Przeglądarki nigdy go nie pobierają.",
+  "name": "mocnydrop-frontend",
+  "private": true,
+  "type": "module"
+}

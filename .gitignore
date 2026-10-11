@@ -1,6 +1,8 @@
 # Pliki runtime bazy SQLite (baza tworzy sie lokalnie, nie commitujemy jej)
 database/*.sqlite
 database/*.sqlite-journal
+database/*.sqlite-wal
+database/*.sqlite-shm
 database/*.db
 
 # System
