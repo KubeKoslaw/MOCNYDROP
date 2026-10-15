@@ -902,45 +902,129 @@ button, input, select, textarea {
 }
 
 .wheel-gauge {
-  width: 190px;
-  height: 190px;
+  width: 210px;
+  height: 210px;
   position: relative;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.98) 100%);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8),
+              inset 0 0 15px rgba(0, 0, 0, 0.8),
+              0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: box-shadow 0.4s ease, border-color 0.4s ease;
 }
 
 .wheel-gauge svg {
   width: 100%;
   height: 100%;
   transform: rotate(-90deg);
+  overflow: visible;
 }
 
 .wheel-gauge-bg {
   fill: none;
-  stroke: var(--bg-surface-elevated);
-  stroke-width: 12;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 14;
 }
 
 .wheel-gauge-val {
   fill: none;
-  stroke: var(--accent-cyan);
-  stroke-width: 12;
+  stroke: url(#wheel-win-grad);
+  stroke-width: 14;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.5s ease;
+  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.6));
+  transition: stroke-dashoffset 0.4s ease, stroke 0.3s ease;
 }
 
+/* Znacznik startowy 0% (godzina 12) */
+.wheel-start-marker {
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 10px;
+  background: #f59e0b;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #f59e0b;
+  z-index: 8;
+  pointer-events: none;
+}
+
+/* Obrotowa wskazówka / igła */
+.wheel-pointer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  transform: rotate(0deg);
+  z-index: 6;
+  will-change: transform;
+}
+
+.wheel-pointer-arrow {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 18px;
+  background: #00f0ff;
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+  filter: drop-shadow(0 0 8px #00f0ff);
+  transition: background 0.3s ease, filter 0.3s ease;
+}
+
+.wheel-pointer-arm {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 35px;
+  background: linear-gradient(to bottom, #00f0ff 0%, rgba(0, 240, 255, 0.05) 100%);
+  transition: background 0.3s ease;
+}
+
+/* Środkowy hub koła */
 .wheel-center-text {
   position: absolute;
   inset: 0;
+  margin: auto;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #0f172a 0%, #030712 100%);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(0, 0, 0, 0.6);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+  z-index: 7;
 }
 
 .wheel-chance-val {
-  font-size: 1.8rem;
+  font-size: 1.7rem;
   font-weight: 900;
   color: var(--text-primary);
+  line-height: 1.1;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.wheel-chance-val.spinning {
+  color: #38bdf8;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+}
+
+.wheel-chance-val.win {
+  color: #10b981;
+  text-shadow: 0 0 14px rgba(16, 185, 129, 0.8);
+}
+
+.wheel-chance-val.lose {
+  color: #ef4444;
+  text-shadow: 0 0 14px rgba(239, 68, 68, 0.8);
 }
 
 .wheel-chance-lbl {
@@ -948,6 +1032,68 @@ button, input, select, textarea {
   text-transform: uppercase;
   color: var(--text-muted);
   font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.wheel-chance-lbl.win {
+  color: #34d399;
+  font-weight: 800;
+}
+
+.wheel-chance-lbl.lose {
+  color: #f87171;
+  font-weight: 800;
+}
+
+/* Stany sukcesu / porażki */
+.wheel-gauge.is-win {
+  box-shadow: 0 0 35px rgba(16, 185, 129, 0.5), inset 0 0 20px rgba(16, 185, 129, 0.25), 0 0 0 2px #10b981;
+}
+
+.wheel-gauge.is-win .wheel-pointer-arrow {
+  background: #10b981;
+  filter: drop-shadow(0 0 12px #10b981);
+}
+
+.wheel-gauge.is-win .wheel-pointer-arm {
+  background: linear-gradient(to bottom, #10b981 0%, rgba(16, 185, 129, 0.05) 100%);
+}
+
+.wheel-gauge.is-lose {
+  box-shadow: 0 0 35px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(239, 68, 68, 0.25), 0 0 0 2px #ef4444;
+}
+
+.wheel-gauge.is-lose .wheel-pointer-arrow {
+  background: #ef4444;
+  filter: drop-shadow(0 0 12px #ef4444);
+}
+
+.wheel-gauge.is-lose .wheel-pointer-arm {
+  background: linear-gradient(to bottom, #ef4444 0%, rgba(239, 68, 68, 0.05) 100%);
+}
+
+/* Badge wyniku pod kołem */
+.upgrader-result-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+.upgrader-result-badge.win {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.upgrader-result-badge.lose {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
 }
 
 .upgrader-actions {

@@ -53,6 +53,28 @@ const SoundFx = {
   loss() {
     this.playTone(260, 'sawtooth', 0.2, 0.08);
     setTimeout(() => this.playTone(190, 'sawtooth', 0.35, 0.1), 160);
+  },
+  wheelTick(freq = 750, vol = 0.04) {
+    try {
+      this.init();
+      if (!this.ctx || this.ctx.state === 'suspended') {
+        this.ctx?.resume();
+      }
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.035);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.035);
+    } catch (e) {}
+  },
+  spinStart() {
+    this.playTone(320, 'sine', 0.15, 0.08);
+    setTimeout(() => this.playTone(480, 'triangle', 0.2, 0.1), 80);
   }
 };
 
@@ -163,6 +185,8 @@ class MocnyDropApp {
     this.tradeSelection = new Set();
     this.isCasting = false;
     this.cachedRarities = {};
+    this.wheelCurrentRotation = 0;
+    this.isUpgrading = false;
   }
 
   async init() {
@@ -673,13 +697,28 @@ class MocnyDropApp {
     const targetId = document.getElementById('up-target-select')?.value;
     const runBtn = document.getElementById('btn-up-run');
     const chanceValEl = document.getElementById('wheel-chance-val');
+    const chanceLblEl = document.getElementById('wheel-chance-lbl');
     const gaugeValEl = document.getElementById('wheel-gauge-val');
+    const gaugeContainer = document.getElementById('upgrader-wheel-gauge');
     const descEl = document.getElementById('up-calc-desc');
+
+    // Resetowanie stanów wizualnych po poprzednim losowaniu
+    if (gaugeContainer) {
+      gaugeContainer.classList.remove('is-win', 'is-lose');
+    }
+    if (chanceValEl) {
+      chanceValEl.classList.remove('win', 'lose', 'spinning');
+    }
+    if (chanceLblEl) {
+      chanceLblEl.classList.remove('win', 'lose');
+      chanceLblEl.textContent = 'Szansa';
+    }
 
     if (!inputId || !targetId) {
       if (runBtn) runBtn.disabled = true;
       if (chanceValEl) chanceValEl.textContent = '0.0%';
-      if (gaugeValEl) gaugeValEl.style.strokeDashoffset = '502';
+      if (gaugeValEl) gaugeValEl.style.strokeDashoffset = '502.6';
+      if (descEl) descEl.innerHTML = 'Wybierz wkład oraz cel o wyższej wartości.';
       return;
     }
 
@@ -688,14 +727,14 @@ class MocnyDropApp {
       const chance = Number(data.szansa_procent);
       if (chanceValEl) chanceValEl.textContent = `${chance.toFixed(1)}%`;
 
-      // Obwód koła dla r=80: 2 * PI * 80 ~= 502.6
-      const offset = 502.6 - (502.6 * (chance / 100));
+      // Obwód koła dla r=80: 2 * PI * 80 ~= 502.65
+      const offset = 502.65 - (502.65 * (chance / 100));
       if (gaugeValEl) gaugeValEl.style.strokeDashoffset = String(offset);
 
       if (descEl) {
-        descEl.innerHTML = `Szansa: <b>${chance.toFixed(2)}%</b> (Wzór: <code>(W_wkład / W_cel) × 95%</code>) • Porażka niszczy przedmiot!`;
+        descEl.innerHTML = `Szansa: <b>${chance.toFixed(2)}%</b> (Wzór: <code>(W_wkład / W_cel) × 95%</code>) • Porażka niszczy wkład!`;
       }
-      if (runBtn) runBtn.disabled = false;
+      if (runBtn && !this.isUpgrading) runBtn.disabled = false;
     } catch (err) {
       if (descEl) descEl.innerHTML = `<span style="color:var(--accent-rose)">${esc(err.message)}</span>`;
       if (runBtn) runBtn.disabled = true;
@@ -703,28 +742,167 @@ class MocnyDropApp {
   }
 
   async runUpgrade() {
-    const inputId = document.getElementById('up-input-select')?.value;
-    const targetId = document.getElementById('up-target-select')?.value;
+    const inputSelect = document.getElementById('up-input-select');
+    const targetSelect = document.getElementById('up-target-select');
+    const calcBtn = document.getElementById('btn-up-calc');
     const runBtn = document.getElementById('btn-up-run');
+    const pointerEl = document.getElementById('wheel-pointer');
+    const wheelGauge = document.getElementById('upgrader-wheel-gauge');
+    const chanceValEl = document.getElementById('wheel-chance-val');
+    const chanceLblEl = document.getElementById('wheel-chance-lbl');
+    const descEl = document.getElementById('up-calc-desc');
 
-    if (!inputId || !targetId) return;
-    runBtn.disabled = true;
+    const inputId = inputSelect?.value;
+    const targetId = targetSelect?.value;
+
+    if (!inputId || !targetId || this.isUpgrading) return;
+    this.isUpgrading = true;
+
+    // Blokada kontrolek podczas losowania
+    if (runBtn) {
+      runBtn.disabled = true;
+      runBtn.dataset.originalText = runBtn.textContent;
+      runBtn.innerHTML = '⚡ Kręcenie kołem...';
+    }
+    if (calcBtn) calcBtn.disabled = true;
+    if (inputSelect) inputSelect.disabled = true;
+    if (targetSelect) targetSelect.disabled = true;
+
+    // Reset klas wygranej/przegranej
+    if (wheelGauge) wheelGauge.classList.remove('is-win', 'is-lose');
+    if (chanceValEl) {
+      chanceValEl.classList.remove('win', 'lose');
+      chanceValEl.classList.add('spinning');
+    }
+    if (chanceLblEl) {
+      chanceLblEl.classList.remove('win', 'lose');
+      chanceLblEl.textContent = 'LOSOWANIE...';
+    }
+    if (descEl) {
+      descEl.innerHTML = 'Koło kręci się... trzymaj kciuki! ⚡';
+    }
+
+    // Dźwięk startu losowania
+    SoundFx.spinStart();
+
+    let animLoop = null;
 
     try {
-      // Dźwięk próby
-      SoundFx.splash();
-
-      const data = await this.api.fetch('upgrade.php', {
+      // Wysłanie żądania do API
+      const fetchPromise = this.api.fetch('upgrade.php', {
         method: 'POST',
         body: { ekwipunek_id: Number(inputId), cel_przedmiot_id: Number(targetId) }
       });
 
+      const data = await fetchPromise;
+
+      // Kąt docelowy wirtualnego koła (0.00% – 100.00% -> 0deg – 360deg)
+      const targetDeg = (Number(data.kolo) / 100) * 360;
+
+      // Obliczenie płynnego obrotu w przód bez cofania/skoków
+      const currentRot = this.wheelCurrentRotation || 0;
+      const currentNorm = ((currentRot % 360) + 360) % 360;
+      let delta = targetDeg - currentNorm;
+      if (delta < 0) {
+        delta += 360;
+      }
+
+      // Minimum 5 pełnych obrotów (1800 deg) + kąt do celu
+      const totalSpin = 1800 + delta;
+      const finalRotation = currentRot + totalSpin;
+      this.wheelCurrentRotation = finalRotation;
+
+      const duration = 4200; // ms czasu trwania animacji
+      const startTime = performance.now();
+
+      if (pointerEl) {
+        pointerEl.style.transition = `transform ${duration}ms cubic-bezier(0.12, 0.85, 0.25, 1)`;
+        pointerEl.style.transform = `rotate(${finalRotation}deg)`;
+      }
+
+      // Pętla audio tykania koła i podglądu kąta w hubie
+      let lastTickAngle = currentNorm;
+      let isSpinning = true;
+
+      const tickStep = (now) => {
+        if (!isSpinning) return;
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+
+        if (pointerEl) {
+          try {
+            const transform = window.getComputedStyle(pointerEl).transform;
+            if (transform && transform !== 'none') {
+              const matrix = new DOMMatrix(transform);
+              let angle = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI);
+              if (angle < 0) angle += 360;
+
+              // Podgląd obracającego się procentu w hubie
+              if (chanceValEl && progress < 0.95) {
+                const livePercent = (angle / 360) * 100;
+                chanceValEl.textContent = `${livePercent.toFixed(1)}%`;
+              }
+
+              // Dźwięk tykania koła przy mijaniu progów kątowych (co 18 stopni)
+              let diff = angle - lastTickAngle;
+              if (diff < 0) diff += 360;
+              if (diff >= 18) {
+                SoundFx.wheelTick(650 + Math.random() * 150);
+                lastTickAngle = angle;
+              }
+            }
+          } catch (e) {}
+        }
+
+        if (progress < 1) {
+          animLoop = requestAnimationFrame(tickStep);
+        }
+      };
+      animLoop = requestAnimationFrame(tickStep);
+
+      // Oczekiwanie na zakończenie obrotu
+      await new Promise(resolve => setTimeout(resolve, duration));
+      isSpinning = false;
+      if (animLoop) cancelAnimationFrame(animLoop);
+
+      // Dokładne zatrzymanie i prezentacja wyniku
+      if (chanceValEl) {
+        chanceValEl.textContent = `${Number(data.kolo).toFixed(2)}%`;
+        chanceValEl.classList.remove('spinning');
+      }
+
       if (data.udane) {
+        if (wheelGauge) wheelGauge.classList.add('is-win');
+        if (chanceValEl) chanceValEl.classList.add('win');
+        if (chanceLblEl) {
+          chanceLblEl.textContent = 'WYGRANA!';
+          chanceLblEl.classList.add('win');
+        }
+        if (descEl) {
+          descEl.innerHTML = `<span class="upgrader-result-badge win">🏆 Wylosowano <b>${Number(data.kolo).toFixed(2)}%</b> (wymagane &lt; ${Number(data.szansa_procent).toFixed(2)}%) — SUKCES!</span>`;
+        }
         SoundFx.fanfare();
-        this.showWinModal(data.przedmiot, `Sukces Upgradera! Zdobyto: ${data.przedmiot.nazwa}! (Koło: ${Number(data.kolo).toFixed(2)}% vs próg ${Number(data.szansa_procent).toFixed(2)}%)`);
+        setTimeout(() => {
+          this.showWinModal(
+            data.przedmiot,
+            `Sukces Upgradera! Zdobyto: ${data.przedmiot.nazwa}! (Koło: ${Number(data.kolo).toFixed(2)}% vs próg ${Number(data.szansa_procent).toFixed(2)}%)`
+          );
+        }, 600);
       } else {
+        if (wheelGauge) wheelGauge.classList.add('is-lose');
+        if (chanceValEl) chanceValEl.classList.add('lose');
+        if (chanceLblEl) {
+          chanceLblEl.textContent = 'PORAŻKA';
+          chanceLblEl.classList.add('lose');
+        }
+        if (descEl) {
+          descEl.innerHTML = `<span class="upgrader-result-badge lose">💥 Wylosowano <b>${Number(data.kolo).toFixed(2)}%</b> (wymagane &lt; ${Number(data.szansa_procent).toFixed(2)}%) — Porażka!</span>`;
+        }
         SoundFx.loss();
-        showToast(`Porażka! Koło zatrzymało się na ${Number(data.kolo).toFixed(2)}% (wymagane poniżej ${Number(data.szansa_procent).toFixed(2)}%). Twój przedmiot uległ zniszczeniu!`, 'error');
+        showToast(
+          `Porażka! Koło zatrzymało się na ${Number(data.kolo).toFixed(2)}% (wymagane poniżej ${Number(data.szansa_procent).toFixed(2)}%). Twój wkład uległ zniszczeniu!`,
+          'error'
+        );
       }
 
       await Promise.allSettled([
@@ -732,9 +910,19 @@ class MocnyDropApp {
         this.loadHistory()
       ]);
     } catch (err) {
+      if (animLoop) cancelAnimationFrame(animLoop);
+      if (chanceValEl) chanceValEl.classList.remove('spinning');
+      if (chanceLblEl) chanceLblEl.textContent = 'Szansa';
       showToast(err.message, 'error');
     } finally {
-      runBtn.disabled = false;
+      this.isUpgrading = false;
+      if (runBtn) {
+        runBtn.disabled = false;
+        runBtn.textContent = runBtn.dataset.originalText || 'Uruchom Upgrader ⚡';
+      }
+      if (calcBtn) calcBtn.disabled = false;
+      if (inputSelect) inputSelect.disabled = false;
+      if (targetSelect) targetSelect.disabled = false;
     }
   }
 

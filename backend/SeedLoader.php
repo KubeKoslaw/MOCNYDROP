@@ -244,7 +244,10 @@ final class SeedLoader
         $rodIds = self::nameToIdMap($db, 'wedki');
         $itemIds = self::nameToIdMap($db, 'przedmioty');
 
-        $stmt = $db->prepare('INSERT OR IGNORE INTO wedka_przedmioty (wedka_id, przedmiot_id, waga) VALUES (?, ?, ?)');
+        $stmt = $db->prepare(
+            'INSERT INTO wedka_przedmioty (wedka_id, przedmiot_id, waga) VALUES (?, ?, ?)
+             ON CONFLICT(wedka_id, przedmiot_id) DO UPDATE SET waga = excluded.waga'
+        );
 
         $loaded = 0;
 
@@ -356,7 +359,10 @@ final class SeedLoader
         $caseIds = self::nameToIdMap($db, 'skrzynki');
         $itemIds = self::nameToIdMap($db, 'przedmioty');
 
-        $stmt = $db->prepare('INSERT OR IGNORE INTO skrzynka_przedmioty (skrzynka_id, przedmiot_id, waga) VALUES (?, ?, ?)');
+        $stmt = $db->prepare(
+            'INSERT INTO skrzynka_przedmioty (skrzynka_id, przedmiot_id, waga) VALUES (?, ?, ?)
+             ON CONFLICT(skrzynka_id, przedmiot_id) DO UPDATE SET waga = excluded.waga'
+        );
 
         $loaded = 0;
 

@@ -255,17 +255,29 @@
 
         <!-- Środek: Wskaźnik koła szansy -->
         <div class="upgrader-wheel-center">
-          <div class="wheel-gauge">
+          <div class="wheel-gauge" id="upgrader-wheel-gauge">
             <svg viewBox="0 0 190 190">
+              <defs>
+                <linearGradient id="wheel-win-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#06b6d4" />
+                  <stop offset="50%" stop-color="#3b82f6" />
+                  <stop offset="100%" stop-color="#10b981" />
+                </linearGradient>
+              </defs>
               <circle class="wheel-gauge-bg" cx="95" cy="95" r="80"></circle>
               <circle id="wheel-gauge-val" class="wheel-gauge-val" cx="95" cy="95" r="80" stroke-dasharray="502.6" stroke-dashoffset="502.6"></circle>
             </svg>
-            <div class="wheel-center-text">
+            <div class="wheel-start-marker" title="0.0% / Start"></div>
+            <div id="wheel-pointer" class="wheel-pointer">
+              <div class="wheel-pointer-arrow"></div>
+              <div class="wheel-pointer-arm"></div>
+            </div>
+            <div class="wheel-center-text" id="wheel-center-text">
               <span id="wheel-chance-val" class="wheel-chance-val">0.0%</span>
-              <span class="wheel-chance-lbl">Szansa</span>
+              <span id="wheel-chance-lbl" class="wheel-chance-lbl">Szansa</span>
             </div>
           </div>
-          <p id="up-calc-desc" class="hint" style="text-align:center; max-width:240px; margin-top:10px">
+          <p id="up-calc-desc" class="hint" style="text-align:center; max-width:260px; margin-top:14px">
             Wybierz wkład oraz cel o wyższej wartości.
           </p>
         </div>
