@@ -138,6 +138,9 @@ CREATE TABLE IF NOT EXISTS wedki (
     nazwa           TEXT    NOT NULL UNIQUE,
     opis            TEXT    NOT NULL DEFAULT '',
     koszt_uzycia    REAL    NOT NULL CHECK (koszt_uzycia >= 0),
+    czy_startowa    INTEGER NOT NULL DEFAULT 0 CHECK (czy_startowa IN (0, 1)),
+    rzadkosc_kod    TEXT NOT NULL DEFAULT 'pospolita' REFERENCES rzadkosci(kod),
+    rekompensata    REAL NOT NULL DEFAULT 0 CHECK (rekompensata >= 0),
     ikona           TEXT    NOT NULL DEFAULT '',
     czy_aktywna     INTEGER NOT NULL DEFAULT 1 CHECK (czy_aktywna IN (0, 1)),
     kolejnosc       INTEGER NOT NULL DEFAULT 0
@@ -174,6 +177,7 @@ CREATE TABLE IF NOT EXISTS skrzynki (
     nazwa       TEXT    NOT NULL UNIQUE,
     opis        TEXT    NOT NULL DEFAULT '',
     cena        REAL    NOT NULL CHECK (cena >= 0),
+    dzienna     INTEGER NOT NULL DEFAULT 0 CHECK (dzienna IN (0, 1)),
     ikona       TEXT    NOT NULL DEFAULT '',
     aktywna     INTEGER NOT NULL DEFAULT 1 CHECK (aktywna IN (0, 1)),
     kolejnosc   INTEGER NOT NULL DEFAULT 0,
@@ -239,7 +243,9 @@ CREATE TABLE IF NOT EXISTS historia_losowan (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id           INTEGER NOT NULL,
     typ               TEXT    NOT NULL CHECK (typ IN ('skrzynka', 'wedka', 'upgrader', 'trader')),
-    wynik_id          INTEGER NOT NULL,
+    wynik_id          INTEGER,
+    wynik_wedka_id    INTEGER,
+    duplikat          INTEGER NOT NULL DEFAULT 0 CHECK (duplikat IN (0, 1)),
     wedka_id          INTEGER,
     skrzynka_id       INTEGER,
     udane             INTEGER NOT NULL DEFAULT 1 CHECK (udane IN (0, 1)),
@@ -249,7 +255,10 @@ CREATE TABLE IF NOT EXISTS historia_losowan (
     suma_wag          REAL    NOT NULL,
     czas              TEXT    NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (user_id)  REFERENCES uzytkownicy (id) ON DELETE CASCADE,
-    FOREIGN KEY (wynik_id) REFERENCES przedmioty (id)  ON DELETE RESTRICT,
+    CHECK ((wynik_id IS NOT NULL) != (wynik_wedka_id IS NOT NULL)),
+    CHECK (wynik_wedka_id IS NULL OR typ = 'skrzynka'),
+    FOREIGN KEY (wynik_id) REFERENCES przedmioty (id) ON DELETE RESTRICT,
+    FOREIGN KEY (wynik_wedka_id) REFERENCES wedki (id) ON DELETE RESTRICT,
     FOREIGN KEY (wedka_id) REFERENCES wedki (id)       ON DELETE CASCADE,
     FOREIGN KEY (skrzynka_id) REFERENCES skrzynki (id) ON DELETE CASCADE
 );
@@ -298,3 +307,29 @@ INSERT OR IGNORE INTO ustawienia (klucz, wartosc, opis) VALUES
     ('alert_rzadkosc_kolejnosc', '4',  'Minimalna kolejność rzadkości liczonej do serii (4 = Mityczna)'),
     ('alert_rtp_prog',       '3.0',    'RTP gracza powyżej tego progu jest oznaczany jako anomalia'),
     ('alert_min_losowan',    '5',      'Minimalna liczba losowań gracza, żeby liczyć jego RTP');
+
+-- Wędki są trwałymi odblokowaniami. Duplikat daje rekompensatę, nie drugi wpis.
+CREATE TABLE IF NOT EXISTS uzytkownik_wedki (
+    user_id INTEGER NOT NULL REFERENCES uzytkownicy(id) ON DELETE CASCADE,
+    wedka_id INTEGER NOT NULL REFERENCES wedki(id) ON DELETE RESTRICT,
+    data_nabycia TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, wedka_id)
+);
+CREATE TABLE IF NOT EXISTS skrzynka_wedki (
+    skrzynka_id INTEGER NOT NULL REFERENCES skrzynki(id) ON DELETE CASCADE,
+    wedka_id INTEGER NOT NULL REFERENCES wedki(id) ON DELETE RESTRICT,
+    waga REAL NOT NULL CHECK (waga > 0),
+    PRIMARY KEY (skrzynka_id, wedka_id)
+);
+-- Jeden wspólny zegar odbioru dziennego na konto, również przy wielu skrzynkach.
+CREATE TABLE IF NOT EXISTS odbiory_dzienne (
+    user_id INTEGER PRIMARY KEY REFERENCES uzytkownicy(id) ON DELETE CASCADE,
+    odebrano INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS otwarcia_skrzynek (
+    user_id INTEGER NOT NULL REFERENCES uzytkownicy(id) ON DELETE CASCADE,
+    request_id TEXT NOT NULL,
+    skrzynka_id INTEGER NOT NULL REFERENCES skrzynki(id) ON DELETE RESTRICT,
+    odpowiedz TEXT NOT NULL,
+    PRIMARY KEY (user_id, request_id)
+);

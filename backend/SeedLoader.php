@@ -22,12 +22,12 @@ use PDO;
  *   przedmioty.csv    nazwa,rzadkosc_kod,wartosc,ikona,opis
  *   wedka_przedmioty.csv  wedka_nazwa,przedmiot_nazwa,waga
  *   skrzynki.csv    nazwa,opis,cena,ikona,kolejnosc
- *   skrzynka_przedmioty.csv  skrzynka_nazwa,przedmiot_nazwa,waga
+ *   skrzynka_wedki.csv  skrzynka_nazwa,wedka_nazwa,waga
  *
  * W plikach *_przedmioty.csv kolumna `waga` może być pusta — wtedy przedmiot
  * dziedziczy wagę domyślną swojego poziomu rzadkości z README.md.
  *
- * Wszystkie inserty są INSERT OR IGNORE, więc loader można odpalać wielokrotnie.
+ * Katalog modeli i skrzynek oraz wagi są aktualizowane przy ponownym imporcie; konta i ekwipunek pozostają bez zmian.
  *
  * Właściciel: @KubeKoslaw (Core Backend)
  */
@@ -39,7 +39,7 @@ final class SeedLoader
         'przedmioty.csv' => 'loadItems',
         'wedka_przedmioty.csv' => 'loadRodItems',
         'skrzynki.csv' => 'loadCases',
-        'skrzynka_przedmioty.csv' => 'loadCaseItems',
+        'skrzynka_wedki.csv' => 'loadCaseRods',
     ];
 
     /**
@@ -142,8 +142,9 @@ final class SeedLoader
         $rows = self::readCsv($path, $warnings);
 
         $stmt = $db->prepare(
-            'INSERT OR IGNORE INTO wedki (nazwa, opis, koszt_uzycia, ikona, czy_aktywna, kolejnosc)
-             VALUES (?, ?, ?, ?, 1, ?)'
+            'INSERT INTO wedki (nazwa, opis, koszt_uzycia, ikona, czy_aktywna, kolejnosc, czy_startowa, rzadkosc_kod, rekompensata)
+             VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)
+             ON CONFLICT(nazwa) DO UPDATE SET opis=excluded.opis, koszt_uzycia=excluded.koszt_uzycia, ikona=excluded.ikona, kolejnosc=excluded.kolejnosc, czy_startowa=excluded.czy_startowa, rzadkosc_kod=excluded.rzadkosc_kod, rekompensata=excluded.rekompensata'
         );
 
         $loaded = 0;
@@ -171,6 +172,9 @@ final class SeedLoader
                 $koszt,
                 $row['ikona'] ?? '',
                 (int) self::toFloat($row['kolejnosc'] ?? '0', 0.0),
+                (int) ($row['czy_startowa'] ?? 0),
+                $row['rzadkosc_kod'] ?? 'pospolita',
+                self::toFloat($row['rekompensata'] ?? '0', 0.0),
             ]);
 
             $loaded++;
@@ -308,8 +312,9 @@ final class SeedLoader
         $rows = self::readCsv($path, $warnings);
 
         $stmt = $db->prepare(
-            'INSERT OR IGNORE INTO skrzynki (nazwa, opis, cena, ikona, aktywna, kolejnosc)
-             VALUES (?, ?, ?, ?, 1, ?)'
+            'INSERT INTO skrzynki (nazwa, opis, cena, ikona, aktywna, kolejnosc, dzienna)
+             VALUES (?, ?, ?, ?, 1, ?, ?)
+             ON CONFLICT(nazwa) DO UPDATE SET opis=excluded.opis, cena=excluded.cena, ikona=excluded.ikona, kolejnosc=excluded.kolejnosc, dzienna=excluded.dzienna'
         );
 
         $loaded = 0;
@@ -335,6 +340,7 @@ final class SeedLoader
                 $cena,
                 $row['ikona'] ?? '',
                 (int) self::toFloat($row['kolejnosc'] ?? '0', 0.0),
+                (int) ($row['dzienna'] ?? 0),
             ]);
 
             $loaded++;
@@ -343,68 +349,37 @@ final class SeedLoader
         return $loaded;
     }
 
-    /**
-     * skrzynka_przedmioty.csv → tabela `skrzynka_przedmioty` (klasa
-     * SkrzynkaPrzedmiot z diagramu).
-     *
-     * CSV odwołuje się do NAZW, nie do id — id zależą od kolejności importu.
-     * Pusta waga = NULL = dziedziczenie wagi domyślnej poziomu rzadkości.
-     *
-     * @param list<string> $warnings
-     */
-    private static function loadCaseItems(PDO $db, string $path, array &$warnings): int
+    /** Import nowych pul wędek. Brakujące pliki nie kasują konfiguracji administratora. */
+    private static function loadCaseRods(PDO $db, string $path, array &$warnings): int
     {
-        $rows = self::readCsv($path, $warnings);
-
-        $caseIds = self::nameToIdMap($db, 'skrzynki');
-        $itemIds = self::nameToIdMap($db, 'przedmioty');
-
-        $stmt = $db->prepare(
-            'INSERT INTO skrzynka_przedmioty (skrzynka_id, przedmiot_id, waga) VALUES (?, ?, ?)
-             ON CONFLICT(skrzynka_id, przedmiot_id) DO UPDATE SET waga = excluded.waga'
-        );
-
-        $loaded = 0;
-
-        foreach ($rows as $row) {
-            $caseName = $row['skrzynka_nazwa'] ?? '';
-            $itemName = $row['przedmiot_nazwa'] ?? '';
-
-            if (!isset($caseIds[$caseName])) {
-                $warnings[] = sprintf('skrzynka_przedmioty.csv: nieznana skrzynka "%s" — wiersz pominięty.', $caseName);
+        $cases = self::nameToIdMap($db, 'skrzynki');
+        $rods = self::nameToIdMap($db, 'wedki');
+        $pools = [];
+        foreach (self::readCsv($path, $warnings) as $row) {
+            $case = $cases[$row['skrzynka_nazwa'] ?? ''] ?? null;
+            $rod = $rods[$row['wedka_nazwa'] ?? ''] ?? null;
+            $weight = self::toFloat($row['waga'] ?? '', 0);
+            if ($case === null || $rod === null || !is_finite($weight) || $weight <= 0) {
+                $warnings[] = 'skrzynka_wedki.csv: nieznana skrzynka/wędka lub niepoprawna waga.';
                 continue;
             }
-
-            if (!isset($itemIds[$itemName])) {
-                $warnings[] = sprintf('skrzynka_przedmioty.csv: nieznany przedmiot "%s" — wiersz pominięty.', $itemName);
-                continue;
-            }
-
-            $rawWaga = trim($row['waga'] ?? '');
-            $waga = null;
-
-            if ($rawWaga !== '') {
-                $parsed = self::toFloat($rawWaga, 0.0);
-
-                if ($parsed <= 0) {
-                    $warnings[] = sprintf(
-                        'skrzynka_przedmioty.csv: "%s" / "%s" ma wagę %s — musi być dodatnia albo pusta.',
-                        $caseName,
-                        $itemName,
-                        $rawWaga
-                    );
-                    continue;
-                }
-
-                $waga = $parsed;
-            }
-
-            $stmt->execute([$caseIds[$caseName], $itemIds[$itemName], $waga]);
-
-            $loaded++;
+            $pools[$case][] = ['wedka_id' => $rod, 'waga' => $weight];
         }
-
-        return $loaded;
+        $db->beginTransaction();
+        try {
+            $count = 0;
+            foreach ($pools as $case => $entries) {
+                $count += SkrzynkaWedka::ustawPule($case, $entries, $db);
+            }
+            // Startowa dla istniejących kont; nowe otrzymują ją przez API łowiska.
+            $db->exec('INSERT OR IGNORE INTO uzytkownik_wedki (user_id, wedka_id)
+                SELECT u.id, w.id FROM uzytkownicy u CROSS JOIN wedki w WHERE w.czy_startowa = 1');
+            $db->commit();
+            return $count;
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            throw $e;
+        }
     }
 
     /**

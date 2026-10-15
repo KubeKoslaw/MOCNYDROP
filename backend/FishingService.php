@@ -59,6 +59,10 @@ final class FishingService
             );
         }
 
+        PosiadaneWedki::startowa($userId, $db);
+        if (!PosiadaneWedki::ma($userId, $wedkaId, $db)) {
+            throw ApiException::forbidden('Zdobądź tę wędkę ze skrzynki, aby nią łowić.', 'rod_not_owned');
+        }
         $koszt = $wedka->kosztUzycia;
 
         $db->beginTransaction();

@@ -21,14 +21,17 @@ use MocnyDrop\Json;
 use MocnyDrop\Rzadkosc;
 use MocnyDrop\Settings;
 use MocnyDrop\Skrzynka;
+use MocnyDrop\Token;
 
 require_once __DIR__ . '/_bootstrap.php';
 
 Json::requireMethod('GET');
 
+$u = Token::bearerToken() === null ? null : Token::wymagajZalogowania();
 Json::success([
+    'czas_serwera' => time(),
     'skrzynki' => array_map(
-        static fn (Skrzynka $skrzynka): array => $skrzynka->doApi(),
+        static fn (Skrzynka $skrzynka): array => $skrzynka->doApi($u?->id),
         Skrzynka::aktywne()
     ),
     'rzadkosci' => array_map(

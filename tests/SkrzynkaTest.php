@@ -4,314 +4,187 @@ declare(strict_types=1);
 
 namespace MocnyDrop\Tests;
 
-use MocnyDrop\ApiException;
-use MocnyDrop\Ekwipunek;
-use MocnyDrop\ILosujacy;
-use MocnyDrop\Losowanie;
-use MocnyDrop\Portfel;
-use MocnyDrop\Przedmiot;
-use MocnyDrop\Skrzynka;
-use MocnyDrop\SkrzynkaPrzedmiot;
-use MocnyDrop\TypLosowania;
-use MocnyDrop\Uzytkownik;
+use MocnyDrop\{ApiException, FishingService, Losowanie, PosiadaneWedki, Portfel, Skrzynka, SkrzynkaWedka, TypLosowania, Uzytkownik, Wedka};
 
-/**
- * tests/SkrzynkaTest.php
- *
- * Przypadek użycia UC_CASE «Otwarcie skrzynki» z diagramu use case razem z
- * przypadkami rozszerzającymi:
- *   CASE_ERR  «Brak środków»
- *   CASE_SELL «Natychmiastowa sprzedaż wygranej»
- *
- * Oraz klasy z diagramu klas:
- *   Skrzynka (otworz, losuj, czyAktywna) ..|> ILosujacy   (krawędź e13)
- *   SkrzynkaPrzedmiot (losuj)            ..|> ILosujacy   (krawędź e14)
- *
- * Właściciel: @KubeKoslaw (Core Backend)
- */
 final class SkrzynkaTest extends TestCase
 {
-    private function gracz(float $saldo = 500.0, string $login = 'gracz'): Uzytkownik
+    private function zestaw(bool $daily = false, float $saldo = 100): array
     {
-        $konto = Fixtures::user($this->db, $login, $saldo);
-
-        return Uzytkownik::znajdz($konto['id'], $this->db);
+        $u = Fixtures::user($this->db, 'gracz', $saldo);
+        $rod = Fixtures::wedkaZRyba($this->db);
+        $this->db->exec("UPDATE wedki SET rekompensata = 3 WHERE id = $rod");
+        $caseId = Fixtures::skrzynka($this->db, 'Skrzynka', $daily ? 0 : 20);
+        if ($daily) $this->db->exec("UPDATE skrzynki SET dzienna = 1 WHERE id = $caseId");
+        SkrzynkaWedka::ustawPule($caseId, [['wedka_id' => $rod, 'waga' => 1]], $this->db);
+        return [Uzytkownik::znajdz($u['id']), $rod, Skrzynka::wymagaj($caseId)];
     }
 
-    /** Skrzynka z dokładnie jednym dropem — wynik deterministyczny bez generatora. */
-    private function prostaSkrzynka(float $cena = 20.0, float $wartoscDropu = 50.0): int
+    public function testOtwarcieOdblokowujeWedkeBezPrzyznawaniaRyby(): void
     {
-        $id = Fixtures::skrzynka($this->db, 'Skrzynka Prosta', $cena);
-
-        Fixtures::przedmiotSkrzynki($this->db, $id, 'Anchois', 'pospolita', $wartoscDropu, null, 'anchovy.png');
-
-        return $id;
+        [$u, $rod, $case] = $this->zestaw();
+        $result = $case->otworzSzczegolowo($u);
+        $this->assertTrue(PosiadaneWedki::ma($u->id, $rod, $this->db), 'Wygrana staje się własnością gracza');
+        $this->assertFloat(80, $result['saldo_po'], 'Opłata pobrana raz');
+        $this->assertFalse($result['duplikat'], 'Pierwsza nagroda to nowe odblokowanie');
+        $this->assertSame('wedka', $result['nagroda']['typ'], 'Jawny typ nagrody');
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM ekwipunek')->fetchColumn(), 'Skrzynka nie przyznaje ryb');
+        $this->assertFloat(0, $result['rekompensata'], 'Odblokowanie nie jest wypłatą monet');
     }
 
-    public function testOtwarciePobieraCeneIDodajePrzedmiotDoEkwipunku(): void
+    public function testDuplikatDajeRekompensateBezDrugiejWedki(): void
     {
-        $gracz = $this->gracz(100.0);
-        $skrzynka = Skrzynka::wymagaj($this->prostaSkrzynka(20.0, 50.0), $this->db);
-
-        $wynik = $skrzynka->otworzSzczegolowo($gracz, false, null, $this->db);
-
-        $this->assertInstanceOf(Przedmiot::class, $wynik['przedmiot'], 'otworz() zwraca Przedmiot (sygnatura z diagramu)');
-        $this->assertSame('Anchois', $wynik['przedmiot']->nazwa, 'Wylosowany przedmiot z puli skrzynki');
-        $this->assertFloat(80.0, Portfel::dlaUzytkownika($gracz->id, $this->db)->saldo, 'Saldo po pobraniu ceny skrzynki');
-        $this->assertFloat(20.0, (float) $wynik['saldo_przed'] - (float) $wynik['saldo_po'], 'Różnica salda = cena skrzynki');
-
-        $ekwipunek = (new Ekwipunek($gracz->id, $this->db))->lista();
-
-        $this->assertCount(1, $ekwipunek, 'Wygrana trafia do ekwipunku (Ekwipunek::dodaj)');
-        $this->assertFloat(50.0, (float) $ekwipunek[0]['wartosc'], 'Wartość zamrożona w chwili nabycia');
-        $this->assertSame($wynik['ekwipunek_id'], (int) $ekwipunek[0]['ekwipunek_id'], 'Odpowiedź wskazuje wpis ekwipunku');
+        [$u, $rod, $case] = $this->zestaw();
+        $case->otworzSzczegolowo($u);
+        $result = $case->otworzSzczegolowo($u);
+        $this->assertTrue($result['duplikat'], 'Ponowne trafienie jest duplikatem');
+        $this->assertFloat(3, $result['rekompensata'], 'Rekompensata z katalogu');
+        $this->assertFloat(63, Portfel::dlaUzytkownika($u->id)->saldo, '100 - 20 - 20 + 3');
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM uzytkownik_wedki')->fetchColumn(), 'Brak powielonego modelu');
+        $this->assertFloat(.075, Losowanie::rtpDlaTypu(TypLosowania::Skrzynka), 'Tylko 3 monety wypłaty za 40 opłat');
     }
 
-    /** Metoda z diagramu: `+ otworz(u : Uzytkownik) : Przedmiot`. */
-    public function testOtworzZDiagramuZwracaPrzedmiot(): void
+    public function testBrakSrodkowNiePrzyznajeNagrody(): void
     {
-        $gracz = $this->gracz(100.0);
-        $skrzynka = Skrzynka::wymagaj($this->prostaSkrzynka(), $this->db);
-
-        $przedmiot = $skrzynka->otworz($gracz);
-
-        $this->assertInstanceOf(Przedmiot::class, $przedmiot, 'otworz() musi zwracać Przedmiot');
-        $this->assertSame('Anchois', $przedmiot->nazwa, 'otworz() zwraca wylosowany przedmiot');
+        [$u, $rod, $case] = $this->zestaw(false, 1);
+        $this->assertThrows(ApiException::class, fn () => $case->otworzSzczegolowo($u), 'Brak środków', 'insufficient_funds');
+        $this->assertFalse(PosiadaneWedki::ma($u->id, $rod, $this->db), 'Brak darmowego odblokowania');
+        $this->assertFloat(1, Portfel::dlaUzytkownika($u->id)->saldo, 'Saldo zachowane');
     }
 
-    public function testOtwarcieZapisujeHistorieTypSkrzynka(): void
+    public function testPotwierdzenieChroniPrzedPonownymPobraniemOplaty(): void
     {
-        $gracz = $this->gracz(100.0);
-        $skrzynkaId = $this->prostaSkrzynka(20.0, 50.0);
-        $skrzynka = Skrzynka::wymagaj($skrzynkaId, $this->db);
-
-        $wynik = $skrzynka->otworzSzczegolowo($gracz, false, null, $this->db);
-
-        $stmt = $this->db->prepare('SELECT typ, skrzynka_id, koszt, wygrana_wartosc, udane FROM historia_losowan WHERE id = ?');
-        $stmt->execute([$wynik['historia_id']]);
-        $row = $stmt->fetch();
-
-        $this->assertSame('skrzynka', (string) $row['typ'], 'Typ losowania z enuma TypLosowania::Skrzynka');
-        $this->assertSame($skrzynkaId, (int) $row['skrzynka_id'], 'Asocjacja Skrzynka — Losowanie (*:1) z diagramu');
-        $this->assertFloat(20.0, (float) $row['koszt'], 'Koszt = cena skrzynki');
-        $this->assertFloat(50.0, (float) $row['wygrana_wartosc'], 'Wypłacona wartość wygranej');
-        $this->assertSame(1, (int) $row['udane'], 'Otwarcie skrzynki zawsze coś daje');
-
-        $historia = Losowanie::historia($gracz->id, 10, $this->db);
-
-        $this->assertSame('Skrzynka Prosta', $historia[0]['zrodlo'], 'Historia pokazuje nazwę skrzynki jako źródło');
-        $this->assertSame('Skrzynka Prosta', $historia[0]['skrzynka'], 'Osobne pole skrzynki w historii');
-        $this->assertTrue($historia[0]['udane'], 'Flaga udanego losowania w historii');
+        [$u, $rod, $case] = $this->zestaw();
+        $a = $case->otworzSzczegolowo($u, requestId: 'request-123');
+        $b = $case->otworzSzczegolowo($u, requestId: 'request-123');
+        $this->assertSame(json_encode($a), json_encode($b), 'Ponowienie zwraca identyczny wynik');
+        $this->assertFloat(80, Portfel::dlaUzytkownika($u->id)->saldo, 'Tylko jedna opłata');
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM historia_losowan')->fetchColumn(), 'Tylko jedno otwarcie');
     }
 
-    /** CASE_ERR «Brak środków» — przypadek rozszerzający z diagramu use case. */
-    public function testBrakSrodkowJestOdrzucany(): void
+    public function testRequestIdNieMozeOznaczacDwochSkrzynek(): void
     {
-        $gracz = $this->gracz(5.0);
-        $skrzynka = Skrzynka::wymagaj($this->prostaSkrzynka(20.0), $this->db);
-
-        $this->assertThrows(
-            ApiException::class,
-            fn () => $skrzynka->otworzSzczegolowo($gracz, false, null, $this->db),
-            'Otwarcie bez środków musi być odrzucone (CASE_ERR)',
-            'insufficient_funds'
-        );
-
-        $this->assertFloat(5.0, Portfel::dlaUzytkownika($gracz->id, $this->db)->saldo, 'Odrzucone otwarcie nie rusza salda');
-        $this->assertSame(
-            0,
-            (int) $this->db->query('SELECT COUNT(*) FROM ekwipunek')->fetchColumn(),
-            'Odrzucone otwarcie nie dodaje przedmiotu'
-        );
-        $this->assertSame(
-            0,
-            (int) $this->db->query('SELECT COUNT(*) FROM historia_losowan')->fetchColumn(),
-            'Odrzucone otwarcie nie zapisuje historii (atomowość transakcji)'
-        );
+        [$u, $rod, $case] = $this->zestaw();
+        $case->otworzSzczegolowo($u, requestId: 'request-123');
+        $other = Skrzynka::wymagaj(Fixtures::skrzynka($this->db, 'Inna'));
+        $this->assertThrows(ApiException::class, fn () => $other->otworzSzczegolowo($u, requestId: 'request-123'), 'Klucz wiąże się ze skrzynką', 'request_id_conflict');
     }
 
-    /** CASE_SELL «Natychmiastowa sprzedaż wygranej». */
-    public function testNatychmiastowaSprzedazWygranej(): void
+    public function testDziennaOdlicza24GodzinyOdOdbioru(): void
     {
-        $gracz = $this->gracz(100.0);
-        $skrzynka = Skrzynka::wymagaj($this->prostaSkrzynka(20.0, 50.0), $this->db);
-
-        $wynik = $skrzynka->otworzSzczegolowo($gracz, true, null, $this->db);
-
-        $this->assertNotNull($wynik['sprzedaz'], 'Przy sprzedaży natychmiastowej odpowiedź zawiera jej wynik');
-        $this->assertFloat(50.0, (float) $wynik['sprzedaz']['otrzymane_monety'], 'Kwota ze sprzedaży wygranej');
-        // 100 - 20 (cena skrzynki) + 50 (sprzedaż) = 130.
-        $this->assertFloat(130.0, (float) $wynik['saldo_po'], 'Saldo po otwarciu i natychmiastowej sprzedaży');
-        $this->assertFloat(130.0, Portfel::dlaUzytkownika($gracz->id, $this->db)->saldo, 'Saldo w bazie po sprzedaży');
-
-        $ekwipunek = new Ekwipunek($gracz->id, $this->db);
-
-        $this->assertCount(0, $ekwipunek->lista(), 'Sprzedana wygrana znika z listy ekwipunku');
-        $this->assertCount(1, $ekwipunek->lista(true), 'Z flagą z_sprzedanymi wpis jest widoczny');
+        [$u, $rod, $case] = $this->zestaw(true, 0);
+        $a = $case->otworzSzczegolowo($u, requestId: 'daily-123');
+        $this->assertFloat(0, $a['saldo_po'], 'Dzienna działa bez monet');
+        $this->assertBetween(86399, 86400, $a['nastepny_odbior'] - time(), 'Ruchome 24 h');
+        $this->assertThrows(ApiException::class, fn () => $case->otworzSzczegolowo($u), 'Drugi odbiór zabroniony', 'daily_case_cooldown');
+        $repeat = $case->otworzSzczegolowo($u, requestId: 'daily-123');
+        $this->assertSame($a['otwarcie']['id'], $repeat['otwarcie']['id'], 'Ponowienie z tym samym ID odtwarza odbiór');
+        $last = time() - 86400;
+        $this->db->exec("UPDATE odbiory_dzienne SET odebrano = $last");
+        $b = $case->otworzSzczegolowo($u);
+        $this->assertTrue($b['duplikat'], 'Po 24 h można odebrać ponownie');
     }
 
-    public function testNieaktywnaSkrzynkaJestOdrzucana(): void
+    public function testLimitDziennyJestWspolnyDlaSkrzynekIOsobnyDlaKont(): void
     {
-        $gracz = $this->gracz(100.0);
-        $id = Fixtures::skrzynka($this->db, 'Wyłączona', 10.0, false);
-
-        Fixtures::przedmiotSkrzynki($this->db, $id, 'Anchois', 'pospolita', 2.0);
-
-        $skrzynka = Skrzynka::wymagaj($id, $this->db);
-
-        $this->assertFalse($skrzynka->czyAktywna(), 'czyAktywna() z diagramu oddaje stan skrzynki');
-        $this->assertFalse($skrzynka->czyDajeSieOtworzyc(), 'Nieaktywnej skrzynki nie da się otworzyć');
-
-        $this->assertThrows(
-            ApiException::class,
-            fn () => $skrzynka->otworzSzczegolowo($gracz, false, null, $this->db),
-            'Otwarcie nieaktywnej skrzynki musi być odrzucone',
-            'case_inactive'
-        );
-
-        $this->assertFloat(100.0, Portfel::dlaUzytkownika($gracz->id, $this->db)->saldo, 'Nieaktywna skrzynka nie pobiera opłaty');
+        [$u, $rod, $case] = $this->zestaw(true);
+        $case->otworzSzczegolowo($u);
+        $id = Fixtures::skrzynka($this->db, 'Druga dzienna', 0);
+        $this->db->exec("UPDATE skrzynki SET dzienna = 1 WHERE id = $id");
+        SkrzynkaWedka::ustawPule($id, [['wedka_id' => $rod, 'waga' => 1]], $this->db);
+        $other = Skrzynka::wymagaj($id);
+        $this->assertThrows(ApiException::class, fn () => $other->otworzSzczegolowo($u), 'Nie można obejść zegara inną skrzynką', 'daily_case_cooldown');
+        $new = Fixtures::user($this->db, 'drugi');
+        $result = $other->otworzSzczegolowo(Uzytkownik::znajdz($new['id']));
+        $this->assertFalse($result['duplikat'], 'Inne konto ma własny odbiór');
     }
 
-    public function testSkrzynkaBezPuliJestOdrzucana(): void
+    public function testAwariaZapisuWycofujeOplateWlasnoscIZegar(): void
     {
-        $gracz = $this->gracz(100.0);
-        $skrzynka = Skrzynka::wymagaj(Fixtures::skrzynka($this->db, 'Pusta', 10.0), $this->db);
-
-        $this->assertThrows(
-            ApiException::class,
-            fn () => $skrzynka->otworzSzczegolowo($gracz, false, null, $this->db),
-            'Skrzynka bez dropów musi być odrzucona',
-            'case_empty'
-        );
-    }
-
-    /** Realizacja interfejsu ILosujacy przez obie klasy z diagramu (e13, e14). */
-    public function testLosujRealizujeInterfejsILosujacy(): void
-    {
-        $id = $this->prostaSkrzynka();
-
-        $skrzynka = Skrzynka::wymagaj($id, $this->db);
-
-        $this->assertInstanceOf(ILosujacy::class, $skrzynka, 'Skrzynka realizuje ILosujacy');
-        $this->assertInstanceOf(Przedmiot::class, $skrzynka->losuj(), 'Skrzynka::losuj() zwraca Przedmiot');
-
-        $wpis = SkrzynkaPrzedmiot::pula($id, $this->db)[0];
-
-        $this->assertInstanceOf(ILosujacy::class, $wpis, 'SkrzynkaPrzedmiot realizuje ILosujacy');
-        $this->assertInstanceOf(Przedmiot::class, $wpis->losuj(), 'SkrzynkaPrzedmiot::losuj() zwraca Przedmiot');
-        $this->assertSame('Anchois', $wpis->losuj()->nazwa, 'Wpis puli zwraca swój przedmiot');
-        $this->assertFloat(50.0, $wpis->waga, 'Waga wpisu puli (atrybut z diagramu) dziedziczona z poziomu rzadkości');
-
-        // losuj() to samo losowanie — bez opłaty, bez ekwipunku, bez historii.
-        $this->assertSame(
-            0,
-            (int) $this->db->query('SELECT COUNT(*) FROM historia_losowan')->fetchColumn(),
-            'losuj() nie zapisuje historii (to nie otwarcie skrzynki)'
-        );
-        $this->assertSame(
-            0,
-            (int) $this->db->query('SELECT COUNT(*) FROM ekwipunek')->fetchColumn(),
-            'losuj() nie dodaje przedmiotu do ekwipunku'
-        );
-    }
-
-    public function testPulaDziedziczyWagiDomyslneIPokazujeSzans(): void
-    {
-        $skrzynka = Skrzynka::wymagaj(Fixtures::readmeSkrzynka($this->db, 20.0), $this->db);
-
-        $pula = $skrzynka->pula($this->db);
-
-        $this->assertCount(6, $pula, 'Pula z README.md ma sześć poziomów rzadkości');
-        $this->assertFloat(50.0, (float) $pula[0]['waga'], 'Pospolita dziedziczy wagę 50');
-        $this->assertFloat(0.001, (float) $pula[5]['waga'], 'ULTRA dziedziczy wagę 0.001');
-        $this->assertBetween(49.9, 50.0, (float) $pula[0]['szansa_procent'], 'Szansa Pospolitej około 50%');
-
-        $suma = 0.0;
-
-        foreach ($pula as $item) {
-            $suma += (float) $item['szansa_procent'];
+        [$u, $rod, $case] = $this->zestaw(true);
+        $this->db->exec("CREATE TRIGGER fail_history BEFORE INSERT ON historia_losowan BEGIN SELECT RAISE(ABORT, 'test failure'); END");
+        $this->assertThrows(\PDOException::class, fn () => $case->otworzSzczegolowo($u, requestId: 'failure-123'), 'Awaria historii powoduje rollback');
+        $this->assertFalse(PosiadaneWedki::ma($u->id, $rod, $this->db), 'Własność wycofana');
+        foreach (['odbiory_dzienne', 'otwarcia_skrzynek', 'historia_losowan'] as $table) {
+            $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM $table")->fetchColumn(), 'Brak częściowego zapisu: '.$table);
         }
-
-        $this->assertBetween(99.9, 100.1, $suma, 'Szanse całej puli sumują się do 100%');
+        $this->assertFloat(100, Portfel::dlaUzytkownika($u->id)->saldo, 'Saldo zachowane');
     }
 
-    /** Kontrakt paska ruletki — identyczny jak w api/fish.php. */
-    public function testOtwarcieZwracaPasekRuletkiZWygranaNaIndeksie(): void
+    public function testHistoriaRozpoznajeWedke(): void
     {
-        $gracz = $this->gracz(1000.0);
-        $skrzynka = Skrzynka::wymagaj(Fixtures::readmeSkrzynka($this->db, 10.0), $this->db);
-
-        $wynik = $skrzynka->otworzSzczegolowo($gracz, false, Fixtures::scriptedRandom([0.5]), $this->db);
-
-        $this->assertSame($wynik['reel_dlugosc'], count($wynik['reel']), 'Pasek ma dokładnie tyle pozycji, ile mówi długość');
-
-        $indeks = (int) $wynik['reel_indeks_wygranej'];
-
-        $this->assertSame(
-            $wynik['przedmiot']->id,
-            (int) $wynik['reel'][$indeks]['przedmiot_id'],
-            'Pod reel_indeks_wygranej leży wygrany przedmiot (kontrakt z frontendem)'
-        );
-        // pick = 0.5 * 100.001 = 50.0005, czyli tuż ZA wagą Pospolitej (50).
-        $this->assertSame('Pstrąg Potokowy', $wynik['przedmiot']->nazwa, 'random 0.5 → drugi poziom puli (próg 80/100.001)');
+        [$u, $rod, $case] = $this->zestaw();
+        $case->otworzSzczegolowo($u);
+        $history = Losowanie::historia($u->id)[0];
+        $this->assertSame('wedka', $history['nagroda_typ'], 'Rodzaj nagrody w historii');
+        $this->assertSame($rod, $history['wynik_wedka_id'], 'ID zdobytej wędki');
+        $this->assertNull($history['przedmiot_id'], 'Wędka nie udaje ryby');
+        $this->assertSame('Sprzęt', $history['nazwa'], 'Nazwa wędki w historii');
     }
 
-    public function testWymagajRzuca404DlaNieistniejacejSkrzynki(): void
+    public function testNieMoznaLowicNieposiadanaWedka(): void
     {
-        $this->assertNull(Skrzynka::znajdz(999, $this->db), 'znajdz() zwraca null dla brakującej skrzynki');
-
-        $this->assertThrows(
-            ApiException::class,
-            fn () => Skrzynka::wymagaj(999, $this->db),
-            'wymagaj() rzuca 404 zamiast zwracać null',
-            'case_not_found'
-        );
+        [$u, $rod, $case] = $this->zestaw();
+        $this->assertThrows(ApiException::class, fn () => FishingService::cast($u->id, $rod), 'Ręczne ID nie omija własności', 'rod_not_owned');
+        $case->otworzSzczegolowo($u);
+        $result = FishingService::cast($u->id, $rod);
+        $this->assertTrue($result['success'], 'Zdobyta wędka pozwala łowić');
+        $other = Fixtures::user($this->db, 'inny');
+        $this->assertThrows(ApiException::class, fn () => FishingService::cast($other['id'], $rod), 'Cudza wędka nie uprawnia do połowu', 'rod_not_owned');
     }
 
-    public function testAktywneZwracajaTylkoAktywneSkrzynki(): void
+    public function testStartowaJestDostepnaDlaIstniejacegoKontaBezMonet(): void
     {
-        Fixtures::skrzynka($this->db, 'Aktywna', 10.0, true);
-        Fixtures::skrzynka($this->db, 'Wyłączona', 10.0, false);
-
-        $aktywne = Skrzynka::aktywne($this->db);
-
-        $this->assertCount(1, $aktywne, 'Lista aktywnych pomija wyłączone skrzynki');
-        $this->assertSame('Aktywna', $aktywne[0]->nazwa, 'Zwrócona skrzynka jest aktywna');
-        $this->assertCount(2, Skrzynka::wszystkie($this->db), 'Panel admina widzi też wyłączone skrzynki');
+        [$u, $rod] = $this->zestaw(false, 0);
+        $this->db->exec("UPDATE wedki SET czy_startowa = 1, koszt_uzycia = 0 WHERE id = $rod");
+        $result = FishingService::cast($u->id, $rod);
+        $this->assertTrue($result['success'], 'Startowa przyznana automatycznie');
+        $this->assertFloat(0, $result['saldo_po'], 'Można kontynuować bez monet');
     }
 
-    public function testDoApiMaKsztaltKontraktu(): void
+    public function testWagiOrazWalidacjaPuli(): void
     {
-        $id = $this->prostaSkrzynka(20.0);
-
-        $api = Skrzynka::wymagaj($id, $this->db)->doApi();
-
-        foreach (['id', 'nazwa', 'opis', 'cena', 'ikona', 'aktywna', 'liczba_przedmiotow', 'przedmioty'] as $klucz) {
-            $this->assertArrayHasKey($klucz, $api, 'Odpowiedź API musi mieć klucz: ' . $klucz);
-        }
-
-        $this->assertSame($id, $api['id'], 'id skrzynki w odpowiedzi');
-        $this->assertFloat(20.0, (float) $api['cena'], 'cena skrzynki w odpowiedzi');
-        $this->assertTrue((bool) $api['aktywna'], 'stan aktywności w odpowiedzi');
-
-        $drop = $api['przedmioty'][0];
-
-        foreach (['przedmiot_id', 'nazwa', 'rzadkosc', 'kolor', 'wartosc', 'ikona', 'waga', 'szansa_procent'] as $klucz) {
-            $this->assertArrayHasKey($klucz, $drop, 'Drop w odpowiedzi API musi mieć klucz: ' . $klucz);
-        }
-
-        $this->assertFloat(100.0, (float) $drop['szansa_procent'], 'Przy jednym dropie szansa wynosi 100%');
+        [$u, $rod, $case] = $this->zestaw();
+        $second = Fixtures::wedkaZRyba($this->db, 'Druga');
+        SkrzynkaWedka::ustawPule($case->id, [['wedka_id' => $rod, 'waga' => 9], ['wedka_id' => $second, 'waga' => 1]], $this->db);
+        $this->assertFloat(90, $case->pula()[0]['szansa_procent'], 'Szansa pochodzi z wag');
+        $r = $case->otworzSzczegolowo($u, fn () => .95);
+        $this->assertSame($second, $r['nagroda']['wedka_id'], 'Losowanie respektuje przedziały');
+        $this->assertThrows(ApiException::class, fn () => SkrzynkaWedka::ustawPule($case->id, [['wedka_id' => $rod, 'waga' => 0]], $this->db), 'Waga zero zabroniona', 'invalid_weight');
+        $this->assertCount(2, $case->pula(), 'Błąd nie usuwa starej puli');
     }
 
-    /** TypLosowania::Skrzynka ma własne RTP — monitoring liczy je per tryb. */
-    public function testRtpSkrzynekLiczySieOsobno(): void
+    public function testPustaINieaktywnaNiePobierajaOplat(): void
     {
-        $gracz = $this->gracz(1000.0);
-        $skrzynka = Skrzynka::wymagaj($this->prostaSkrzynka(20.0, 50.0), $this->db);
-
-        $skrzynka->otworzSzczegolowo($gracz, false, null, $this->db);
-
-        $this->assertFloat(2.5, Losowanie::rtpDlaTypu(TypLosowania::Skrzynka, $this->db), 'RTP skrzynek = 50 / 20');
-        $this->assertFloat(0.0, Losowanie::rtpDlaTypu(TypLosowania::Wedka, $this->db), 'Łowiska mają osobne RTP');
+        [$u, $rod, $case] = $this->zestaw();
+        $empty = Skrzynka::wymagaj(Fixtures::skrzynka($this->db, 'Pusta'));
+        $this->assertThrows(ApiException::class, fn () => $empty->otworzSzczegolowo($u), 'Pusta pula', 'case_empty');
+        $this->db->exec('UPDATE skrzynki SET aktywna = 0');
+        $this->assertThrows(ApiException::class, fn () => Skrzynka::wymagaj($case->id)->otworzSzczegolowo($u), 'Nieaktywna', 'case_inactive');
+        $this->assertFloat(100, Portfel::dlaUzytkownika($u->id)->saldo, 'Brak obciążeń');
     }
+    public function testDarmoweWyplatyNieZawyzajaRtpPlatnychSkrzynek(): void
+    {
+        [$u, $rod, $case] = $this->zestaw();
+        $case->otworzSzczegolowo($u);
+        $case->otworzSzczegolowo($u);
+        $id = Fixtures::skrzynka($this->db, 'Dzienna', 0);
+        $this->db->exec("UPDATE skrzynki SET dzienna = 1 WHERE id = $id");
+        SkrzynkaWedka::ustawPule($id, [['wedka_id' => $rod, 'waga' => 1]], $this->db);
+        Skrzynka::wymagaj($id)->otworzSzczegolowo($u);
+        $this->assertFloat(.075, Losowanie::rtpDlaTypu(TypLosowania::Skrzynka), '3 monety za 40 opłat, darmowy bonus osobno');
+        $stats = Losowanie::statystyki();
+        $this->assertFloat(3, $stats['lacznie']['darmowe_wyplaty'], 'Raport pokazuje darmowe wypłaty');
+        $this->assertFloat(.075, $stats['lacznie']['rtp'], 'Globalne RTP również wyklucza bonusy');
+        $this->assertSame(1, $stats['lacznie']['odblokowania_wedek'], 'Odblokowania liczone oddzielnie');
+    }
+
+    public function testAwariaPlatnegoOtwarciaZwracaOplate(): void
+    {
+        [$u, $rod, $case] = $this->zestaw();
+        $this->db->exec("CREATE TRIGGER fail_history BEFORE INSERT ON historia_losowan BEGIN SELECT RAISE(ABORT, 'test failure'); END");
+        $this->assertThrows(\PDOException::class, fn () => $case->otworzSzczegolowo($u), 'Awaria historii');
+        $this->assertFloat(100, Portfel::dlaUzytkownika($u->id)->saldo, 'Opłata zwrócona');
+        $this->assertFalse(PosiadaneWedki::ma($u->id, $rod, $this->db), 'Brak nagrody po rollbacku');
+    }
+
 }

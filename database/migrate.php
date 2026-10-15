@@ -92,7 +92,7 @@ $counts = [
     'skrzynki' => (int) $db->query('SELECT COUNT(*) FROM skrzynki')->fetchColumn(),
     'przedmioty' => (int) $db->query('SELECT COUNT(*) FROM przedmioty')->fetchColumn(),
     'połączenia wędka-przedmiot' => (int) $db->query('SELECT COUNT(*) FROM wedka_przedmioty')->fetchColumn(),
-    'połączenia skrzynka-przedmiot' => (int) $db->query('SELECT COUNT(*) FROM skrzynka_przedmioty')->fetchColumn(),
+    'połączenia skrzynka-wędka' => (int) $db->query('SELECT COUNT(*) FROM skrzynka_wedki')->fetchColumn(),
     'użytkownicy' => (int) $db->query('SELECT COUNT(*) FROM uzytkownicy')->fetchColumn(),
 ];
 
@@ -118,8 +118,8 @@ if ($wedkiBezPuli > 0) {
 $skrzynkiBezPuli = (int) $db->query(
     'SELECT COUNT(*) FROM skrzynki s
      WHERE s.aktywna = 1
-       AND NOT EXISTS (SELECT 1 FROM skrzynka_przedmioty sp
-                       JOIN przedmioty p ON p.id = sp.przedmiot_id AND p.czy_aktywny = 1
+       AND NOT EXISTS (SELECT 1 FROM skrzynka_wedki sp
+                       JOIN wedki w ON w.id = sp.wedka_id AND w.czy_aktywna = 1
                        WHERE sp.skrzynka_id = s.id)'
 )->fetchColumn();
 

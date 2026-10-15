@@ -22,15 +22,21 @@ use MocnyDrop\Json;
 use MocnyDrop\Rzadkosc;
 use MocnyDrop\Settings;
 use MocnyDrop\Wedka;
+use MocnyDrop\Token;
+use MocnyDrop\PosiadaneWedki;
+use MocnyDrop\Database;
 
 require_once __DIR__ . '/_bootstrap.php';
 
 Json::requireMethod('GET');
 
+$db = Database::connection();
+$u = Token::bearerToken() === null ? null : Token::wymagajZalogowania();
+if ($u !== null) { PosiadaneWedki::startowa($u->id, $db); }
 $wedki = Wedka::aktywne();
 
 Json::success([
-    'wedki' => array_map(static fn (Wedka $wedka): array => $wedka->doApi(), $wedki),
+    'wedki' => array_map(static fn (Wedka $wedka): array => $wedka->doApi() + ['posiadana' => $u !== null && PosiadaneWedki::ma($u->id, $wedka->id, $db)], $wedki),
     'rzadkosci' => array_map(
         static fn (Rzadkosc $rzadkosc): array => $rzadkosc->doApi(),
         array_values(Rzadkosc::wszystkie())

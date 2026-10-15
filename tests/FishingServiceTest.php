@@ -28,7 +28,7 @@ final class FishingServiceTest extends TestCase
         $gracz = Fixtures::user($this->db, 'wedkarz', 100.0);
         $wedka = Fixtures::readmeWedka($this->db, 10.0);
 
-        $wynik = FishingService::cast($gracz['id'], $wedka);
+        $wynik = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka);
 
         $this->assertTrue((bool) $wynik['success'], 'Udany zarzut musi zwrócić success=true');
         $this->assertFloat(100.0, (float) $wynik['saldo_przed'], 'Saldo przed zarzutem');
@@ -43,7 +43,7 @@ final class FishingServiceTest extends TestCase
         $wedka = Fixtures::readmeWedka($this->db, 10.0);
 
         // 0.1 * 100.001 = 10.0001 → pierwszy przedział (0..50) → Anchois
-        $wynik = FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
+        $wynik = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
 
         $ryba = $wynik['przedmiot'];
 
@@ -72,7 +72,7 @@ final class FishingServiceTest extends TestCase
         $gracz = Fixtures::user($this->db, 'wedkarz', 100.0);
         $wedka = Fixtures::readmeWedka($this->db, 0.0);
 
-        $wynik = FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.999995]));
+        $wynik = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.999995]));
 
         $this->assertSame('ultra', $wynik['przedmiot']['rzadkosc_kod'], 'Przy random bliskim 1 musi wypaść poziom ULTRA');
         $this->assertFloat(25000.0, (float) $wynik['przedmiot']['wartosc'], 'Wartość najrzadszego przedmiotu');
@@ -88,7 +88,7 @@ final class FishingServiceTest extends TestCase
         $gracz = Fixtures::user($this->db, 'wedkarz', 100.0);
         $wedka = Fixtures::readmeWedka($this->db, 10.0);
 
-        $wynik = FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
+        $wynik = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
 
         $stmt = $this->db->prepare('SELECT * FROM historia_losowan WHERE id = ?');
         $stmt->execute([$wynik['rzut']['id']]);
@@ -110,7 +110,7 @@ final class FishingServiceTest extends TestCase
         $wedka = Fixtures::readmeWedka($this->db, 10.0);
 
         // 0.9 * 100.001 = 90.0009 → przedziały narastająco 50, 80, 95 → wpada w 80..95
-        $wynik = FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.9]));
+        $wynik = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.9]));
 
         $this->assertSame('niezla', $wynik['przedmiot']['rzadkosc_kod'], 'Przedmiot z przedziału 80..95 to poziom Niezła');
         $this->assertFloat(15.0, (float) $wynik['przedmiot']['szansa_procent'], 'Szansa dla wagi 15 przy sumie ~100');
@@ -125,7 +125,7 @@ final class FishingServiceTest extends TestCase
 
         $this->assertThrows(
             ApiException::class,
-            static fn (): array => FishingService::cast($gracz['id'], $wedka),
+            fn (): array => Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka),
             'Zarzut bez środków powinien zostać odrzucony',
             'insufficient_funds'
         );
@@ -140,13 +140,13 @@ final class FishingServiceTest extends TestCase
         $gracz = Fixtures::user($this->db, 'biedak', 10.0);
         $wedka = Fixtures::readmeWedka($this->db, 10.0);
 
-        FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
+        Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
 
         $this->assertFloat(0.0, Portfel::dlaUzytkownika($gracz['id'], $this->db)->saldo, 'Po zarzucie za dokładnie całe saldo zostaje 0');
 
         $this->assertThrows(
             ApiException::class,
-            static fn (): array => FishingService::cast($gracz['id'], $wedka),
+            fn (): array => Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka),
             'Drugi zarzut przy zerowym saldzie powinien być odrzucony',
             'insufficient_funds'
         );
@@ -160,7 +160,7 @@ final class FishingServiceTest extends TestCase
         $gracz = Fixtures::user($this->db, 'wedkarz', 77.0);
         $wedka = Fixtures::readmeWedka($this->db, 0.0);
 
-        $wynik = FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
+        $wynik = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
 
         $this->assertFloat(77.0, (float) $wynik['saldo_po'], 'Darmowy zarzut nie może pobrać opłaty');
         $this->assertFloat(77.0, Portfel::dlaUzytkownika($gracz['id'], $this->db)->saldo, 'Saldo w bazie po darmowym zarzucie');
@@ -175,7 +175,7 @@ final class FishingServiceTest extends TestCase
 
         $this->assertThrows(
             ApiException::class,
-            static fn (): array => FishingService::cast($gracz['id'], 9999),
+            fn (): array => Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], 9999),
             'Zarzut na nieistniejącym łowisku powinien być odrzucony',
             'rod_not_found'
         );
@@ -190,7 +190,7 @@ final class FishingServiceTest extends TestCase
 
         $this->assertThrows(
             ApiException::class,
-            static fn (): array => FishingService::cast($gracz['id'], $pustaWedka),
+            fn (): array => Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $pustaWedka),
             'Zarzut na wędce bez przedmiotów powinien być odrzucony',
             'rod_empty'
         );
@@ -213,7 +213,7 @@ final class FishingServiceTest extends TestCase
 
         $this->assertThrows(
             ApiException::class,
-            static fn (): array => FishingService::cast($gracz['id'], $wedka),
+            fn (): array => Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka),
             'Wędka z samymi wyłączonymi przedmiotami powinna być traktowana jak pusta',
             'rod_empty'
         );
@@ -228,7 +228,7 @@ final class FishingServiceTest extends TestCase
 
         $this->assertThrows(
             ApiException::class,
-            static fn (): array => FishingService::cast($gracz['id'], $wedka),
+            fn (): array => Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka),
             'Nieaktywna wędka nie może przyjmować zarzutów',
             'rod_inactive'
         );
@@ -242,7 +242,7 @@ final class FishingServiceTest extends TestCase
         $gracz = Fixtures::user($this->db, 'wedkarz', 100.0);
         $wedka = Fixtures::readmeWedka($this->db, 10.0);
 
-        $wynik = FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.9]));
+        $wynik = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.9]));
 
         $this->assertSame(60, (int) $wynik['reel_dlugosc'], 'Domyślna długość paska z ustawień');
         $this->assertSame(54, (int) $wynik['reel_indeks_wygranej'], 'Domyślny indeks wygranej z ustawień');
@@ -270,7 +270,7 @@ final class FishingServiceTest extends TestCase
         $gracz = Fixtures::user($this->db, 'wedkarz', 100.0);
         $wedka = Fixtures::readmeWedka($this->db, 10.0);
 
-        $wynik = FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
+        $wynik = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
 
         $this->assertSame(12, (int) $wynik['reel_dlugosc'], 'Długość paska musi brać się z ustawień, nie ze stałej w kodzie');
         $this->assertSame(3, (int) $wynik['reel_indeks_wygranej'], 'Indeks wygranej musi brać się z ustawień');
@@ -290,7 +290,7 @@ final class FishingServiceTest extends TestCase
         $gracz = Fixtures::user($this->db, 'wedkarz', 100.0);
         $wedka = Fixtures::readmeWedka($this->db, 10.0);
 
-        $wynik = FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
+        $wynik = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
 
         $this->assertCount(5, $wynik['reel'], 'Długość paska po przycięciu');
         $this->assertSame(4, (int) $wynik['reel_indeks_wygranej'], 'Indeks musi zostać przycięty do ostatniej pozycji paska');
@@ -312,8 +312,8 @@ final class FishingServiceTest extends TestCase
 
         // Obie są poziomu "pospolita", ale wagi to 50 (domyślna) i 150 (nadpisana).
         // Suma = 200, więc progi: 0..50 -> Rzadsza, 50..200 -> Czestsza.
-        $rzadsza = FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
-        $czestsza = FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.9]));
+        $rzadsza = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.1]));
+        $czestsza = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.9]));
 
         $this->assertSame('Ryba Rzadsza', $rzadsza['przedmiot']['nazwa'], 'random=0.1 (pick=20) musi trafić w wagę domyślną 50');
         $this->assertFloat(25.0, (float) $rzadsza['przedmiot']['szansa_procent'], 'Szansa 50/200 = 25%');
@@ -347,9 +347,12 @@ final class FishingServiceTest extends TestCase
 
         $licznik = array_fill_keys(array_keys($oczekiwane), 0);
         $proby = 15000;
+        // Osobne, stałe ziarno zapewnia powtarzalny test rozkładu i historii.
+        $engine = new \Random\Randomizer(new \Random\Engine\Mt19937(20261015));
+        $random = static fn (): float => $engine->getInt(0, PHP_INT_MAX - 1) / PHP_INT_MAX;
 
         for ($n = 0; $n < $proby; $n++) {
-            $licznik[FishingService::cast($gracz['id'], $wedka)['przedmiot']['rzadkosc_kod']]++;
+            $licznik[Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, $random)['przedmiot']['rzadkosc_kod']]++;
         }
 
         $this->assertSame($proby, array_sum($licznik), 'Każdy zarzut musi dać dokładnie jedną rybę');

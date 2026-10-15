@@ -177,8 +177,8 @@ final class Administrator extends Uzytkownik
         try {
             if ($tworzenie) {
                 $stmt = $db->prepare(
-                    'INSERT INTO skrzynki (nazwa, opis, cena, ikona, aktywna, kolejnosc)
-                     VALUES (?, ?, ?, ?, ?, ?)'
+                    'INSERT INTO skrzynki (nazwa, opis, cena, ikona, aktywna, kolejnosc, dzienna)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)'
                 );
                 $stmt->execute([
                     $s->nazwa,
@@ -187,13 +187,14 @@ final class Administrator extends Uzytkownik
                     $s->ikona,
                     $s->aktywna ? 1 : 0,
                     $s->kolejnosc,
+                    $s->dzienna ? 1 : 0,
                 ]);
 
                 $s->id = (int) $db->lastInsertId();
             } else {
                 $stmt = $db->prepare(
                     'UPDATE skrzynki
-                     SET nazwa = ?, opis = ?, cena = ?, ikona = ?, aktywna = ?, kolejnosc = ?
+                     SET nazwa = ?, opis = ?, cena = ?, ikona = ?, aktywna = ?, kolejnosc = ?, dzienna = ?
                      WHERE id = ?'
                 );
                 $stmt->execute([
@@ -203,6 +204,7 @@ final class Administrator extends Uzytkownik
                     $s->ikona,
                     $s->aktywna ? 1 : 0,
                     $s->kolejnosc,
+                    $s->dzienna ? 1 : 0,
                     $s->id,
                 ]);
             }
@@ -211,7 +213,7 @@ final class Administrator extends Uzytkownik
 
             // null = „nie ruszaj puli" (np. samo przełączenie aktywna = 0/1).
             if ($s->pulaDoZapisu !== null) {
-                $wpisow = SkrzynkaPrzedmiot::ustawPule($s->id, $s->pulaDoZapisu, $db);
+                $wpisow = SkrzynkaWedka::ustawPule($s->id, $s->pulaDoZapisu, $db);
             }
 
             LogAudytowy::wpis(
@@ -254,6 +256,9 @@ final class Administrator extends Uzytkownik
             throw ApiException::badRequest('Cena skrzynki nie może być ujemna.', 'invalid_price');
         }
 
+        if ($s->dzienna && $s->cena != 0) {
+            throw ApiException::badRequest('Dzienna skrzynka musi być darmowa.', 'invalid_price');
+        }
         if (mb_strlen($s->opis) > 500) {
             throw ApiException::badRequest('Opis skrzynki może mieć maksymalnie 500 znaków.', 'invalid_case_description');
         }

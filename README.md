@@ -10,26 +10,32 @@ Strona z elementami hazardu z nagrodami o różnych wartościach, oparta na wirt
 
 ## Wymagania
 
-- PHP 8.2+ z rozszerzeniem `pdo_sqlite` (XAMPP ma je w zestawie)
+- PHP 8.2+ z rozszerzeniami `pdo_sqlite`, `mbstring` i `ctype` (XAMPP ma je w zestawie)
 - Dowolne IDE wspierające powyższe języki programowania *(Rekomendowane: VSCode, VSCodium, Apache NetBeans, PhpStorm itp.)*
 
 ## Szybki start
 
 ```bash
-php database/migrate.php --fresh   # baza + dane startowe (6 wędek, 3 skrzynki, 54 przedmioty)
+php database/migrate.php           # migracja + seed (6 wędek, 4 skrzynki, 54 przedmioty)
 php -S localhost:8000              # serwer
 ```
 
-Gra: <http://localhost:8000/dev/playground.html>
+Gra: <http://localhost:8000/> (także `/public/`). Konsola API i administratora: `/dev/playground.html`.
 
 Animacja łowienia (mock, bez logowania): <http://localhost:8000/dev/fishing-demo.html>
 
 `dev/playground.html` to tymczasowa konsola developerska do testowania API —
-docelowy layout powstanie w `public/`. Konsola pokrywa wszystkie przypadki
+interfejs gry działa już w katalogu głównym i w `public/`. Konsola pokrywa wszystkie przypadki
 użycia z diagramu: łowisko, skrzynki, upgrader, trader, ekwipunek, historię
 i panel administratora. Szczegóły (instalacja PHP na różnych systemach, XAMPP,
 testy, reset bazy, doładowywanie salda) są w
 [INSTRUKCJA_DLA_ZESPOLU.md](INSTRUKCJA_DLA_ZESPOLU.md#2-jak-uruchomić-lokalnie).
+
+## Mechanika v2 na Maks
+
+Skrzynki dają wędki, łowisko daje ryby. Wędka startowa jest darmowa;
+pozostałe trzeba odblokować. [Zasady, balans, migracja i nowe API](docs/MECHANIKA_V2.md).
+Do aktualizacji istniejących danych używaj migracji **bez `--fresh`**.
 
 ## Animacja łowienia
 
@@ -60,7 +66,7 @@ przypadki administratora. Wszystkie są zaimplementowane i mają swoje endpointy
 | Tryb | Przypadek użycia | Endpoint | Na czym polega |
 |---|---|---|---|
 | Łowisko | `UC_FISH` | `POST /api/fish.php` | Zarzut wędką: opłata `koszt_uzycia` → ważone losowanie ryby |
-| Skrzynki | `UC_CASE` | `POST /api/open_case.php` | Otwarcie skrzynki: opłata `cena` → drop; opcjonalna natychmiastowa sprzedaż (`CASE_SELL`) |
+| Skrzynki | `UC_CASE` | `POST /api/open_case.php` | Losowanie i trwałe odblokowanie wędki; duplikaty dają rekompensatę. Jedna skrzynka darmowa co 24 h |
 | Upgrader | `UC_UPGRADE` | `GET`/`POST /api/upgrade.php` | Szansa = `(W_wkład / W_cel) × (1 − marża)`; porażka = wkład przepada |
 | Trader | `UC_TRADE` | `GET`/`POST /api/trade_up.php` | Kontrakt 3–10 przedmiotów o wartości ≥ progu; nagroda z puli rzadszej |
 
@@ -71,7 +77,7 @@ audytowy, eksport CSV/JSON).
 
 Wszystkie cztery tryby losują **tym samym algorytmem** $P(i) = w_i / \sum w_j$
 i zapisują zdarzenia do jednej tabeli `historia_losowan` (kolumna `typ`),
-więc RTP i statystyki liczą się wspólnie albo w rozbiciu na tryb.
+RTP liczy wypłaty płatnych losowań; darmowe bonusy i odblokowania sprzętu raportowane są osobno.
 
 ## Zespół
 

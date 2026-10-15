@@ -145,8 +145,8 @@ final class LosowanieTest extends TestCase
 
         $wedkaId = Fixtures::readmeWedka($this->db, 10.0);
 
-        FishingService::cast($pierwszy['id'], $wedkaId, Fixtures::scriptedRandom([0.1]), $this->db);
-        FishingService::cast($drugi['id'], $wedkaId, Fixtures::scriptedRandom([0.1]), $this->db);
+        Fixtures::zarzucPosiadanaWedka($this->db, $pierwszy['id'], $wedkaId, Fixtures::scriptedRandom([0.1]), $this->db);
+        Fixtures::zarzucPosiadanaWedka($this->db, $drugi['id'], $wedkaId, Fixtures::scriptedRandom([0.1]), $this->db);
 
         $historia = Losowanie::historia($pierwszy['id'], 10, $this->db);
 
@@ -164,8 +164,8 @@ final class LosowanieTest extends TestCase
         $wedkaId = Fixtures::readmeWedka($this->db, 0.0);
 
         // random 0.0 -> pierwszy element puli (Pospolita), powtórzone dwa razy.
-        FishingService::cast($gracz['id'], $wedkaId, Fixtures::scriptedRandom([0.0]), $this->db);
-        FishingService::cast($gracz['id'], $wedkaId, Fixtures::scriptedRandom([0.0]), $this->db);
+        Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedkaId, Fixtures::scriptedRandom([0.0]), $this->db);
+        Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedkaId, Fixtures::scriptedRandom([0.0]), $this->db);
 
         $rozbicie = Losowanie::rozbicieRzadkosci($gracz['id'], $this->db);
 
@@ -180,7 +180,7 @@ final class LosowanieTest extends TestCase
         $wedkaId = Fixtures::readmeWedka($this->db, 0.0);
 
         for ($i = 0; $i < 5; $i++) {
-            FishingService::cast($gracz['id'], $wedkaId, Fixtures::scriptedRandom([0.0]), $this->db);
+            Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedkaId, Fixtures::scriptedRandom([0.0]), $this->db);
         }
 
         $this->assertCount(2, Losowanie::historia($gracz['id'], 2, $this->db), 'limit=2 musi ciąć wynik');

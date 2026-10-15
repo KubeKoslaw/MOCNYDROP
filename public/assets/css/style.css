@@ -1488,3 +1488,54 @@ button, input, select, textarea {
     padding: 32px 14px;
   }
 }
+
+/* Wspólna nawigacja, ekran wejścia i wybór graficzny. */
+[hidden] { display: none !important; }
+.site-navbar { position: sticky; top: 0; z-index: 50; }
+.site-navbar nav { min-width: 0; }
+.nav-links { flex-wrap: nowrap; overflow-x: auto; padding: 5px 0; }
+.nav-item-btn { white-space: nowrap; }
+.startup-screen { display: none; }
+.booting .startup-screen { position: fixed; inset: 0; z-index: 10000; display: grid; place-content: center; justify-items: center; gap: 20px; background: #020617; color: #e2e8f0; font-size: clamp(24px, 6vw, 48px); letter-spacing: .08em; }
+.startup-icon { font-size: 72px; }
+.startup-progress { width: 180px; height: 4px; background: #22d3ee; transform-origin: left; animation: startup 3s linear; }
+@keyframes startup { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.rod-name { display: flex; align-items: center; gap: 8px; }
+.rod-icon { width: 42px; height: 42px; }
+.rod-pool { overflow: visible; display: flex; flex-wrap: wrap; gap: 6px; }
+.fish-chip { position: relative; border: 1px solid #334155; background: #0f172a; border-radius: 8px; padding: 4px; cursor: help; }
+.fish-chip img { width: 36px; height: 36px; object-fit: contain; }
+.fish-tooltip { display: none; position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 20; width: max-content; max-width: 220px; background: #020617; color: #f8fafc; border: 1px solid #475569; border-radius: 6px; padding: 8px; font-size: 12px; box-shadow: 0 4px 16px #0008; }
+.fish-chip:hover .fish-tooltip, .fish-chip:focus .fish-tooltip { display: block; }
+.upgrade-picker { border: 0; padding: 4px; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; max-height: 340px; overflow-y: auto; }
+.upgrade-choice { display: flex; flex-direction: column; align-items: center; gap: 5px; border: 1px solid var(--rarity, #334155); background: #0f172a; color: #e2e8f0; padding: 8px; border-radius: 10px; cursor: pointer; font-size: 12px; min-width: 0; }
+.upgrade-choice img { width: 64px; height: 64px; object-fit: contain; }
+.upgrade-choice.selected { outline: 3px solid #22d3ee; background: #164e63; }
+.upgrade-choice:focus-visible, .fish-chip:focus-visible { outline: 3px solid #fbbf24; outline-offset: 2px; }
+.upgrade-picker:disabled { opacity: .6; }
+.upgrader-slot { min-width: 0; }
+.case-rod-pool { display: grid; grid-template-columns: repeat(auto-fit, minmax(95px, 1fr)); gap: 8px; margin: 12px 0; }
+.case-rod { display: flex; flex-direction: column; align-items: center; gap: 5px; border: 1px solid var(--rarity, #334155); padding: 8px; border-radius: 8px; text-align: center; font-size: 12px; }
+.case-rod img { width: 48px; height: 48px; }
+.case-rod small { color: #cbd5e1; }
+@media (max-width: 700px) { .site-navbar { gap: 10px; padding: 10px; } .site-navbar nav { width: 100%; order: 3; } .upgrader-container { grid-template-columns: 1fr; } .fish-tooltip { left: 0; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .startup-progress { animation: none; } }
+@media (max-width: 1200px) {
+  .site-navbar { flex-wrap: wrap; }
+  .site-navbar nav { order: 3; width: 100%; }
+  .nav-links { display: flex; }
+}
+@media (max-width: 700px) {
+  .site-navbar > div:last-child { width: 100%; }
+  .nav-auth-box { flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .brand { width: 100%; justify-content: center; }
+  .upgrader-actions { flex-wrap: wrap; }
+  .mode-arena-section { scroll-margin-top: 210px; }
+  .fish-chip:nth-last-child(-n+3) .fish-tooltip { left: auto; right: 0; }
+}
+.fishing-arena-layout { grid-template-columns: minmax(0, 1fr); }
+.scene-toolbar > div { flex-wrap: wrap; min-width: 0; }
+.rods-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); }
+.cases-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.rod-head { flex-wrap: wrap; }
+.rod-card, .case-card { min-width: 0; }

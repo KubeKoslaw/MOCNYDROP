@@ -181,7 +181,7 @@
   <p class="hint">
     Otwarcie pobiera <code>cena</code> z portfela (<code>Portfel::pobierzOplate</code>), a wynik ustala serwer —
     pasek <code>reel</code> to tylko prezentacja.
-    <label><input type="checkbox" id="case-sell"> sprzedaj wygraną od razu (CASE_SELL)</label>
+    <p class="hint">Skrzynki odblokowują wędki. Duplikaty dają rekompensatę.</p>
   </p>
 </section>
 
@@ -256,11 +256,15 @@
 
   <h3 class="sub">Zarządzanie skrzynkami (UC_ADM1)</h3>
   <div class="row">
+    <input id="adm-case-id" type="hidden">
     <input id="adm-case-nazwa" placeholder="nazwa skrzynki">
     <input id="adm-case-cena" placeholder="cena" type="number" step="0.01" min="0" style="min-width:90px">
     <input id="adm-case-opis" placeholder="opis">
+    <label><input id="adm-case-daily" type="checkbox"> Darmowa co 24 h</label>
     <button id="btn-adm-case-create">Utwórz</button>
+    <button id="btn-adm-case-cancel" class="ghost">Nowa skrzynka</button>
   </div>
+  <fieldset id="adm-case-rods"><legend>Wędki i wagi</legend></fieldset>
   <div id="adm-cases"></div>
 </section>
 
@@ -423,6 +427,7 @@ async function loadSpots() {
     const data = await api('wedki.php');
 
     rodsCache = data.wedki || [];
+    if (!$('adm-case-rods').querySelector('input')) renderAdminRodPool();
 
     if (!data.wedki.length) {
       box.innerHTML = '<p class="hint">Brak łowisk w bazie. Załaduj dane: '
@@ -690,7 +695,7 @@ async function loadCases() {
     }
 
     box.innerHTML = data.skrzynki.map((skrzynka) => {
-      const chips = skrzynka.przedmioty.map((item) => '<span class="chip" style="border-color:' + esc(item.kolor)
+      const chips = skrzynka.wedki.map((item) => '<span class="chip" style="border-color:' + esc(item.kolor)
         + ';color:' + esc(item.kolor) + '">' + esc(item.nazwa) + ' · ' + esc(item.szansa_procent.toFixed(3))
         + '%</span>').join('');
 
@@ -700,7 +705,7 @@ async function loadCases() {
         + '<div class="cost">' + money(skrzynka.cena) + ' 🪙</div></div>'
         + '<div class="pool">' + chips + '</div>'
         + '<button class="btn-open-case" data-id="' + Number(skrzynka.id) + '" data-nazwa="' + esc(skrzynka.nazwa)
-        + '">' + 'Otwórz (' + skrzynka.liczba_przedmiotow + ' dropów)</button>'
+        + '">' + 'Otwórz (' + skrzynka.wedki.length + ' dropów)</button>'
         + '</div>';
     }).join('');
 
@@ -733,34 +738,27 @@ async function openCase(skrzynkaId, button) {
       method: 'POST',
       body: {
         skrzynka_id: skrzynkaId,
-        sprzedaj_natychmiast: $('case-sell').checked,
+        request_id: button.dataset.requestId || (button.dataset.requestId = (crypto.randomUUID?.() ?? Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''))),
       },
     });
 
-    const item = data.przedmiot;
-    const sprzedaz = data.sprzedaz;
+    const item = data.nagroda;
+    delete button.dataset.requestId;
 
     $('case-wynik').innerHTML = '<div class="box" style="border-left-color:' + esc(item.kolor) + '">'
       + (item.ikona ? '<img src="' + esc(item.ikona) + '" alt="">' : '')
       + '<div><strong style="color:' + esc(item.kolor) + '">' + esc(item.nazwa) + '</strong>'
-      + '<div class="muted">' + esc(item.rzadkosc) + ' • wartość ' + money(item.wartosc)
+      + '<div class="muted">' + esc(item.rzadkosc) + ' • rekompensata ' + money(data.rekompensata)
       + ' • szansa ' + Number(item.szansa_procent).toFixed(3) + '%</div>'
       + '<div class="muted">Cena ' + money(data.otwarcie.cena) + ' • saldo '
       + money(data.saldo_przed) + ' → ' + money(data.saldo_po)
-      + (sprzedaz ? ' (sprzedano od razu za ' + money(sprzedaz.otrzymane_monety) + ')' : '') + '</div>'
+      + (data.duplikat ? ' (duplikat)' : ' (nowa wędka)') + '</div>'
       + '</div></div>';
-
-    // Kontrola kontraktu: wygrana musi leżeć pod reel_indeks_wygranej.
-    const reelWinner = (data.reel || [])[data.reel_indeks_wygranej] || {};
-
-    if (Number(reelWinner.przedmiot_id) !== Number(item.przedmiot_id)) {
-      toast('UWAGA: reel[reel_indeks_wygranej] nie wskazuje wygranej!', true);
-    }
 
     toast(data.message);
     $('saldo').textContent = money(data.saldo_po);
 
-    await Promise.all([loadInventory(), loadHistory()]);
+    await Promise.all([loadInventory(), loadHistory(), loadRods(), loadCases()]);
   } catch (error) {
     reportError(error.kod || 'error', error.message, error.status);
   } finally {
@@ -1134,12 +1132,23 @@ function renderAdminCases(skrzynki) {
         + '<td>' + skrzynka.id + '</td>'
         + '<td>' + esc(skrzynka.nazwa) + '</td>'
         + '<td>' + money(skrzynka.cena) + '</td>'
-        + '<td>' + skrzynka.liczba_przedmiotow + '</td>'
+        + '<td>' + skrzynka.wedki.length + '</td>'
         + '<td>' + (skrzynka.aktywna ? '<span class="pos">aktywna</span>' : '<span class="neg">wyłączona</span>') + '</td>'
         + '<td><button class="ghost small adm-case" data-id="' + skrzynka.id + '">'
-        + (skrzynka.aktywna ? 'Wyłącz' : 'Włącz') + '</button></td></tr>').join('')
+        + (skrzynka.aktywna ? 'Wyłącz' : 'Włącz') + '</button> <button class="ghost small adm-case-edit" data-id="' + skrzynka.id + '">Edytuj pulę</button></td></tr>').join('')
       + '</tbody></table>'
     : '<p class="hint">Brak skrzynek.</p>';
+
+  $('adm-cases').querySelectorAll('.adm-case-edit').forEach(btn => btn.addEventListener('click', () => {
+    const c = skrzynki.find(c => c.id === Number(btn.dataset.id));
+    $('adm-case-id').value = c.id;
+    $('adm-case-nazwa').value = c.nazwa;
+    $('adm-case-cena').value = c.cena;
+    $('adm-case-opis').value = c.opis;
+    $('adm-case-daily').checked = c.dzienna;
+    $('btn-adm-case-create').textContent = 'Zapisz';
+    renderAdminRodPool(c.wedki);
+  }));
 
   $('adm-cases').querySelectorAll('.adm-case').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -1158,11 +1167,23 @@ function renderAdminCases(skrzynki) {
   });
 }
 
-/**
- * Kreator skrzynki (nazwa + cena + opis).
- * Pula = wszystkie aktywne przedmioty z katalogu z wagą NULL, czyli z wagą
- * domyślną poziomu rzadkości z README.md — admin doprecyzuje wagi w edycji.
- */
+function renderAdminRodPool(pool = null) {
+  $('adm-case-rods').innerHTML = '<legend>Wędki i wagi (dodatnie liczby)</legend>' + rodsCache.map(r => {
+    const current = pool?.find(p => p.wedka_id === r.id);
+    return '<label style="display:inline-flex;align-items:center;gap:8px;margin:8px">'
+      + '<input type="checkbox" data-admin-rod="' + r.id + '" ' + (!pool || current ? 'checked' : '') + '>'
+      + esc(r.nazwa) + '<input type="number" min="0.000001" step="any" aria-label="Waga: ' + esc(r.nazwa)
+      + '" data-admin-weight="' + r.id + '" value="' + (current?.waga || 1) + '" style="width:90px"></label>';
+  }).join('');
+}
+
+function resetCaseEditor() {
+  for (const id of ['adm-case-id','adm-case-nazwa','adm-case-cena','adm-case-opis']) $(id).value = '';
+  $('adm-case-daily').checked = false;
+  $('btn-adm-case-create').textContent = 'Utwórz';
+  renderAdminRodPool();
+}
+
 async function createCase() {
   const nazwa = $('adm-case-nazwa').value.trim();
   const cena = Number($('adm-case-cena').value);
@@ -1172,30 +1193,33 @@ async function createCase() {
     return;
   }
 
-  if (!catalogCache.length) {
-    toast('Katalog jest pusty — nie ma z czego zbudować puli.', true);
+  if (!rodsCache.length) {
+    toast('Katalog wędek jest pusty.', true);
     return;
   }
 
-  const przedmioty = catalogCache.map((item) => ({ przedmiot_id: Number(item.przedmiot_id), waga: null }));
+  const wedki = [...$('adm-case-rods').querySelectorAll('[data-admin-rod]:checked')].map(input => ({
+    wedka_id: Number(input.dataset.adminRod),
+    waga: Number($('adm-case-rods').querySelector('[data-admin-weight="' + input.dataset.adminRod + '"]').value)
+  }));
 
   try {
     const data = await api('admin/skrzynki.php', {
       method: 'POST',
       body: {
-        akcja: 'utworz',
+        akcja: $('adm-case-id').value ? 'edycja' : 'utworz',
+        ...($('adm-case-id').value ? {skrzynka_id: Number($('adm-case-id').value)} : {}),
+        dzienna: $('adm-case-daily').checked,
         nazwa,
         cena,
         opis: $('adm-case-opis').value.trim(),
-        przedmioty,
+        wedki,
       },
     });
 
-    toast(data.message + ' Dropów: ' + data.skrzynka.liczba_przedmiotow);
+    toast(data.message + ' Dropów: ' + data.skrzynka.wedki.length);
 
-    $('adm-case-nazwa').value = '';
-    $('adm-case-cena').value = '';
-    $('adm-case-opis').value = '';
+    resetCaseEditor();
 
     await Promise.all([loadAdmin(), loadCases()]);
   } catch (error) {
@@ -1334,6 +1358,7 @@ $('btn-admin-load').addEventListener('click', loadAdmin);
 $('btn-adm-refresh').addEventListener('click', loadAdmin);
 $('btn-adm-search').addEventListener('click', searchUsers);
 $('btn-adm-case-create').addEventListener('click', createCase);
+$('btn-adm-case-cancel').addEventListener('click', resetCaseEditor);
 $('btn-adm-csv').addEventListener('click', () => downloadReport('csv'));
 $('btn-adm-json').addEventListener('click', () => downloadReport('json'));
 

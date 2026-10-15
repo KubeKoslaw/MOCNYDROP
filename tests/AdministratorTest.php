@@ -163,13 +163,13 @@ final class AdministratorTest extends TestCase
     {
         $admin = $this->admin();
 
-        $anchovis = Fixtures::przedmiotKatalog($this->db, 'Anchois', 'pospolita', 2.0);
-        $jesiotr = Fixtures::przedmiotKatalog($this->db, 'Jesiotr', 'niesamowita', 400.0);
+        $anchovis = Fixtures::wedkaZRyba($this->db, 'Bambus');
+        $jesiotr = Fixtures::wedkaZRyba($this->db, 'Morska');
 
         $skrzynka = Skrzynka::nowa('Skrzynka Testowa', 25.0, '', 'Opis skrzynki');
         $skrzynka->pulaDoZapisu = [
-            ['przedmiot_id' => $anchovis, 'waga' => 50.0],
-            ['przedmiot_id' => $jesiotr, 'waga' => null],
+            ['wedka_id' => $anchovis, 'waga' => 50.0],
+            ['wedka_id' => $jesiotr, 'waga' => null],
         ];
 
         $this->assertSame(0, $skrzynka->id, 'Przed zapisem skrzynka nie ma id');
@@ -221,7 +221,7 @@ final class AdministratorTest extends TestCase
     public function testEdytujSkrzynkeOdrzucaUjemnaCeneIBledneWagi(): void
     {
         $admin = $this->admin();
-        $anchovis = Fixtures::przedmiotKatalog($this->db, 'Anchois', 'pospolita', 2.0);
+        $anchovis = Fixtures::wedkaZRyba($this->db, 'Bambus');
 
         $ujemna = Skrzynka::nowa('Zła Skrzynka', -5.0);
 
@@ -233,7 +233,7 @@ final class AdministratorTest extends TestCase
         );
 
         $zlaWaga = Skrzynka::nowa('Zła Waga', 10.0);
-        $zlaWaga->pulaDoZapisu = [['przedmiot_id' => $anchovis, 'waga' => -1.0]];
+        $zlaWaga->pulaDoZapisu = [['wedka_id' => $anchovis, 'waga' => -1.0]];
 
         $this->assertThrows(
             ApiException::class,
@@ -258,7 +258,7 @@ final class AdministratorTest extends TestCase
         );
         $this->assertSame(
             0,
-            (int) $this->db->query('SELECT COUNT(*) FROM skrzynka_przedmioty')->fetchColumn(),
+            (int) $this->db->query('SELECT COUNT(*) FROM skrzynka_wedki')->fetchColumn(),
             'Odrzucony zapis nie może zostawić połowy puli (transakcyjność)'
         );
     }
@@ -303,7 +303,7 @@ final class AdministratorTest extends TestCase
         $konto = Fixtures::user($this->db, 'gracz', 100.0);
         $wedkaId = Fixtures::readmeWedka($this->db, 10.0);
 
-        FishingService::cast($konto['id'], $wedkaId, Fixtures::scriptedRandom([0.1]), $this->db);
+        Fixtures::zarzucPosiadanaWedka($this->db, $konto['id'], $wedkaId, Fixtures::scriptedRandom([0.1]), $this->db);
 
         $csv = $admin->eksportujRaport();
 

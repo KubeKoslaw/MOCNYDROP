@@ -117,7 +117,7 @@ final class Losowanie
         $stmt = $db->prepare(
             'SELECT COALESCE(SUM(wygrana_wartosc), 0) AS wygrane, COALESCE(SUM(koszt), 0) AS koszty
              FROM historia_losowan
-             WHERE typ = ?'
+             WHERE typ = ? AND koszt > 0'
         );
         $stmt->execute([$typ->value]);
 
@@ -148,13 +148,16 @@ final class Losowanie
 
         $stmt = $db->prepare(
             'SELECT h.id, h.typ, h.koszt, h.wygrana_wartosc, h.waga_wylosowana, h.suma_wag, h.czas, h.udane,
-                    p.id AS przedmiot_id, p.nazwa, p.ikona,
-                    z.nazwa AS rzadkosc_nazwa, z.kolor,
+                    p.id AS przedmiot_id, rw.id AS wynik_wedka_id, h.duplikat,
+                    COALESCE(p.nazwa, rw.nazwa) AS nazwa, COALESCE(p.ikona, rw.ikona) AS ikona,
+                    COALESCE(z.nazwa, rz.nazwa) AS rzadkosc_nazwa, COALESCE(z.kolor, rz.kolor) AS kolor,
                     w.nazwa AS wedka_nazwa,
                     s.nazwa AS skrzynka_nazwa
              FROM historia_losowan h
-             JOIN przedmioty p ON p.id = h.wynik_id
-             JOIN rzadkosci z  ON z.kod = p.rzadkosc_kod
+             LEFT JOIN przedmioty p ON p.id = h.wynik_id
+             LEFT JOIN rzadkosci z ON z.kod = p.rzadkosc_kod
+             LEFT JOIN wedki rw ON rw.id = h.wynik_wedka_id
+             LEFT JOIN rzadkosci rz ON rz.kod = rw.rzadkosc_kod
              LEFT JOIN wedki w ON w.id = h.wedka_id
              LEFT JOIN skrzynki s ON s.id = h.skrzynka_id
              WHERE h.user_id = ?
@@ -184,7 +187,10 @@ final class Losowanie
                 'zrodlo' => self::nazwaZrodla($row, $typ),
                 'wedka' => $row['wedka_nazwa'] === null ? null : (string) $row['wedka_nazwa'],
                 'skrzynka' => $row['skrzynka_nazwa'] === null ? null : (string) $row['skrzynka_nazwa'],
-                'przedmiot_id' => (int) $row['przedmiot_id'],
+                'przedmiot_id' => $row['przedmiot_id'] === null ? null : (int) $row['przedmiot_id'],
+                'wynik_wedka_id' => $row['wynik_wedka_id'] === null ? null : (int) $row['wynik_wedka_id'],
+                'duplikat' => (bool) $row['duplikat'],
+                'nagroda_typ' => $row['wynik_wedka_id'] === null ? 'przedmiot' : 'wedka',
                 'nazwa' => (string) $row['nazwa'],
                 'rzadkosc' => (string) $row['rzadkosc_nazwa'],
                 'kolor' => (string) $row['kolor'],
@@ -263,6 +269,10 @@ final class Losowanie
                     COUNT(DISTINCT user_id) AS graczy,
                     COALESCE(SUM(koszt), 0) AS koszt,
                     COALESCE(SUM(wygrana_wartosc), 0) AS wygrana,
+                    COALESCE(SUM(CASE WHEN koszt > 0 THEN wygrana_wartosc ELSE 0 END), 0) AS wyplaty_platne,
+                    COALESCE(SUM(CASE WHEN koszt = 0 THEN wygrana_wartosc ELSE 0 END), 0) AS wyplaty_darmowe,
+                    SUM(CASE WHEN wynik_wedka_id IS NOT NULL AND duplikat = 0 THEN 1 ELSE 0 END) AS odblokowania,
+                    SUM(CASE WHEN wynik_wedka_id IS NOT NULL AND duplikat = 1 THEN 1 ELSE 0 END) AS duplikaty,
                     COALESCE(SUM(CASE WHEN udane = 0 THEN 1 ELSE 0 END), 0) AS porazki
              FROM historia_losowan'
         )->fetch();
@@ -277,6 +287,10 @@ final class Losowanie
                 'SELECT COUNT(*) AS liczba,
                         COALESCE(SUM(koszt), 0) AS koszt,
                         COALESCE(SUM(wygrana_wartosc), 0) AS wygrana,
+                    COALESCE(SUM(CASE WHEN koszt > 0 THEN wygrana_wartosc ELSE 0 END), 0) AS wyplaty_platne,
+                    COALESCE(SUM(CASE WHEN koszt = 0 THEN wygrana_wartosc ELSE 0 END), 0) AS wyplaty_darmowe,
+                    SUM(CASE WHEN wynik_wedka_id IS NOT NULL AND duplikat = 0 THEN 1 ELSE 0 END) AS odblokowania,
+                    SUM(CASE WHEN wynik_wedka_id IS NOT NULL AND duplikat = 1 THEN 1 ELSE 0 END) AS duplikaty,
                         COALESCE(SUM(CASE WHEN udane = 0 THEN 1 ELSE 0 END), 0) AS porazki
                  FROM historia_losowan WHERE typ = ?'
             );
@@ -294,20 +308,25 @@ final class Losowanie
                 'suma_kosztow' => round($koszt, 2),
                 'suma_wyplat' => round($wygrana, 2),
                 'bilans' => round($wygrana - $koszt, 2),
-                'rtp' => $koszt > 0.0 ? round($wygrana / $koszt, 4) : 0.0,
+                'rtp' => $koszt > 0.0 ? round((float) $row['wyplaty_platne'] / $koszt, 4) : 0.0,
+                'darmowe_wyplaty' => (float) $row['wyplaty_darmowe'],
+                'odblokowania_wedek' => (int) $row['odblokowania'],
+                'duplikaty_wedek' => (int) $row['duplikaty'],
             ];
         }
 
         $rzadkosci = [];
 
         foreach ($db->query(
-            'SELECT z.kod, z.nazwa, z.kolor, z.kolejnosc, COUNT(h.id) AS liczba
+            'SELECT COALESCE(z.kod, rz.kod) AS kod, COALESCE(z.nazwa, rz.nazwa) AS nazwa, COALESCE(z.kolor, rz.kolor) AS kolor, COALESCE(z.kolejnosc, rz.kolejnosc) AS kolejnosc, COUNT(h.id) AS liczba
              FROM historia_losowan h
-             JOIN przedmioty p ON p.id = h.wynik_id
-             JOIN rzadkosci z  ON z.kod = p.rzadkosc_kod
+             LEFT JOIN przedmioty p ON p.id = h.wynik_id
+             LEFT JOIN rzadkosci z ON z.kod = p.rzadkosc_kod
+             LEFT JOIN wedki rw ON rw.id = h.wynik_wedka_id
+             LEFT JOIN rzadkosci rz ON rz.kod = rw.rzadkosc_kod
              WHERE h.udane = 1
-             GROUP BY z.kod
-             ORDER BY z.kolejnosc ASC'
+             GROUP BY COALESCE(z.kod, rz.kod)
+             ORDER BY COALESCE(z.kolejnosc, rz.kolejnosc) ASC'
         )->fetchAll() as $row) {
             $rzadkosci[] = [
                 'kod' => (string) $row['kod'],
@@ -320,11 +339,13 @@ final class Losowanie
         $najwieksze = [];
 
         foreach ($db->query(
-            'SELECT h.czas, h.typ, h.wygrana_wartosc, u.login, p.nazwa, p.ikona, z.nazwa AS rzadkosc, z.kolor
+            'SELECT h.czas, h.typ, h.wygrana_wartosc, u.login, COALESCE(p.nazwa, rw.nazwa) AS nazwa, COALESCE(p.ikona, rw.ikona) AS ikona, COALESCE(z.nazwa, rz.nazwa) AS rzadkosc, COALESCE(z.kolor, rz.kolor) AS kolor
              FROM historia_losowan h
              JOIN uzytkownicy u ON u.id = h.user_id
-             JOIN przedmioty p  ON p.id = h.wynik_id
-             JOIN rzadkosci z   ON z.kod = p.rzadkosc_kod
+             LEFT JOIN przedmioty p ON p.id = h.wynik_id
+             LEFT JOIN rzadkosci z ON z.kod = p.rzadkosc_kod
+             LEFT JOIN wedki rw ON rw.id = h.wynik_wedka_id
+             LEFT JOIN rzadkosci rz ON rz.kod = rw.rzadkosc_kod
              WHERE h.udane = 1
              ORDER BY h.wygrana_wartosc DESC, h.id DESC
              LIMIT 10'
@@ -349,7 +370,10 @@ final class Losowanie
                 'suma_kosztow' => round($sumaKoszt, 2),
                 'suma_wyplat' => round($sumaWygrana, 2),
                 'bilans_platformy' => round($sumaKoszt - $sumaWygrana, 2),
-                'rtp' => $sumaKoszt > 0.0 ? round($sumaWygrana / $sumaKoszt, 4) : 0.0,
+                'rtp' => $sumaKoszt > 0.0 ? round((float) $ogolne['wyplaty_platne'] / $sumaKoszt, 4) : 0.0,
+                'darmowe_wyplaty' => (float) $ogolne['wyplaty_darmowe'],
+                'odblokowania_wedek' => (int) $ogolne['odblokowania'],
+                'duplikaty_wedek' => (int) $ogolne['duplikaty'],
             ],
             'wedlug_typu' => $wedlugTypu,
             'rozbicie_rzadkosci' => $rzadkosci,
@@ -494,6 +518,7 @@ final class Losowanie
                     COALESCE(SUM(h.wygrana_wartosc), 0) AS wygrana
              FROM historia_losowan h
              JOIN uzytkownicy u ON u.id = h.user_id
+             WHERE h.koszt > 0
              GROUP BY h.user_id, u.login
              HAVING liczba >= ?'
         );
@@ -543,7 +568,11 @@ final class Losowanie
         $db = $pdo ?? Database::connection();
 
         $stmt = $db->prepare(
-            'SELECT COALESCE(SUM(wygrana_wartosc), 0) AS wygrana, COALESCE(SUM(koszt), 0) AS koszt
+            'SELECT COALESCE(SUM(wygrana_wartosc), 0) AS wygrana,
+                    COALESCE(SUM(CASE WHEN koszt > 0 THEN wygrana_wartosc ELSE 0 END), 0) AS wyplaty_platne,
+                    COALESCE(SUM(CASE WHEN koszt = 0 THEN wygrana_wartosc ELSE 0 END), 0) AS wyplaty_darmowe,
+                    SUM(CASE WHEN wynik_wedka_id IS NOT NULL AND duplikat = 0 THEN 1 ELSE 0 END) AS odblokowania,
+                    SUM(CASE WHEN wynik_wedka_id IS NOT NULL AND duplikat = 1 THEN 1 ELSE 0 END) AS duplikaty, COALESCE(SUM(koszt), 0) AS koszt
              FROM historia_losowan WHERE user_id = ?'
         );
         $stmt->execute([$userId]);
