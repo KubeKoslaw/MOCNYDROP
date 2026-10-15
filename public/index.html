@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="../">
+  <title>MOCNY DROP — Strona Główna | Gry Hazardowe na Wirtualną Walutę</title>
+  <meta name="description" content="Projekt MOCNY DROP — losowanie nagród w 4 trybach gry: Łowisko ryb, Otwieranie skrzynek, Upgrader oraz Trader. Czysta wirtualna waluta.">
+
+  <!-- Arkusze stylów -->
+  <link rel="stylesheet" href="public/assets/css/fishing-scene.css">
+  <link rel="stylesheet" href="public/assets/css/style.css">
+
+  <!-- Skrypty modułowe ES -->
+  <script type="module" src="public/assets/js/fishing/index.js"></script>
+  <script type="module" src="public/assets/js/main.js"></script>
+</head>
+<body>
+
+  <!-- Górna belka nawigacji (Navbar) -->
+  <header class="site-navbar">
+    <div class="brand">
+      <span class="brand-icon">🎣</span>
+      <span class="brand-title">MOCNY DROP</span>
+      <span class="brand-tag">WIRTUALNA WALUTA</span>
+    </div>
+
+    <nav aria-label="Główne tryby">
+      <ul class="nav-links">
+        <li><button class="nav-item-btn active" data-target-mode="hub">🏠 Hub Trybów</button></li>
+        <li><button class="nav-item-btn" data-target-mode="fish">🎣 Łowisko</button></li>
+        <li><button class="nav-item-btn" data-target-mode="cases">📦 Skrzynki</button></li>
+        <li><button class="nav-item-btn" data-target-mode="upgrade">⚡ Upgrader</button></li>
+        <li><button class="nav-item-btn" data-target-mode="trade">🔄 Trader</button></li>
+        <li><button class="nav-item-btn" data-target-mode="inventory">🎒 Ekwipunek</button></li>
+        <li><button class="nav-item-btn" data-target-mode="history">📜 Historia & RTP</button></li>
+      </ul>
+    </nav>
+
+    <!-- Kontener stanu konta i logowania -->
+    <div>
+      <!-- Stan dla niezalogowanego gościa -->
+      <div id="nav-guest-box" class="nav-auth-box">
+        <button id="btn-nav-login" class="btn btn-ghost btn-sm">Zaloguj się</button>
+        <button id="btn-nav-register" class="btn btn-primary btn-sm">Rejestracja (+50 🪙)</button>
+        <button id="btn-demo-account" class="btn btn-gold btn-sm" title="Utwórz natychmiastowe konto demo z darmowym saldem">⚡ Szybkie Demo</button>
+      </div>
+
+      <!-- Stan dla zalogowanego gracza -->
+      <div id="nav-auth-box" class="nav-auth-box" style="display: none;">
+        <div class="wallet-badge" title="Twój stan portfela w grze">
+          <span class="wallet-coin">🪙</span>
+          <span id="nav-saldo-val" class="wallet-amount">50,00</span>
+          <span style="font-size:0.75rem; color:var(--text-muted)">monet</span>
+        </div>
+        <div class="user-profile-btn">
+          <span id="nav-user-login" style="font-weight:700">Gracz</span>
+          <span id="nav-user-role" class="user-role-pill">Gracz</span>
+        </div>
+        <button id="btn-nav-logout" class="btn btn-ghost btn-sm" title="Wyloguj się">Wyloguj</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Główna zawartość witryny -->
+  <main class="main-content">
+
+    <!-- Sekcja Hero: Wizytówka i Wprowadzenie -->
+    <section class="hero-section">
+      <div class="hero-glow-sphere"></div>
+      
+      <div class="hero-badge-pill">
+        <span>✨ OFICJALNA ARCHITEKTURA UML</span>
+        <span>•</span>
+        <span>4 TRYBY GRY</span>
+        <span>•</span>
+        <span>CSPRNG ROZKŁAD WAŻONY</span>
+      </div>
+
+      <h1 class="hero-title">
+        Witaj w <span class="hero-title-highlight">MOCNY DROP</span>
+      </h1>
+      
+      <p class="hero-subtitle">
+        Poznaj innowacyjną platformę z elementami losowania nagród opartą w 100% na wirtualnej walucie.
+        Wybierz swój ulubiony tryb: łów legendarne ryby z dynamiczną animacją tafli wody, otwieraj skrzynki,
+        ryzykuj w Upgraderze lub wymieniaj zdobycze w Kontrakcie Tradera!
+      </p>
+
+      <div class="hero-stats-row">
+        <div class="stat-pill"><span class="icon">🎯</span> 4 zbalansowane tryby gry</div>
+        <div class="stat-pill"><span class="icon">🐟</span> 54 unikalne ryby i przedmioty</div>
+        <div class="stat-pill"><span class="icon">💎</span> 6 poziomów rzadkości (aż do ULTRA)</div>
+        <div class="stat-pill"><span class="icon">⚖️</span> Algorytm losowania P(i) = w_i / &Sigma;w</div>
+        <div class="stat-pill"><span class="icon">🎁</span> Bonus powitalny 50 monet na start</div>
+      </div>
+    </section>
+
+    <!-- HUB GŁÓWNY: WYBÓR TRYBÓW GRY (hub_main z diagramu MOCNYDROP_PROJEKT.drawio) -->
+    <section id="arena-hub" class="hub-selector-section">
+      <div class="section-header">
+        <div class="section-header-left">
+          <h2><span>🎮</span> Wybierz Tryb Gry</h2>
+          <p>Wszystkie cztery tryby posiadają zweryfikowane endpointy API i wspólną historię losowań.</p>
+        </div>
+      </div>
+
+      <div class="modes-grid">
+        <!-- Karta 1: Łowisko Ryb (UC_FISH) -->
+        <article class="mode-card mode-fish selected" data-mode="fish">
+          <div>
+            <span class="mode-badge">UC_FISH • Scena Łowienia 3D</span>
+            <div class="mode-icon-circle">🎣</div>
+            <h3 class="mode-title">Łowisko Ryb</h3>
+            <p class="mode-desc">
+              Zamiast klasycznej skrzynki zarzucasz wędkę w jednym z 6 zróżnicowanych łowisk.
+              Poczuj emocje: falująca tafla wody, spławik, podwodna parada ryb i zacięcie w momencie brania!
+            </p>
+            <ul class="mode-details-list">
+              <li><span>🏷️ Koszt zarzutu:</span> <strong>5 – 500 monet</strong></li>
+              <li><span>🌊 Dostępny sprzęt:</span> <strong>6 profesjonalnych wędek</strong></li>
+              <li><span>🎬 Mechanika:</span> <strong>Komponent &lt;fishing-scene&gt;</strong></li>
+            </ul>
+          </div>
+          <button class="btn btn-primary mode-cta" data-target-mode="fish">Zagraj w Łowisko 🎣</button>
+        </article>
+
+        <!-- Karta 2: Otwarcie Skrzynki (UC_CASE) -->
+        <article class="mode-card mode-case" data-mode="cases">
+          <div>
+            <span class="mode-badge">UC_CASE • Otwieranie Skrzynek</span>
+            <div class="mode-icon-circle">📦</div>
+            <h3 class="mode-title">Otwarcie Skrzynki</h3>
+            <p class="mode-desc">
+              Klasyczny drop ze skrzynek z rybami. Transparentne szanse procentowe dla każdego przedmiotu
+              oraz możliwość natychmiastowej sprzedaży wygranej do portfela (przypadek CASE_SELL)!
+            </p>
+            <ul class="mode-details-list">
+              <li><span>🏷️ Koszt skrzynki:</span> <strong>10 – 750 monet</strong></li>
+              <li><span>⚡ Funkcja specjalna:</span> <strong>Natychmiastowa sprzedaż</strong></li>
+              <li><span>🎲 Transparentność:</span> <strong>Pełny podgląd wag dropu</strong></li>
+            </ul>
+          </div>
+          <button class="btn btn-primary mode-cta" data-target-mode="cases">Otwórz Skrzynki 📦</button>
+        </article>
+
+        <!-- Karta 3: Upgrader Przedmiotów (UC_UPGRADE) -->
+        <article class="mode-card mode-upgrade" data-mode="upgrade">
+          <div>
+            <span class="mode-badge">UC_UPGRADE • Wirtualne Koło</span>
+            <div class="mode-icon-circle">⚡</div>
+            <h3 class="mode-title">Upgrader Ryb</h3>
+            <p class="mode-desc">
+              Poświęć złowioną rybę z ekwipunku, by zawalczyć o mityczną zdobycz z katalogu!
+              Szansa wyliczana ściśle według wzoru P = (W_wkład / W_cel) &times; 95%. Porażka niszczy wkład!
+            </p>
+            <ul class="mode-details-list">
+              <li><span>🎯 Cel ulepszenia:</span> <strong>Dowolna cenniejsza ryba</strong></li>
+              <li><span>🎰 Koło fortuny:</span> <strong>Losowanie CSPRNG 0–100%</strong></li>
+              <li><span>⚠️ Ryzyko:</span> <strong>Porażka kasuje przedmiot</strong></li>
+            </ul>
+          </div>
+          <button class="btn btn-primary mode-cta" data-target-mode="upgrade">Uruchom Upgrader ⚡</button>
+        </article>
+
+        <!-- Karta 4: Kontrakt Tradera (UC_TRADE) -->
+        <article class="mode-card mode-trade" data-mode="trade">
+          <div>
+            <span class="mode-badge">UC_TRADE • Wymiana Ryb</span>
+            <div class="mode-icon-circle">🔄</div>
+            <h3 class="mode-title">Kontrakt Tradera</h3>
+            <p class="mode-desc">
+              Wybierz od 3 do 10 zbędnych ryb ze swojego ekwipunku o łącznej wartości &ge; 10 monet.
+              Podpisz kontrakt, spal wkład i odbierz gwarantowaną nagrodę z wyższego poziomu rzadkości!
+            </p>
+            <ul class="mode-details-list">
+              <li><span>📑 Wielkość kontraktu:</span> <strong>3 do 10 przedmiotów</strong></li>
+              <li><span>💰 Minimalny próg:</span> <strong>10,00 monet</strong></li>
+              <li><span>💎 Gwarancja:</span> <strong>Wyższy poziom rzadkości</strong></li>
+            </ul>
+          </div>
+          <button class="btn btn-primary mode-cta" data-target-mode="trade">Podpisz Kontrakt 🔄</button>
+        </article>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         ARENA 1: ŁOWISKO RYB (UC_FISH)
+         ========================================================================= -->
+    <section id="arena-fish" class="mode-arena-section active-mode-arena">
+      <div class="arena-title-bar">
+        <h3><span>🎣</span> Scena Łowienia Ryb (UC_FISH)</h3>
+        <span class="arena-meta">Zamiast skrzynki: wędka, tafla wody i podwodny pasek reel</span>
+      </div>
+
+      <div class="fishing-arena-layout">
+        <!-- Komponent sceny łowienia -->
+        <div class="scene-wrapper">
+          <fishing-scene id="main-fishing-scene" api-base="api/" show-lane></fishing-scene>
+        </div>
+
+        <div class="scene-toolbar">
+          <div style="display:flex; gap:8px">
+            <button id="btn-reset-scene" class="btn btn-ghost btn-sm">Resetuj widok sceny</button>
+            <button id="btn-toggle-lane" class="btn btn-ghost btn-sm">Ukryj podwodną paradę ryb</button>
+          </div>
+          <p class="hint" style="margin:0">Wynik ustala transakcyjnie serwer przed startem animacji.</p>
+        </div>
+
+        <!-- Siatka wędek do wyboru -->
+        <div style="margin-top:16px">
+          <h4 style="font-size:1.1rem; font-weight:700; margin-bottom:12px">Wybierz Wędkę i Zarzuć:</h4>
+          <div id="rods-container" class="rods-grid">
+            <p class="hint">Wczytywanie łowisk z bazy danych...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         ARENA 2: SKRZYNKI Z DROPEM (UC_CASE)
+         ========================================================================= -->
+    <section id="arena-cases" class="mode-arena-section active-mode-arena" style="display: none;">
+      <div class="arena-title-bar">
+        <h3><span>📦</span> Sklep ze Skrzynkami (UC_CASE)</h3>
+        <span class="arena-meta">Klasyczne otwieranie dropu z opcjonalną natychmiastową sprzedażą (CASE_SELL)</span>
+      </div>
+
+      <div id="cases-container" class="cases-grid">
+        <p class="hint">Wczytywanie skrzynek...</p>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         ARENA 3: UPGRADER PRZEDMIOTÓW (UC_UPGRADE)
+         ========================================================================= -->
+    <section id="arena-upgrade" class="mode-arena-section active-mode-arena" style="display: none;">
+      <div class="arena-title-bar">
+        <h3><span>⚡</span> Upgrader Przedmiotów (UC_UPGRADE)</h3>
+        <span class="arena-meta">Szansa = (W_wkład / W_cel) &times; (1 &minus; marża). Porażka niszczy wkład!</span>
+      </div>
+
+      <div class="upgrader-container">
+        <!-- Lewy slot: Wkład z ekwipunku -->
+        <div class="upgrader-slot">
+          <div class="slot-title">
+            <span>1. Wkład (Twój ekwipunek)</span>
+          </div>
+          <select id="up-input-select" class="slot-select">
+            <option value="">— Wybierz rybę z ekwipunku —</option>
+          </select>
+          <div id="up-input-preview" class="slot-preview-card">
+            <span class="hint">Wybierz wkład</span>
+          </div>
+        </div>
+
+        <!-- Środek: Wskaźnik koła szansy -->
+        <div class="upgrader-wheel-center">
+          <div class="wheel-gauge">
+            <svg viewBox="0 0 190 190">
+              <circle class="wheel-gauge-bg" cx="95" cy="95" r="80"></circle>
+              <circle id="wheel-gauge-val" class="wheel-gauge-val" cx="95" cy="95" r="80" stroke-dasharray="502.6" stroke-dashoffset="502.6"></circle>
+            </svg>
+            <div class="wheel-center-text">
+              <span id="wheel-chance-val" class="wheel-chance-val">0.0%</span>
+              <span class="wheel-chance-lbl">Szansa</span>
+            </div>
+          </div>
+          <p id="up-calc-desc" class="hint" style="text-align:center; max-width:240px; margin-top:10px">
+            Wybierz wkład oraz cel o wyższej wartości.
+          </p>
+        </div>
+
+        <!-- Prawy slot: Cel z katalogu -->
+        <div class="upgrader-slot">
+          <div class="slot-title">
+            <span>2. Cel (Katalog nagród)</span>
+          </div>
+          <select id="up-target-select" class="slot-select">
+            <option value="">— Wybierz cel z katalogu —</option>
+          </select>
+          <div id="up-target-preview" class="slot-preview-card">
+            <span class="hint">Wybierz cel</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="upgrader-actions">
+        <button id="btn-up-calc" class="btn btn-secondary">Przelicz szansę</button>
+        <button id="btn-up-run" class="btn btn-primary btn-lg" disabled>Uruchom Upgrader ⚡</button>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         ARENA 4: KONTRAKT TRADERA (UC_TRADE)
+         ========================================================================= -->
+    <section id="arena-trade" class="mode-arena-section active-mode-arena" style="display: none;">
+      <div class="arena-title-bar">
+        <h3><span>🔄</span> Kontrakt Wymiany w Traderze (UC_TRADE)</h3>
+        <span class="arena-meta">Wybierz 3–10 ryb o łącznej wartości &ge; 10 monet &rarr; losuj z wyższej puli rzadkości</span>
+      </div>
+
+      <div class="trader-summary-bar">
+        <div class="trader-counter-item">
+          Liczba wybranych: <strong id="trade-count-val">0 / 10</strong> (min. 3)
+        </div>
+        <div class="trader-counter-item">
+          Łączna wartość wkładu: <strong id="trade-val-val">0,00 🪙</strong> (próg &ge; 10,00)
+        </div>
+        <div style="display:flex; gap:10px">
+          <button id="btn-trade-preview" class="btn btn-secondary btn-sm" disabled>Podgląd puli nagród</button>
+          <button id="btn-trade-clear" class="btn btn-ghost btn-sm">Odznacz wszystkie</button>
+        </div>
+      </div>
+
+      <div id="trade-status-notice" style="margin-bottom:12px; font-size:0.85rem">
+        Zaznacz od 3 do 10 ryb z poniższego ekwipunku.
+      </div>
+
+      <div id="trader-inv-grid" class="trader-grid">
+        <p class="hint">Wczytywanie ekwipunku do kontraktu...</p>
+      </div>
+
+      <div id="trade-pool-preview" style="background:rgba(0,0,0,0.2); border-radius:var(--radius-md); padding:16px; margin-bottom:16px">
+        <span class="hint">Kliknij "Podgląd puli nagród", aby zobaczyć ryby z wyższego poziomu rzadkości.</span>
+      </div>
+
+      <div style="text-align:center">
+        <button id="btn-trade-execute" class="btn btn-gold btn-lg" disabled>Podpisz Kontrakt i Wymień Ryby 🔄</button>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         SEKCJA 5: EKWIPUNEK GRACZA
+         ========================================================================= -->
+    <section id="arena-inventory" class="mode-arena-section active-mode-arena" style="display: none;">
+      <div class="arena-title-bar">
+        <h3><span>🎒</span> Twój Ekwipunek Złowionych Ryb</h3>
+        <div id="inventory-summary" class="arena-meta">Zaloguj się, aby zobaczyć swoje trofea.</div>
+      </div>
+
+      <div id="inventory-grid" class="inv-grid">
+        <p class="hint">Zaloguj się na konto, aby przeglądać i sprzedawać swoje ryby.</p>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         SEKCJA 6: HISTORIA I MONITORING RTP
+         ========================================================================= -->
+    <section id="arena-history" class="mode-arena-section active-mode-arena" style="display: none;">
+      <div class="arena-title-bar">
+        <h3><span>📜</span> Historia Losowań & Statystyki RTP</h3>
+        <div class="arena-meta">Aktualne RTP gracza: <strong id="history-rtp-val" style="color:var(--accent-cyan)">—</strong></div>
+      </div>
+
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tryb / Źródło</th>
+              <th>Przedmiot</th>
+              <th>Koszt</th>
+              <th>Bilans</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr>
+              <td colspan="5" class="hint" style="text-align:center; padding:16px">Brak historii — zaloguj się i wykonaj pierwszy rzut!</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       MODALE APLIKACJI
+       ========================================================================= -->
+
+  <!-- Modal Logowania i Rejestracji -->
+  <div id="auth-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <button class="modal-close-btn modal-close-trigger">&times;</button>
+      
+      <div class="modal-tabs">
+        <button id="tab-btn-login" class="modal-tab-btn active">Logowanie</button>
+        <button id="tab-btn-register" class="modal-tab-btn">Rejestracja</button>
+      </div>
+
+      <!-- Formularz Logowania -->
+      <form id="form-login">
+        <div class="form-group">
+          <label class="form-label" for="auth-login-val">Login lub Adres E-mail</label>
+          <input type="text" id="auth-login-val" class="form-input" placeholder="Wprowadź login" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="auth-pass-val">Hasło</label>
+          <input type="password" id="auth-pass-val" class="form-input" placeholder="Wprowadź hasło" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px">Zaloguj się</button>
+      </form>
+
+      <!-- Formularz Rejestracji -->
+      <form id="form-register" style="display: none;">
+        <div class="form-group">
+          <label class="form-label" for="reg-login-val">Login (3–32 znaki)</label>
+          <input type="text" id="reg-login-val" class="form-input" placeholder="Twój unikalny login" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-email-val">Adres E-mail</label>
+          <input type="email" id="reg-email-val" class="form-input" placeholder="adres@poczta.pl" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-pass-val">Hasło (min. 8 znaków)</label>
+          <input type="password" id="reg-pass-val" class="form-input" placeholder="Bezpieczne hasło" minlength="8" required autocomplete="new-password">
+        </div>
+        <div style="background:rgba(34,211,238,0.1); border-radius:var(--radius-sm); padding:10px; margin-bottom:14px; font-size:0.82rem; color:var(--accent-cyan)">
+          🎁 Każde nowe konto natychmiast otrzymuje <b>50 monet powitalnych</b>!
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%">Utwórz konto (+50 🪙)</button>
+      </form>
+
+      <div style="margin-top:16px; text-align:center; border-top:1px solid var(--line-dim); padding-top:14px">
+        <button id="btn-modal-demo" class="btn btn-gold btn-sm" style="width:100%" onclick="window.mocnyDropApp.registerDemo()">
+          ⚡ Wypróbuj Szybkie Konto Demo (1 kliknięcie)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Gratulacji / Wygranej Ryby -->
+  <div id="win-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <button class="modal-close-btn modal-close-trigger">&times;</button>
+      <div class="win-modal-content">
+        <h3 style="font-size:1.1rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-secondary)">
+          🎉 Nowa Zdobycz!
+        </h3>
+        <img id="win-modal-img" class="win-icon-large" src="assets/icons/anchovy.png" alt="">
+        <div id="win-modal-name" class="win-fish-name">Złota Rybka</div>
+        <div id="win-modal-rarity" class="win-rarity-pill">Mityczna</div>
+        
+        <div class="win-meta-box">
+          <div>Wartość rynkowa: <strong id="win-modal-val" style="color:var(--accent-gold)">0,00 🪙</strong></div>
+          <div>Koszt próby: <strong id="win-modal-cost">0,00 🪙</strong></div>
+        </div>
+
+        <p id="win-modal-msg" style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:20px"></p>
+
+        <button class="btn btn-primary modal-close-trigger" style="width:100%">
+          Zabierz do Ekwipunku 🎒
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kontener powiadomień Toast -->
+  <div id="toast-container"></div>
+
+  <!-- Stopka Serwisu -->
+  <footer class="site-footer">
+    <p class="footer-quote">"PROJEKT W PEŁNI LEGALNY BO BEZ PRAWDZIWEJ WALUTY POZDRAWIAM" — cytat moxmar</p>
+    <p>MOCNY DROP — Szkolny projekt gry hazardowej opartej na wirtualnych monetach. Architektura zgodna z diagramami UML.</p>
+    <div class="footer-team-pills">
+      <span class="footer-pill">@KubeKoslaw — Core Backend, Tech Lead</span>
+      <span class="footer-pill">@moxmar26 — Treść, Dane & Dokumentacja</span>
+      <span class="footer-pill">@jgpostrach — JavaScript & Interakcje</span>
+      <span class="footer-pill">@THOPA174 — Layout & CSS</span>
+    </div>
+  </footer>
+
+</body>
+</html>
