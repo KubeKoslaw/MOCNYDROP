@@ -1,4 +1,5 @@
-nazwa,opis,cena,ikona,kolejnosc
-Skrzynka Płytkiej Wody,Tania skrzynka na start - drobnica i jedna niespodzianka,10,,1
-Skrzynka Rafy Koralowej,Kolorowe ryby z rafy - tu zaczyna się prawdziwa gra,60,,2
-Skrzynka Otchłani,Najdroższa skrzynka w sklepie - legendy i sprzęt mistrzów,750,,3
+nazwa,opis,cena,ikona,kolejnosc,dzienna
+Darmowa skrzynka,Jedna wędka co 24 godziny. Zaloguj się i odbierz nagrodę.,0,,0,1
+Skrzynka Płytkiej Wody,Odblokuj wędkę do łowiska. Duplikaty zamieniamy na monety.,10,,1,0
+Skrzynka Rafy Koralowej,Odblokuj wędkę do łowiska. Duplikaty zamieniamy na monety.,60,,2,0
+Skrzynka Otchłani,Odblokuj wędkę do łowiska. Duplikaty zamieniamy na monety.,750,,3,0

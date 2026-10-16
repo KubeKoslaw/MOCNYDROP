@@ -53,6 +53,28 @@ const SoundFx = {
   loss() {
     this.playTone(260, 'sawtooth', 0.2, 0.08);
     setTimeout(() => this.playTone(190, 'sawtooth', 0.35, 0.1), 160);
+  },
+  wheelTick(freq = 750, vol = 0.04) {
+    try {
+      this.init();
+      if (!this.ctx || this.ctx.state === 'suspended') {
+        this.ctx?.resume();
+      }
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.035);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.035);
+    } catch (e) {}
+  },
+  spinStart() {
+    this.playTone(320, 'sine', 0.15, 0.08);
+    setTimeout(() => this.playTone(480, 'triangle', 0.2, 0.1), 80);
   }
 };
 
@@ -63,7 +85,7 @@ function showToast(message, type = 'info') {
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>${message}</span><button style="background:transparent;border:none;color:inherit;cursor:pointer;font-weight:bold">&times;</button>`;
+  toast.innerHTML = `<span>${esc(message)}</span><button style="background:transparent;border:none;color:inherit;cursor:pointer;font-weight:bold">&times;</button>`;
 
   toast.querySelector('button').addEventListener('click', () => toast.remove());
 
@@ -163,13 +185,26 @@ class MocnyDropApp {
     this.tradeSelection = new Set();
     this.isCasting = false;
     this.cachedRarities = {};
+    this.wheelCurrentRotation = 0;
+    this.isUpgrading = false;
+    this.upgradeInputId = null;
+    this.upgradeTargetId = null;
+    this.upgradePreviewSeq = 0;
+    this.pendingCases = new Map();
+    this.caseTimer = null;
+    this.serverOffset = 0;
   }
 
   async init() {
     this.bindNavigation();
     this.bindAuthModals();
-    this.bindModeCards();
     this.bindSceneControls();
+    document.getElementById('btn-use-won-rod')?.addEventListener('click', () => {
+      const id = Number(document.getElementById('btn-use-won-rod').dataset.rodId);
+      this.closeModal('win-modal');
+      this.switchMode('fish');
+      this.selectRodInScene(id);
+    });
     this.bindUpgraderEvents();
     this.bindTraderEvents();
 
@@ -198,7 +233,7 @@ class MocnyDropApp {
       this.renderSessionState();
       await Promise.allSettled([
         this.loadInventory(),
-        this.loadHistory()
+        this.loadHistory(), this.loadRods(), this.loadCases()
       ]);
       if (this.user.rola === 'admin') {
         document.getElementById('nav-btn-admin')?.removeAttribute('hidden');
@@ -282,7 +317,12 @@ class MocnyDropApp {
     this.user = null;
     this.saldo = 0;
     this.inventory = [];
+    this.pendingCases.clear();
+    this.upgradeInputId = null;
+    this.upgradeTargetId = null;
     this.tradeSelection.clear();
+    this.updateUpgraderInputSelect();
+    await Promise.allSettled([this.loadRods(), this.loadCases()]);
     this.renderSessionState();
     this.renderInventory([]);
     if (userInitiated) {
@@ -303,24 +343,9 @@ class MocnyDropApp {
     document.getElementById('btn-nav-logout')?.addEventListener('click', () => this.logout(true));
   }
 
-  bindModeCards() {
-    document.querySelectorAll('.mode-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const mode = card.dataset.mode;
-        this.switchMode(mode);
-      });
-    });
-  }
-
   switchMode(modeId) {
     this.currentMode = modeId;
 
-    // Podświetlenie karty w Hubie
-    document.querySelectorAll('.mode-card').forEach(c => {
-      c.classList.toggle('selected', c.dataset.mode === modeId);
-    });
-
-    // Podświetlenie w pasku nawigacji
     document.querySelectorAll('[data-target-mode]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.targetMode === modeId);
     });
@@ -350,23 +375,23 @@ class MocnyDropApp {
 
       container.innerHTML = this.activeRods.map(rod => {
         const chips = (rod.przedmioty || []).map(fish => `
-          <span class="item-chip" style="border-color:${esc(fish.kolor)}; color:${esc(fish.kolor)}">
-            ${esc(fish.nazwa)} (${Number(fish.szansa_procent).toFixed(1)}%)
-          </span>
+          <button type="button" class="fish-chip" aria-label="${esc(fish.nazwa)}, szansa ${Number(fish.szansa_procent)}%">
+            <img src="${esc(fish.ikona || 'assets/icons/anchovy.png')}" alt="" loading="lazy">
+            <span class="fish-tooltip" role="tooltip">${esc(fish.nazwa)} · ${Number(fish.szansa_procent)}%</span>
+          </button>
         `).join('');
-
         return `
           <div class="rod-card">
             <div>
               <div class="rod-head">
-                <span class="rod-name">${esc(rod.nazwa)}</span>
+                <span class="rod-name"><img class="rod-icon" src="${esc(rod.ikona || 'assets/icons/rod.svg')}" alt="">${esc(rod.nazwa)}</span>
                 <span class="rod-price">${formatMoney(rod.koszt_uzycia)} 🪙</span>
               </div>
               <p class="rod-desc">${esc(rod.opis || '')}</p>
               <div class="rod-pool">${chips}</div>
             </div>
-            <button class="btn btn-primary btn-cast-rod" data-rod-id="${rod.id}">
-              Zarzuć wędkę (${formatMoney(rod.koszt_uzycia)} 🪙)
+            <button class="btn btn-primary btn-cast-rod" data-rod-id="${rod.id}" ${this.user && !rod.posiadana ? 'disabled' : ''}>
+              ${this.user && !rod.posiadana ? '🔒 Zdobądź ze skrzynki' : `Zarzuć wędkę (${formatMoney(rod.koszt_uzycia)} 🪙)`}
             </button>
           </div>
         `;
@@ -381,9 +406,8 @@ class MocnyDropApp {
       });
 
       // Ustawienie pierwszej wędki w scenie
-      if (this.activeRods.length > 0) {
-        this.selectRodInScene(this.activeRods[0].id);
-      }
+      const available = this.activeRods.find(r => r.posiadana || r.czy_startowa);
+      if (available) this.selectRodInScene(available.id);
     } catch (err) {
       container.innerHTML = `<p class="hint" style="color:var(--accent-rose)">Błąd ładowania wędek: ${esc(err.message)}</p>`;
     }
@@ -408,6 +432,10 @@ class MocnyDropApp {
     }
 
     const rod = this.activeRods.find(r => Number(r.id) === Number(rodId));
+    if (!rod?.posiadana) {
+      showToast('Zdobądź tę wędkę ze skrzynki.', 'info');
+      return;
+    }
     if (rod && this.saldo < Number(rod.koszt_uzycia)) {
       showToast('Niewystarczające saldo monet na zarzut tej wędki!', 'error');
       SoundFx.loss();
@@ -479,95 +507,74 @@ class MocnyDropApp {
 
   async loadCases() {
     const container = document.getElementById('cases-container');
+    if (!container) return;
     try {
       const data = await this.api.fetch('skrzynki.php');
+      this.serverOffset = data.czas_serwera * 1000 - Date.now();
       this.activeCases = data.skrzynki || [];
-      if (!this.activeCases.length) {
-        container.innerHTML = '<p class="hint">Brak aktywnych skrzynek.</p>';
-        return;
-      }
-
-      container.innerHTML = this.activeCases.map(caseItem => {
-        const chips = (caseItem.przedmioty || []).map(item => `
-          <span class="item-chip" style="border-color:${esc(item.kolor)}; color:${esc(item.kolor)}">
-            ${esc(item.nazwa)} (${Number(item.szansa_procent).toFixed(1)}%)
-          </span>
-        `).join('');
-
-        return `
-          <div class="case-card">
-            <div>
-              <div class="case-card-header">
-                <div class="case-icon-box">📦</div>
-                <div class="case-meta">
-                  <h4>${esc(caseItem.nazwa)}</h4>
-                  <div class="case-cost">${formatMoney(caseItem.cena)} 🪙</div>
-                </div>
-              </div>
-              <p class="rod-desc">${esc(caseItem.opis || '')}</p>
-              <div class="rod-pool">${chips}</div>
-            </div>
-            <div>
-              <div class="case-options-row">
-                <label style="cursor:pointer; display:flex; align-items:center; gap:8px">
-                  <input type="checkbox" id="case-sell-check-${caseItem.id}">
-                  <span>Sprzedaj wygraną od razu (CASE_SELL)</span>
-                </label>
-              </div>
-              <button class="btn btn-primary btn-open-case" data-case-id="${caseItem.id}" style="width:100%; margin-top:10px">
-                Otwórz skrzynkę (${formatMoney(caseItem.cena)} 🪙)
-              </button>
-            </div>
+      container.innerHTML = this.activeCases.map(c => `
+        <article class="case-card">
+          <div class="case-card-header"><div class="case-icon-box">${c.dzienna ? '🎁' : '📦'}</div>
+            <div><h4>${esc(c.nazwa)}</h4><span>${c.dzienna ? 'Bezpłatnie co 24 godziny' : formatMoney(c.cena) + ' 🪙'}</span></div>
           </div>
-        `;
-      }).join('');
-
-      container.querySelectorAll('.btn-open-case').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const caseId = Number(btn.dataset.caseId);
-          const autoSell = document.getElementById(`case-sell-check-${caseId}`)?.checked || false;
-          this.openCase(caseId, autoSell, btn);
-        });
-      });
+          <p>${esc(c.opis)}</p>
+          <div class="case-rod-pool">${c.wedki.map(r => `
+            <div class="case-rod" style="--rarity:${esc(r.kolor)}">
+              <img src="${esc(r.ikona || 'assets/icons/rod.svg')}" alt="" loading="lazy">
+              <span>${esc(r.nazwa)}</span><small>${Number(r.szansa_procent)}%</small>
+              <small>Duplikat: ${formatMoney(r.rekompensata)} 🪙</small>
+            </div>`).join('')}</div>
+          <button type="button" class="btn btn-primary btn-open-case" data-case-id="${c.id}">Otwórz skrzynkę</button>
+        </article>`).join('') || '<p class="hint">Brak aktywnych skrzynek.</p>';
+      container.querySelectorAll('.btn-open-case').forEach(btn => btn.addEventListener('click', () => this.openCase(Number(btn.dataset.caseId), btn)));
+      clearInterval(this.caseTimer);
+      this.updateCaseTimers();
+      this.caseTimer = setInterval(() => this.updateCaseTimers(), 1000);
     } catch (err) {
-      container.innerHTML = `<p class="hint" style="color:var(--accent-rose)">Błąd ładowania skrzynek: ${esc(err.message)}</p>`;
+      container.textContent = `Błąd ładowania skrzynek: ${err.message}`;
     }
   }
 
-  async openCase(caseId, autoSell, button) {
-    if (!this.user) {
-      showToast('Zaloguj się, aby otwierać skrzynki.', 'info');
-      this.openModal('auth-modal');
-      return;
-    }
+  updateCaseTimers() {
+    const now = (Date.now() + this.serverOffset) / 1000;
+    document.querySelectorAll('.btn-open-case').forEach(btn => {
+      if (btn.dataset.busy === 'true') return;
+      const c = this.activeCases.find(c => c.id === Number(btn.dataset.caseId));
+      const remaining = Math.max(0, Math.ceil((c?.nastepny_odbior || 0) - now));
+      const pending = this.user && this.pendingCases.has(`${this.user.id}:${c?.id}`);
+      btn.disabled = Boolean(c?.dzienna && this.user && remaining > 0 && !pending);
+      btn.textContent = pending ? 'Sprawdź wynik otwarcia' : btn.disabled
+        ? `Dostępna za ${Math.floor(remaining / 3600)}h ${Math.floor(remaining % 3600 / 60)}m ${remaining % 60}s`
+        : !this.user ? 'Zaloguj się, aby otworzyć' : c?.dzienna ? 'Odbierz darmową skrzynkę' : `Otwórz (${formatMoney(c?.cena)} 🪙)`;
+    });
+  }
 
-    const c = this.activeCases.find(item => Number(item.id) === Number(caseId));
-    if (c && this.saldo < Number(c.cena)) {
-      showToast('Za mało monet na otwarcie tej skrzynki!', 'error');
-      SoundFx.loss();
-      return;
-    }
-
+  async openCase(caseId, button) {
+    if (!this.user) { this.openModal('auth-modal'); return; }
+    if (button.dataset.busy === 'true') return;
+    const key = `${this.user.id}:${caseId}`;
+    if (!this.pendingCases.has(key)) this.pendingCases.set(key, (crypto.randomUUID?.() ?? Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('')));
     button.disabled = true;
+    button.dataset.busy = 'true';
+    button.textContent = 'Otwieranie…';
     try {
-      SoundFx.splash();
-      const data = await this.api.fetch('open_case.php', {
-        method: 'POST',
-        body: { skrzynka_id: caseId, sprzedaj_natychmiast: autoSell }
-      });
-
+      const data = await this.api.fetch('open_case.php', { method: 'POST', body: { skrzynka_id: caseId, request_id: this.pendingCases.get(key) } });
+      this.pendingCases.delete(key);
       this.saldo = data.saldo_po;
       this.renderSessionState();
       SoundFx.fanfare();
-      this.showWinModal(data.przedmiot, data.message, data.otwarcie?.cena);
-      await Promise.allSettled([
-        this.loadInventory(),
-        this.loadHistory()
-      ]);
+      this.showWinModal({ ...data.nagroda, wartosc: data.rekompensata }, data.message, data.otwarcie.cena);
+      const use = document.getElementById('btn-use-won-rod');
+      use.hidden = false;
+      use.dataset.rodId = data.nagroda.wedka_id;
+      await this.loadMe();
     } catch (err) {
+      if (err.status >= 400 && err.status < 500 && err.kod !== 'bad_response') this.pendingCases.delete(key);
       showToast(err.message, 'error');
+      await this.loadCases();
     } finally {
-      button.disabled = false;
+      delete button.dataset.busy;
+      this.updateCaseTimers();
     }
   }
 
@@ -584,157 +591,148 @@ class MocnyDropApp {
   }
 
   bindUpgraderEvents() {
-    const inputSelect = document.getElementById('up-input-select');
-    const targetSelect = document.getElementById('up-target-select');
-    const calcBtn = document.getElementById('btn-up-calc');
-    const runBtn = document.getElementById('btn-up-run');
-
-    inputSelect?.addEventListener('change', () => {
-      this.updateUpgraderInputPreview();
-      this.updateUpgraderTargetSelect();
-      this.calculateUpgradeChance();
-    });
-
-    targetSelect?.addEventListener('change', () => {
-      this.updateUpgraderTargetPreview();
-      this.calculateUpgradeChance();
-    });
-
-    calcBtn?.addEventListener('click', () => this.calculateUpgradeChance());
-    runBtn?.addEventListener('click', () => this.runUpgrade());
+    document.getElementById('btn-up-calc')?.addEventListener('click', () => this.calculateUpgradeChance());
+    document.getElementById('btn-up-run')?.addEventListener('click', () => this.runUpgrade());
   }
 
   updateUpgraderInputSelect() {
-    const select = document.getElementById('up-input-select');
-    if (!select) return;
-    const currentVal = select.value;
-    select.innerHTML = '<option value="">— Wybierz rybę z ekwipunku —</option>' +
-      this.inventory.map(item => `
-        <option value="${item.ekwipunek_id}" data-val="${item.wartosc}" data-icon="${item.ikona}" data-name="${esc(item.nazwa)}" data-color="${item.kolor}" data-rarity="${esc(item.rzadkosc)}">
-          ${esc(item.nazwa)} (${formatMoney(item.wartosc)} 🪙) [${esc(item.rzadkosc)}]
-        </option>
-      `).join('');
-
-    if (currentVal) select.value = currentVal;
-    this.updateUpgraderInputPreview();
-    this.updateUpgraderTargetSelect();
+    if (!this.inventory.some(i => i.ekwipunek_id === this.upgradeInputId)) this.upgradeInputId = null;
+    this.renderUpgradePickers();
   }
 
-  updateUpgraderTargetSelect() {
-    const targetSelect = document.getElementById('up-target-select');
-    const inputOption = document.getElementById('up-input-select')?.selectedOptions[0];
-    const inputVal = Number(inputOption?.dataset.val || 0);
+  updateUpgraderTargetSelect() { this.renderUpgradePickers(); }
 
-    if (!targetSelect) return;
-    // Backend odrzuca cel tańszy od wkładu (target_must_be_more_valuable)
-    const validTargets = this.catalog.filter(item => Number(item.wartosc) > inputVal);
-
-    targetSelect.innerHTML = '<option value="">— Wybierz cel z katalogu —</option>' +
-      validTargets.map(item => `
-        <option value="${item.przedmiot_id}" data-val="${item.wartosc}" data-icon="${item.ikona}" data-name="${esc(item.nazwa)}" data-color="${item.kolor}" data-rarity="${esc(item.rzadkosc)}">
-          ${esc(item.nazwa)} (${formatMoney(item.wartosc)} 🪙) [${esc(item.rzadkosc)}]
-        </option>
-      `).join('');
-    this.updateUpgraderTargetPreview();
-  }
-
-  updateUpgraderInputPreview() {
-    const preview = document.getElementById('up-input-preview');
-    const opt = document.getElementById('up-input-select')?.selectedOptions[0];
-    if (opt && opt.value) {
-      preview.innerHTML = `
-        <img src="${opt.dataset.icon || 'assets/icons/anchovy.png'}" alt="">
-        <div style="font-weight:700; color:${opt.dataset.color}">${opt.dataset.name}</div>
-        <div style="font-size:0.8rem; color:var(--text-muted)">${opt.dataset.rarity}</div>
-        <div style="font-weight:800; color:var(--accent-gold); margin-top:4px">${formatMoney(opt.dataset.val)} 🪙</div>
-      `;
-    } else {
-      preview.innerHTML = '<span class="hint">Wybierz wkład z ekwipunku</span>';
+  renderUpgradePickers() {
+    const input = this.inventory.find(i => i.ekwipunek_id === this.upgradeInputId);
+    const targets = this.catalog.filter(i => input && Number(i.wartosc) > Number(input.wartosc));
+    if (!targets.some(i => i.przedmiot_id === this.upgradeTargetId)) this.upgradeTargetId = null;
+    const card = (item, id, selected, side) => `
+      <button type="button" class="upgrade-choice ${selected ? 'selected' : ''}" data-up-${side}="${id}"
+        aria-pressed="${selected}" style="--rarity:${esc(item.kolor)}">
+        <img src="${esc(item.ikona || 'assets/icons/anchovy.png')}" alt="" loading="lazy">
+        <span>${esc(item.nazwa)}</span><strong>${formatMoney(item.wartosc)} 🪙</strong>
+      </button>`;
+    const grid = document.getElementById('up-input-grid');
+    const targetGrid = document.getElementById('up-target-grid');
+    if (!grid || !targetGrid) return;
+    grid.disabled = targetGrid.disabled = this.isUpgrading;
+    grid.innerHTML = this.inventory.map(i => card(i, i.ekwipunek_id, i.ekwipunek_id === this.upgradeInputId, 'input')).join('') || '<p class="hint">Złów rybę, aby wybrać wkład.</p>';
+    targetGrid.innerHTML = targets.map(i => card(i, i.przedmiot_id, i.przedmiot_id === this.upgradeTargetId, 'target')).join('') || '<p class="hint">Wybierz wkład, aby zobaczyć dostępne cele.</p>';
+    grid.querySelectorAll('[data-up-input]').forEach(btn => btn.addEventListener('click', () => {
+      if (this.isUpgrading) return;
+      this.upgradeInputId = Number(btn.dataset.upInput);
+      this.upgradeTargetId = null;
+      this.renderUpgradePickers();
+      this.calculateUpgradeChance();
+    }));
+    targetGrid.querySelectorAll('[data-up-target]').forEach(btn => btn.addEventListener('click', () => {
+      if (this.isUpgrading) return;
+      this.upgradeTargetId = Number(btn.dataset.upTarget);
+      this.renderUpgradePickers();
+      this.calculateUpgradeChance();
+    }));
+    const target = targets.find(i => i.przedmiot_id === this.upgradeTargetId);
+    for (const [side, item] of [['input', input], ['target', target]]) {
+      const preview = document.getElementById(`up-${side}-preview`);
+      if (preview) preview.textContent = item ? `Wybrano: ${item.nazwa}` : 'Wybierz kartę powyżej';
     }
-  }
-
-  updateUpgraderTargetPreview() {
-    const preview = document.getElementById('up-target-preview');
-    const opt = document.getElementById('up-target-select')?.selectedOptions[0];
-    if (opt && opt.value) {
-      preview.innerHTML = `
-        <img src="${opt.dataset.icon || 'assets/icons/anchovy.png'}" alt="">
-        <div style="font-weight:700; color:${opt.dataset.color}">${opt.dataset.name}</div>
-        <div style="font-size:0.8rem; color:var(--text-muted)">${opt.dataset.rarity}</div>
-        <div style="font-weight:800; color:var(--accent-gold); margin-top:4px">${formatMoney(opt.dataset.val)} 🪙</div>
-      `;
-    } else {
-      preview.innerHTML = '<span class="hint">Wybierz cel o wyższej wartości</span>';
-    }
+    if (!input || !target) document.getElementById('btn-up-run').disabled = true;
   }
 
   async calculateUpgradeChance() {
-    const inputId = document.getElementById('up-input-select')?.value;
-    const targetId = document.getElementById('up-target-select')?.value;
-    const runBtn = document.getElementById('btn-up-run');
-    const chanceValEl = document.getElementById('wheel-chance-val');
-    const gaugeValEl = document.getElementById('wheel-gauge-val');
-    const descEl = document.getElementById('up-calc-desc');
-
-    if (!inputId || !targetId) {
-      if (runBtn) runBtn.disabled = true;
-      if (chanceValEl) chanceValEl.textContent = '0.0%';
-      if (gaugeValEl) gaugeValEl.style.strokeDashoffset = '502';
+    if (this.isUpgrading) return;
+    const seq = ++this.upgradePreviewSeq;
+    const button = document.getElementById('btn-up-run');
+    const value = document.getElementById('wheel-chance-val');
+    const label = document.getElementById('wheel-chance-lbl');
+    const gauge = document.getElementById('wheel-gauge-val');
+    const desc = document.getElementById('up-calc-desc');
+    button.disabled = true;
+    value.className = 'wheel-chance-val';
+    label.className = 'wheel-chance-lbl';
+    label.textContent = 'Szansa';
+    document.getElementById('upgrader-wheel-gauge').classList.remove('is-win', 'is-lose');
+    if (!this.upgradeInputId || !this.upgradeTargetId) {
+      value.textContent = '0%';
+      gauge.style.strokeDashoffset = '502.65';
+      desc.textContent = 'Wybierz wkład i cenniejszy cel.';
       return;
     }
-
+    value.textContent = '…';
     try {
-      const data = await this.api.fetch(`upgrade.php?ekwipunek_id=${inputId}&cel_przedmiot_id=${targetId}`);
+      const data = await this.api.fetch(`upgrade.php?ekwipunek_id=${this.upgradeInputId}&cel_przedmiot_id=${this.upgradeTargetId}`);
+      if (seq !== this.upgradePreviewSeq || this.isUpgrading) return;
       const chance = Number(data.szansa_procent);
-      if (chanceValEl) chanceValEl.textContent = `${chance.toFixed(1)}%`;
-
-      // Obwód koła dla r=80: 2 * PI * 80 ~= 502.6
-      const offset = 502.6 - (502.6 * (chance / 100));
-      if (gaugeValEl) gaugeValEl.style.strokeDashoffset = String(offset);
-
-      if (descEl) {
-        descEl.innerHTML = `Szansa: <b>${chance.toFixed(2)}%</b> (Wzór: <code>(W_wkład / W_cel) × 95%</code>) • Porażka niszczy przedmiot!`;
-      }
-      if (runBtn) runBtn.disabled = false;
+      value.textContent = `${chance.toFixed(2)}%`;
+      gauge.style.strokeDashoffset = String(502.65 * (1 - chance / 100));
+      desc.textContent = 'Porażka niszczy wybrany wkład.';
+      button.disabled = false;
     } catch (err) {
-      if (descEl) descEl.innerHTML = `<span style="color:var(--accent-rose)">${esc(err.message)}</span>`;
-      if (runBtn) runBtn.disabled = true;
+      if (seq !== this.upgradePreviewSeq || this.isUpgrading) return;
+      value.textContent = '—';
+      desc.textContent = err.message;
     }
   }
 
   async runUpgrade() {
-    const inputId = document.getElementById('up-input-select')?.value;
-    const targetId = document.getElementById('up-target-select')?.value;
-    const runBtn = document.getElementById('btn-up-run');
-
-    if (!inputId || !targetId) return;
-    runBtn.disabled = true;
-
+    if (this.isUpgrading || !this.upgradeInputId || !this.upgradeTargetId) return;
+    this.isUpgrading = true;
+    ++this.upgradePreviewSeq;
+    const inputId = this.upgradeInputId, targetId = this.upgradeTargetId;
+    const run = document.getElementById('btn-up-run');
+    const calc = document.getElementById('btn-up-calc');
+    const value = document.getElementById('wheel-chance-val');
+    const label = document.getElementById('wheel-chance-lbl');
+    const desc = document.getElementById('up-calc-desc');
+    const gauge = document.getElementById('upgrader-wheel-gauge');
+    run.disabled = calc.disabled = true;
+    this.renderUpgradePickers();
+    gauge.classList.remove('is-win', 'is-lose');
+    value.className = 'wheel-chance-val spinning';
+    value.textContent = '…';
+    label.className = 'wheel-chance-lbl';
+    label.textContent = 'Losowanie';
+    desc.textContent = 'Oczekiwanie na wynik…';
+    run.textContent = 'Losowanie…';
     try {
-      // Dźwięk próby
-      SoundFx.splash();
-
-      const data = await this.api.fetch('upgrade.php', {
-        method: 'POST',
-        body: { ekwipunek_id: Number(inputId), cel_przedmiot_id: Number(targetId) }
-      });
-
+      const data = await this.api.fetch('upgrade.php', { method: 'POST', body: { ekwipunek_id: inputId, cel_przedmiot_id: targetId } });
+      const pointer = document.getElementById('wheel-pointer');
+      const target = Number(data.kolo) * 3.6;
+      const norm = ((this.wheelCurrentRotation % 360) + 360) % 360;
+      const rotation = this.wheelCurrentRotation + 1800 + ((target - norm + 360) % 360);
+      const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 4200;
+      pointer.style.transition = `transform ${duration}ms cubic-bezier(0.12, 0.85, 0.25, 1)`;
+      pointer.style.transform = `rotate(${rotation}deg)`;
+      this.wheelCurrentRotation = rotation;
+      SoundFx.spinStart();
+      desc.textContent = 'Koło kręci się…';
+      // W czasie obrotu nie wyświetlamy procentu kąta ani wyniku losowania.
+      await new Promise(resolve => setTimeout(resolve, duration));
+      const result = data.udane ? 'win' : 'lose';
+      gauge.classList.add(`is-${result}`);
+      value.className = `wheel-chance-val ${result}`;
+      value.textContent = data.udane ? '✓' : '×';
+      label.textContent = data.udane ? 'Wygrana!' : 'Porażka';
+      desc.textContent = data.udane ? `Zdobyto: ${data.przedmiot.nazwa}` : 'Wkład został utracony.';
       if (data.udane) {
         SoundFx.fanfare();
-        this.showWinModal(data.przedmiot, `Sukces Upgradera! Zdobyto: ${data.przedmiot.nazwa}! (Koło: ${Number(data.kolo).toFixed(2)}% vs próg ${Number(data.szansa_procent).toFixed(2)}%)`);
-      } else {
-        SoundFx.loss();
-        showToast(`Porażka! Koło zatrzymało się na ${Number(data.kolo).toFixed(2)}% (wymagane poniżej ${Number(data.szansa_procent).toFixed(2)}%). Twój przedmiot uległ zniszczeniu!`, 'error');
-      }
-
-      await Promise.allSettled([
-        this.loadInventory(),
-        this.loadHistory()
-      ]);
+        this.showWinModal(data.przedmiot, `Udane ulepszenie: ${data.przedmiot.nazwa}!`);
+      } else { SoundFx.loss(); }
+      await Promise.allSettled([this.loadInventory(), this.loadHistory()]);
     } catch (err) {
+      value.className = 'wheel-chance-val';
+      value.textContent = '—';
+      label.textContent = 'Błąd';
+      desc.textContent = err.message;
       showToast(err.message, 'error');
+      await this.loadInventory();
     } finally {
-      runBtn.disabled = false;
+      this.isUpgrading = false;
+      run.textContent = 'Uruchom Upgrader ⚡';
+      calc.disabled = false;
+      this.renderUpgradePickers();
+      // Po sukcesie wkład znika; po błędzie wymagamy ponownej kalkulacji.
+      run.disabled = true;
     }
   }
 
@@ -754,7 +752,7 @@ class MocnyDropApp {
     if (!grid) return;
 
     if (!this.inventory.length) {
-      grid.innerHTML = '<p class="hint">Twój ekwipunek jest pusty. Złów ryby w Łowisku lub otwórz Skrzynkę!</p>';
+      grid.innerHTML = '<p class="hint">Twój ekwipunek jest pusty. Złów ryby w łowisku.</p>';
       return;
     }
 
@@ -992,6 +990,7 @@ class MocnyDropApp {
   showWinModal(fish, customMessage = '', cost = 0) {
     const modal = document.getElementById('win-modal');
     if (!modal) return;
+    document.getElementById('btn-use-won-rod').hidden = true;
 
     document.getElementById('win-modal-img').src = fish.ikona || 'assets/icons/anchovy.png';
     const nameEl = document.getElementById('win-modal-name');
@@ -1004,7 +1003,8 @@ class MocnyDropApp {
     rarityEl.style.color = fish.kolor;
     rarityEl.style.border = `1px solid ${fish.kolor}66`;
 
-    document.getElementById('win-modal-val').textContent = `${formatMoney(fish.wartosc)} 🪙`;
+    document.getElementById('win-modal-value-label').textContent = fish.typ === 'wedka' ? 'Rekompensata:' : 'Wartość rynkowa:';
+    document.getElementById('win-modal-val').textContent = fish.typ === 'wedka' && !fish.wartosc ? 'Nowa wędka' : `${formatMoney(fish.wartosc)} 🪙`;
     document.getElementById('win-modal-cost').textContent = cost ? `${formatMoney(cost)} 🪙` : '—';
     document.getElementById('win-modal-msg').textContent = customMessage;
 

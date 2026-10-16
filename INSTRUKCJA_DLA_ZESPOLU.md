@@ -1,5 +1,11 @@
 # Instrukcja dla zespołu — MOCNY DROP (Backend & API)
 
+> **Aktualizacja na branchu Maks:** skrzynki odblokowują wędki; wprowadzono własność
+> sprzętu, darmową skrzynkę co 24 h i migrację zachowującą historię. Aktualne
+> kontrakty oraz diagram v2 są w [MECHANIKA_V2.md](docs/MECHANIKA_V2.md).
+> Poniższe opisy skrzynek z rybami i CASE_SELL dotyczą wcześniejszej wersji.
+
+
 > Właściciel: **@KubeKoslaw** (Core Backend, Tech lead)
 > Zakres tego pliku: backend, baza danych i kontrakt API.
 > Nie opisuje wyglądu strony ani zachowania animacji — to domeny @THOPA174 i @jgpostrach.

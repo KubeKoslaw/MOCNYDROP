@@ -26,7 +26,8 @@ use ReflectionNamedType;
  * tests/DiagramKlasTest.php
  *
  * Test zgodności STRUKTURALNEJ kodu z MOCNYDROP_diagram_klas.drawio (wersja
- * z gałęzi main — diagram jest specyfikacją, kod ma ją odzwierciedlać).
+ * z gałęzi main; zmiana v2: Skrzynka zwraca Wedka i nie realizuje starego
+ * ILosujacy, który jest zachowany dla historycznych SkrzynkaPrzedmiot).
  *
  * Sprawdza przez refleksję, że:
  *   - każda klasa z diagramu istnieje w backend/,
@@ -219,7 +220,7 @@ final class DiagramKlasTest extends TestCase
      */
     public function testKlasyLosujaceRealizujaInterfejsILosujacy(): void
     {
-        foreach ([Skrzynka::class, SkrzynkaPrzedmiot::class] as $klasa) {
+        foreach ([SkrzynkaPrzedmiot::class] as $klasa) {
             $this->assertTrue(
                 is_subclass_of($klasa, ILosujacy::class),
                 $klasa . ' musi realizować interfejs ILosujacy (krawędzie e13/e14 diagramu)'
@@ -245,7 +246,7 @@ final class DiagramKlasTest extends TestCase
 
         $this->assertSame(1, count($parametry), 'Skrzynka::otworz() przyjmuje dokładnie jeden parametr (u)');
         $this->assertSame(Uzytkownik::class, (string) $parametry[0]->getType(), 'Parametr otworz() musi być typu Uzytkownik');
-        $this->assertSame(Przedmiot::class, (string) $otworz->getReturnType(), 'otworz() musi zwracać Przedmiot');
+        $this->assertSame(Wedka::class, (string) $otworz->getReturnType(), 'Nowa skrzynka odblokowuje Wedka; stary interfejs zachowano dla historycznych przedmiotów');
 
         $edytuj = (new ReflectionClass(Administrator::class))->getMethod('edytujSkrzynke');
         $parametryEdycji = $edytuj->getParameters();

@@ -35,9 +35,14 @@ $dbFile = Config::databaseFile();
 if ($fresh) {
     // WAL zostawia obok bazy pliki -wal i -shm; bez ich usunięcia SQLite
     // potrafi odtworzyć stare dane do świeżo utworzonej bazy.
+    $allUnlinked = true;
     foreach ([$dbFile, $dbFile . '-journal', $dbFile . '-wal', $dbFile . '-shm'] as $stale) {
-        if (is_file($stale) && unlink($stale)) {
-            echo '  usunięto: ' . basename($stale) . PHP_EOL;
+        if (is_file($stale)) {
+            if (@unlink($stale)) {
+                echo '  usunięto: ' . basename($stale) . PHP_EOL;
+            } else {
+                $allUnlinked = false;
+            }
         }
     }
 }
@@ -45,6 +50,18 @@ if ($fresh) {
 echo 'Baza: ' . $dbFile . PHP_EOL;
 
 $db = Database::connection();
+
+if ($fresh && isset($allUnlinked) && !$allUnlinked) {
+    // Jeśli plik bazy był zablokowany przez działający serwer www,
+    // czyścimy tabele SQL-em, aby --fresh zawsze skutecznie resetował stan.
+    $db->exec('PRAGMA foreign_keys = OFF');
+    $tables = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name != 'sqlite_sequence'")->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($tables as $table) {
+        $db->exec("DROP TABLE IF EXISTS \"$table\"");
+    }
+    $db->exec('PRAGMA foreign_keys = ON');
+    echo '  zresetowano tabele w bazie (serwer był aktywny).' . PHP_EOL;
+}
 
 // Idempotentne — schemat używa IF NOT EXISTS, a dane słowników INSERT OR IGNORE.
 Database::applySchema($db);
@@ -75,7 +92,7 @@ $counts = [
     'skrzynki' => (int) $db->query('SELECT COUNT(*) FROM skrzynki')->fetchColumn(),
     'przedmioty' => (int) $db->query('SELECT COUNT(*) FROM przedmioty')->fetchColumn(),
     'połączenia wędka-przedmiot' => (int) $db->query('SELECT COUNT(*) FROM wedka_przedmioty')->fetchColumn(),
-    'połączenia skrzynka-przedmiot' => (int) $db->query('SELECT COUNT(*) FROM skrzynka_przedmioty')->fetchColumn(),
+    'połączenia skrzynka-wędka' => (int) $db->query('SELECT COUNT(*) FROM skrzynka_wedki')->fetchColumn(),
     'użytkownicy' => (int) $db->query('SELECT COUNT(*) FROM uzytkownicy')->fetchColumn(),
 ];
 
@@ -101,8 +118,8 @@ if ($wedkiBezPuli > 0) {
 $skrzynkiBezPuli = (int) $db->query(
     'SELECT COUNT(*) FROM skrzynki s
      WHERE s.aktywna = 1
-       AND NOT EXISTS (SELECT 1 FROM skrzynka_przedmioty sp
-                       JOIN przedmioty p ON p.id = sp.przedmiot_id AND p.czy_aktywny = 1
+       AND NOT EXISTS (SELECT 1 FROM skrzynka_wedki sp
+                       JOIN wedki w ON w.id = sp.wedka_id AND w.czy_aktywna = 1
                        WHERE sp.skrzynka_id = s.id)'
 )->fetchColumn();
 

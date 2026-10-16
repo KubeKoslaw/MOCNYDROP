@@ -14,8 +14,19 @@
   <!-- Skrypty modułowe ES -->
   <script type="module" src="public/assets/js/fishing/index.js"></script>
   <script type="module" src="public/assets/js/main.js"></script>
+  <script>
+    document.documentElement.classList.add('booting');
+    setTimeout(() => {
+      document.documentElement.classList.remove('booting');
+      document.getElementById('startup-screen')?.remove();
+    }, 3000);
+  </script>
 </head>
 <body>
+  <div id="startup-screen" class="startup-screen" role="status" aria-label="MOCNY DROP — start">
+    <span class="startup-icon" aria-hidden="true">🎣</span><strong>MOCNY DROP</strong>
+    <span class="startup-progress" aria-hidden="true"></span>
+  </div>
 
   <!-- Górna belka nawigacji (Navbar) -->
   <header class="site-navbar">
@@ -27,8 +38,7 @@
 
     <nav aria-label="Główne tryby">
       <ul class="nav-links">
-        <li><button class="nav-item-btn active" data-target-mode="hub">🏠 Hub Trybów</button></li>
-        <li><button class="nav-item-btn" data-target-mode="fish">🎣 Łowisko</button></li>
+        <li><button class="nav-item-btn active" data-target-mode="fish">🎣 Łowisko</button></li>
         <li><button class="nav-item-btn" data-target-mode="cases">📦 Skrzynki</button></li>
         <li><button class="nav-item-btn" data-target-mode="upgrade">⚡ Upgrader</button></li>
         <li><button class="nav-item-btn" data-target-mode="trade">🔄 Trader</button></li>
@@ -66,131 +76,10 @@
   <main class="main-content">
 
     <!-- Sekcja Hero: Wizytówka i Wprowadzenie -->
-    <section class="hero-section">
-      <div class="hero-glow-sphere"></div>
-      
-      <div class="hero-badge-pill">
-        <span>✨ OFICJALNA ARCHITEKTURA UML</span>
-        <span>•</span>
-        <span>4 TRYBY GRY</span>
-        <span>•</span>
-        <span>CSPRNG ROZKŁAD WAŻONY</span>
-      </div>
-
-      <h1 class="hero-title">
-        Witaj w <span class="hero-title-highlight">MOCNY DROP</span>
-      </h1>
-      
-      <p class="hero-subtitle">
-        Poznaj innowacyjną platformę z elementami losowania nagród opartą w 100% na wirtualnej walucie.
-        Wybierz swój ulubiony tryb: łów legendarne ryby z dynamiczną animacją tafli wody, otwieraj skrzynki,
-        ryzykuj w Upgraderze lub wymieniaj zdobycze w Kontrakcie Tradera!
-      </p>
-
-      <div class="hero-stats-row">
-        <div class="stat-pill"><span class="icon">🎯</span> 4 zbalansowane tryby gry</div>
-        <div class="stat-pill"><span class="icon">🐟</span> 54 unikalne ryby i przedmioty</div>
-        <div class="stat-pill"><span class="icon">💎</span> 6 poziomów rzadkości (aż do ULTRA)</div>
-        <div class="stat-pill"><span class="icon">⚖️</span> Algorytm losowania P(i) = w_i / &Sigma;w</div>
-        <div class="stat-pill"><span class="icon">🎁</span> Bonus powitalny 50 monet na start</div>
-      </div>
-    </section>
-
-    <!-- HUB GŁÓWNY: WYBÓR TRYBÓW GRY (hub_main z diagramu MOCNYDROP_PROJEKT.drawio) -->
-    <section id="arena-hub" class="hub-selector-section">
-      <div class="section-header">
-        <div class="section-header-left">
-          <h2><span>🎮</span> Wybierz Tryb Gry</h2>
-          <p>Wszystkie cztery tryby posiadają zweryfikowane endpointy API i wspólną historię losowań.</p>
-        </div>
-      </div>
-
-      <div class="modes-grid">
-        <!-- Karta 1: Łowisko Ryb (UC_FISH) -->
-        <article class="mode-card mode-fish selected" data-mode="fish">
-          <div>
-            <span class="mode-badge">UC_FISH • Scena Łowienia 3D</span>
-            <div class="mode-icon-circle">🎣</div>
-            <h3 class="mode-title">Łowisko Ryb</h3>
-            <p class="mode-desc">
-              Zamiast klasycznej skrzynki zarzucasz wędkę w jednym z 6 zróżnicowanych łowisk.
-              Poczuj emocje: falująca tafla wody, spławik, podwodna parada ryb i zacięcie w momencie brania!
-            </p>
-            <ul class="mode-details-list">
-              <li><span>🏷️ Koszt zarzutu:</span> <strong>5 – 500 monet</strong></li>
-              <li><span>🌊 Dostępny sprzęt:</span> <strong>6 profesjonalnych wędek</strong></li>
-              <li><span>🎬 Mechanika:</span> <strong>Komponent &lt;fishing-scene&gt;</strong></li>
-            </ul>
-          </div>
-          <button class="btn btn-primary mode-cta" data-target-mode="fish">Zagraj w Łowisko 🎣</button>
-        </article>
-
-        <!-- Karta 2: Otwarcie Skrzynki (UC_CASE) -->
-        <article class="mode-card mode-case" data-mode="cases">
-          <div>
-            <span class="mode-badge">UC_CASE • Otwieranie Skrzynek</span>
-            <div class="mode-icon-circle">📦</div>
-            <h3 class="mode-title">Otwarcie Skrzynki</h3>
-            <p class="mode-desc">
-              Klasyczny drop ze skrzynek z rybami. Transparentne szanse procentowe dla każdego przedmiotu
-              oraz możliwość natychmiastowej sprzedaży wygranej do portfela (przypadek CASE_SELL)!
-            </p>
-            <ul class="mode-details-list">
-              <li><span>🏷️ Koszt skrzynki:</span> <strong>10 – 750 monet</strong></li>
-              <li><span>⚡ Funkcja specjalna:</span> <strong>Natychmiastowa sprzedaż</strong></li>
-              <li><span>🎲 Transparentność:</span> <strong>Pełny podgląd wag dropu</strong></li>
-            </ul>
-          </div>
-          <button class="btn btn-primary mode-cta" data-target-mode="cases">Otwórz Skrzynki 📦</button>
-        </article>
-
-        <!-- Karta 3: Upgrader Przedmiotów (UC_UPGRADE) -->
-        <article class="mode-card mode-upgrade" data-mode="upgrade">
-          <div>
-            <span class="mode-badge">UC_UPGRADE • Wirtualne Koło</span>
-            <div class="mode-icon-circle">⚡</div>
-            <h3 class="mode-title">Upgrader Ryb</h3>
-            <p class="mode-desc">
-              Poświęć złowioną rybę z ekwipunku, by zawalczyć o mityczną zdobycz z katalogu!
-              Szansa wyliczana ściśle według wzoru P = (W_wkład / W_cel) &times; 95%. Porażka niszczy wkład!
-            </p>
-            <ul class="mode-details-list">
-              <li><span>🎯 Cel ulepszenia:</span> <strong>Dowolna cenniejsza ryba</strong></li>
-              <li><span>🎰 Koło fortuny:</span> <strong>Losowanie CSPRNG 0–100%</strong></li>
-              <li><span>⚠️ Ryzyko:</span> <strong>Porażka kasuje przedmiot</strong></li>
-            </ul>
-          </div>
-          <button class="btn btn-primary mode-cta" data-target-mode="upgrade">Uruchom Upgrader ⚡</button>
-        </article>
-
-        <!-- Karta 4: Kontrakt Tradera (UC_TRADE) -->
-        <article class="mode-card mode-trade" data-mode="trade">
-          <div>
-            <span class="mode-badge">UC_TRADE • Wymiana Ryb</span>
-            <div class="mode-icon-circle">🔄</div>
-            <h3 class="mode-title">Kontrakt Tradera</h3>
-            <p class="mode-desc">
-              Wybierz od 3 do 10 zbędnych ryb ze swojego ekwipunku o łącznej wartości &ge; 10 monet.
-              Podpisz kontrakt, spal wkład i odbierz gwarantowaną nagrodę z wyższego poziomu rzadkości!
-            </p>
-            <ul class="mode-details-list">
-              <li><span>📑 Wielkość kontraktu:</span> <strong>3 do 10 przedmiotów</strong></li>
-              <li><span>💰 Minimalny próg:</span> <strong>10,00 monet</strong></li>
-              <li><span>💎 Gwarancja:</span> <strong>Wyższy poziom rzadkości</strong></li>
-            </ul>
-          </div>
-          <button class="btn btn-primary mode-cta" data-target-mode="trade">Podpisz Kontrakt 🔄</button>
-        </article>
-      </div>
-    </section>
-
-    <!-- =========================================================================
-         ARENA 1: ŁOWISKO RYB (UC_FISH)
-         ========================================================================= -->
     <section id="arena-fish" class="mode-arena-section active-mode-arena">
       <div class="arena-title-bar">
-        <h3><span>🎣</span> Scena Łowienia Ryb (UC_FISH)</h3>
-        <span class="arena-meta">Zamiast skrzynki: wędka, tafla wody i podwodny pasek reel</span>
+        <h3><span>🎣</span> Scena Łowienia Ryb</h3>
+        <span class="arena-meta">Wybierz swoją wędkę i złów kolejną rybę.</span>
       </div>
 
       <div class="fishing-arena-layout">
@@ -204,7 +93,7 @@
             <button id="btn-reset-scene" class="btn btn-ghost btn-sm">Resetuj widok sceny</button>
             <button id="btn-toggle-lane" class="btn btn-ghost btn-sm">Ukryj podwodną paradę ryb</button>
           </div>
-          <p class="hint" style="margin:0">Wynik ustala transakcyjnie serwer przed startem animacji.</p>
+          <p class="hint" style="margin:0">Zdobywaj wędki ze skrzynek, aby odblokować kolejne pule ryb.</p>
         </div>
 
         <!-- Siatka wędek do wyboru -->
@@ -218,12 +107,12 @@
     </section>
 
     <!-- =========================================================================
-         ARENA 2: SKRZYNKI Z DROPEM (UC_CASE)
+         ARENA 2: SKRZYNKI Z DROPEM
          ========================================================================= -->
     <section id="arena-cases" class="mode-arena-section active-mode-arena" style="display: none;">
       <div class="arena-title-bar">
-        <h3><span>📦</span> Sklep ze Skrzynkami (UC_CASE)</h3>
-        <span class="arena-meta">Klasyczne otwieranie dropu z opcjonalną natychmiastową sprzedażą (CASE_SELL)</span>
+        <h3><span>📦</span> Sklep ze Skrzynkami</h3>
+        <span class="arena-meta">Odblokowuj wędki. Duplikaty zamieniamy na monety.</span>
       </div>
 
       <div id="cases-container" class="cases-grid">
@@ -232,12 +121,12 @@
     </section>
 
     <!-- =========================================================================
-         ARENA 3: UPGRADER PRZEDMIOTÓW (UC_UPGRADE)
+         ARENA 3: UPGRADER PRZEDMIOTÓW
          ========================================================================= -->
     <section id="arena-upgrade" class="mode-arena-section active-mode-arena" style="display: none;">
       <div class="arena-title-bar">
-        <h3><span>⚡</span> Upgrader Przedmiotów (UC_UPGRADE)</h3>
-        <span class="arena-meta">Szansa = (W_wkład / W_cel) &times; (1 &minus; marża). Porażka niszczy wkład!</span>
+        <h3><span>⚡</span> Upgrader</h3>
+        <span class="arena-meta">Wybierz rybę i cenniejszy cel. Porażka niszczy wkład.</span>
       </div>
 
       <div class="upgrader-container">
@@ -246,9 +135,7 @@
           <div class="slot-title">
             <span>1. Wkład (Twój ekwipunek)</span>
           </div>
-          <select id="up-input-select" class="slot-select">
-            <option value="">— Wybierz rybę z ekwipunku —</option>
-          </select>
+          <fieldset id="up-input-grid" class="upgrade-picker" aria-label="Wybierz rybę z ekwipunku"></fieldset>
           <div id="up-input-preview" class="slot-preview-card">
             <span class="hint">Wybierz wkład</span>
           </div>
@@ -256,17 +143,29 @@
 
         <!-- Środek: Wskaźnik koła szansy -->
         <div class="upgrader-wheel-center">
-          <div class="wheel-gauge">
+          <div class="wheel-gauge" id="upgrader-wheel-gauge">
             <svg viewBox="0 0 190 190">
+              <defs>
+                <linearGradient id="wheel-win-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#06b6d4" />
+                  <stop offset="50%" stop-color="#3b82f6" />
+                  <stop offset="100%" stop-color="#10b981" />
+                </linearGradient>
+              </defs>
               <circle class="wheel-gauge-bg" cx="95" cy="95" r="80"></circle>
               <circle id="wheel-gauge-val" class="wheel-gauge-val" cx="95" cy="95" r="80" stroke-dasharray="502.6" stroke-dashoffset="502.6"></circle>
             </svg>
-            <div class="wheel-center-text">
+            <div class="wheel-start-marker" title="0.0% / Start"></div>
+            <div id="wheel-pointer" class="wheel-pointer">
+              <div class="wheel-pointer-arrow"></div>
+              <div class="wheel-pointer-arm"></div>
+            </div>
+            <div class="wheel-center-text" id="wheel-center-text">
               <span id="wheel-chance-val" class="wheel-chance-val">0.0%</span>
-              <span class="wheel-chance-lbl">Szansa</span>
+              <span id="wheel-chance-lbl" class="wheel-chance-lbl">Szansa</span>
             </div>
           </div>
-          <p id="up-calc-desc" class="hint" style="text-align:center; max-width:240px; margin-top:10px">
+          <p id="up-calc-desc" class="hint" style="text-align:center; max-width:260px; margin-top:14px">
             Wybierz wkład oraz cel o wyższej wartości.
           </p>
         </div>
@@ -276,9 +175,7 @@
           <div class="slot-title">
             <span>2. Cel (Katalog nagród)</span>
           </div>
-          <select id="up-target-select" class="slot-select">
-            <option value="">— Wybierz cel z katalogu —</option>
-          </select>
+          <fieldset id="up-target-grid" class="upgrade-picker" aria-label="Wybierz cel ulepszenia"></fieldset>
           <div id="up-target-preview" class="slot-preview-card">
             <span class="hint">Wybierz cel</span>
           </div>
@@ -292,11 +189,11 @@
     </section>
 
     <!-- =========================================================================
-         ARENA 4: KONTRAKT TRADERA (UC_TRADE)
+         ARENA 4: KONTRAKT TRADERA
          ========================================================================= -->
     <section id="arena-trade" class="mode-arena-section active-mode-arena" style="display: none;">
       <div class="arena-title-bar">
-        <h3><span>🔄</span> Kontrakt Wymiany w Traderze (UC_TRADE)</h3>
+        <h3><span>🔄</span> Kontrakt Wymiany w Traderze</h3>
         <span class="arena-meta">Wybierz 3–10 ryb o łącznej wartości &ge; 10 monet &rarr; losuj z wyższej puli rzadkości</span>
       </div>
 
@@ -443,14 +340,15 @@
         <div id="win-modal-rarity" class="win-rarity-pill">Mityczna</div>
         
         <div class="win-meta-box">
-          <div>Wartość rynkowa: <strong id="win-modal-val" style="color:var(--accent-gold)">0,00 🪙</strong></div>
+          <div><span id="win-modal-value-label">Wartość rynkowa:</span> <strong id="win-modal-val" style="color:var(--accent-gold)">0,00 🪙</strong></div>
           <div>Koszt próby: <strong id="win-modal-cost">0,00 🪙</strong></div>
         </div>
 
         <p id="win-modal-msg" style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:20px"></p>
+      <button id="btn-use-won-rod" class="btn btn-primary" type="button" hidden>Przejdź do łowiska</button>
 
         <button class="btn btn-primary modal-close-trigger" style="width:100%">
-          Zabierz do Ekwipunku 🎒
+          Zamknij
         </button>
       </div>
     </div>

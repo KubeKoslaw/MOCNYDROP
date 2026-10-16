@@ -25,6 +25,22 @@ use PDO;
  */
 final class Fixtures
 {
+    /** Przygotowanie testu: gracz posiada wędkę, którą testuje. */
+    public static function zarzucPosiadanaWedka(PDO $db, int $userId, int $wedkaId, ?callable $random = null, ?PDO $pdo = null): array
+    {
+        if (\MocnyDrop\Wedka::znajdz($wedkaId, $db) !== null) {
+            \MocnyDrop\PosiadaneWedki::przyznaj($userId, $wedkaId, $db);
+        }
+        return \MocnyDrop\FishingService::cast($userId, $wedkaId, $random, $pdo ?? $db);
+    }
+
+    public static function wedkaZRyba(PDO $db, string $name = 'Sprzęt', float $cost = 10): int
+    {
+        $id = self::wedka($db, $name, $cost);
+        self::przedmiot($db, $id, 'Ryba '.$name, 'pospolita', 2);
+        return $id;
+    }
+
     /**
      * Pula odpowiadająca dokładnie tabeli wag z README.md:
      * jeden przedmiot na każdy z 6 poziomów rzadkości, wagi dziedziczone (NULL).

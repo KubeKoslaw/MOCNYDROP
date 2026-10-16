@@ -136,7 +136,7 @@ final class WedkaTest extends TestCase
         $api = Wedka::wymagaj($wedkaId, $this->db)->doApi();
 
         $this->assertSame(
-            ['id', 'nazwa', 'opis', 'koszt_uzycia', 'ikona', 'liczba_przedmiotow', 'przedmioty'],
+            ['czy_startowa', 'rekompensata', 'rzadkosc', 'kolor', 'id', 'nazwa', 'opis', 'koszt_uzycia', 'ikona', 'liczba_przedmiotow', 'przedmioty'],
             array_keys($api),
             'Dokładna lista pól wędki w API'
         );

@@ -13,12 +13,12 @@ declare(strict_types=1);
  * GET  — lista WSZYSTKICH skrzynek (także nieaktywnych) z pulami i wagami.
  *
  * POST — body { akcja, ... }:
- *   "utworz"   { nazwa, cena, opis?, ikona?, aktywna?, kolejnosc?, przedmioty? }
- *   "edycja"   { skrzynka_id, nazwa?, cena?, opis?, ikona?, aktywna?, kolejnosc?, przedmioty? }
+ *   "utworz"   { nazwa, cena, opis?, ikona?, aktywna?, kolejnosc?, wedki? }
+ *   "edycja"   { skrzynka_id, nazwa?, cena?, opis?, ikona?, aktywna?, kolejnosc?, wedki? }
  *   "przelacz" { skrzynka_id }                      -> aktywna = 0/1
  *
- *   przedmioty: [ { "przedmiot_id": 1, "waga": 5.0 }, { "przedmiot_id": 2, "waga": null } ]
- *   (waga null = dziedziczenie waga_domyslna poziomu rzadkości)
+ *   wedki: [ { "wedka_id": 1, "waga": 5.0 }, { "wedka_id": 2, "waga": null } ]
+ *   (waga null = domyślna waga 1)
  *
  * Wszystkie zapisy idą przez Administrator::edytujSkrzynke() z diagramu klas —
  * jedną transakcją, z wpisem do log_audytowy.
@@ -72,29 +72,29 @@ $poleFloat = static function (array $body, string $klucz, float $domyslna): floa
 };
 
 /**
- * Lista dropów z body: [{przedmiot_id, waga}] — null = „nie ruszaj puli".
+ * Lista dropów z body: [{wedka_id, waga}] — null = „nie ruszaj puli".
  *
  * @param array<string, mixed> $body
- * @return list<array{przedmiot_id: int, waga: float|null}>|null
+ * @return list<array{wedka_id: int, waga: float|null}>|null
  */
 $czytajPule = static function (array $body): ?array {
-    if (!array_key_exists('przedmioty', $body) || $body['przedmioty'] === null) {
+    if (!array_key_exists('wedki', $body) || $body['wedki'] === null) {
         return null;
     }
 
-    if (!is_array($body['przedmioty'])) {
-        throw ApiException::badRequest('Pole przedmioty musi być listą.', 'invalid_pool_entry');
+    if (!is_array($body['wedki'])) {
+        throw ApiException::badRequest('Pole wedki musi być listą.', 'invalid_pool_entry');
     }
 
     $pula = [];
 
-    foreach ($body['przedmioty'] as $wpis) {
+    foreach ($body['wedki'] as $wpis) {
         if (!is_array($wpis)) {
-            throw ApiException::badRequest('Wpis puli musi być obiektem {przedmiot_id, waga}.', 'invalid_pool_entry');
+            throw ApiException::badRequest('Wpis puli musi być obiektem {wedka_id, waga}.', 'invalid_pool_entry');
         }
 
         $pula[] = [
-            'przedmiot_id' => (int) ($wpis['przedmiot_id'] ?? 0),
+            'wedka_id' => Json::intField($wpis, 'wedka_id'),
             'waga' => array_key_exists('waga', $wpis) ? $wpis['waga'] : null,
         ];
     }
@@ -109,7 +109,8 @@ if ($akcja === 'utworz') {
         Json::stringField($body, 'ikona'),
         Json::stringField($body, 'opis'),
         filter_var($body['aktywna'] ?? true, FILTER_VALIDATE_BOOL),
-        (int) $poleFloat($body, 'kolejnosc', 0.0)
+        (int) $poleFloat($body, 'kolejnosc', 0.0),
+        dzienna: filter_var($body['dzienna'] ?? false, FILTER_VALIDATE_BOOL)
     );
 
     // Nowa skrzynka bez puli nie da się otworzyć — wymagamy dropów od razu.
@@ -149,7 +150,8 @@ if ($akcja === 'edycja' || $akcja === 'przelacz') {
         $akcja === 'przelacz'
             ? $istniejaca->kolejnosc
             : (int) $poleFloat($body, 'kolejnosc', (float) $istniejaca->kolejnosc),
-        $istniejaca->id
+        $istniejaca->id,
+        dzienna: $akcja === 'przelacz' ? $istniejaca->dzienna : filter_var($body['dzienna'] ?? $istniejaca->dzienna, FILTER_VALIDATE_BOOL)
     );
 
     // Przełącznik nie rusza puli; edycja zapisuje ją tylko, gdy przyszła w body.

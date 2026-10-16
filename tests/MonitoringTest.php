@@ -63,7 +63,7 @@ final class MonitoringTest extends TestCase
         $wedka = $this->lowisko($koszt);
 
         for ($i = 0; $i < $ile; $i++) {
-            FishingService::cast($konto['id'], $wedka, Fixtures::scriptedRandom([$los]), $this->db);
+            Fixtures::zarzucPosiadanaWedka($this->db, $konto['id'], $wedka, Fixtures::scriptedRandom([$los]), $this->db);
         }
 
         return $konto['id'];
@@ -217,7 +217,7 @@ final class MonitoringTest extends TestCase
         $wedka = $this->lowisko(10.0);
 
         foreach ([0.99, 0.1, 0.99, 0.99] as $los) {
-            FishingService::cast($konto['id'], $wedka, Fixtures::scriptedRandom([$los]), $this->db);
+            Fixtures::zarzucPosiadanaWedka($this->db, $konto['id'], $wedka, Fixtures::scriptedRandom([$los]), $this->db);
         }
 
         $serie = array_values(array_filter(

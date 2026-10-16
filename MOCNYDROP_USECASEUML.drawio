@@ -1,175 +1,470 @@
-<mxfile host="app.diagrams.net" agent="ZCode">
-  <diagram id="d_mocnydrop_usecase" name="Diagram przypadków użycia">
-    <mxGraphModel dx="2240" dy="1183" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1750" background="#0d1424" math="0" shadow="0">
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" agent="Codex" version="24.7.17" type="device" compressed="false">
+  <diagram id="uc-gracz" name="1. Przypadki użycia — gracz">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1436" pageHeight="1016" math="0" shadow="0" background="#ffffff">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#f1f5f9;fontSize=20;fontStyle=1;" value="MOCNYDROP — diagram przypadków użycia (UML)" vertex="1">
-          <mxGeometry height="32" width="900" x="380" y="6" as="geometry" />
+        <mxCell id="page-title" value="1. Przypadki użycia — gracz&lt;br/&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;Mechanika v2 • trwałe wędki, ryby w ekwipunku, odbiór co 24 h&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#0f172a;" vertex="1" parent="1">
+          <mxGeometry x="40" y="8" width="1356" height="68" as="geometry" />
         </mxCell>
-        <mxCell id="boundary" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#475569;strokeWidth=2;fontColor=#e2e8f0;fontSize=16;fontStyle=1;verticalAlign=top;align=left;spacingLeft=14;spacingTop=10;" value=" " vertex="1">
-          <mxGeometry height="1540" width="1700" x="380" y="50" as="geometry" />
+        <mxCell id="Guest" value="«aktor»&lt;br/&gt;Gość" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;rounded=1;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="253.20" y="474.20" width="84.50" height="49.40" as="geometry" />
         </mxCell>
-        <mxCell id="act_guest" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontColor=#f8fafc;strokeColor=#38bdf8;fillColor=#1e293b;fontSize=12;fontStyle=1;" value="Użytkownik (Gość)" vertex="1">
-          <mxGeometry height="90" width="55" x="140" y="200" as="geometry" />
+        <mxCell id="Player" value="«aktor»&lt;br/&gt;Zalogowany gracz" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;rounded=1;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40.00" y="635.40" width="159.90" height="49.40" as="geometry" />
         </mxCell>
-        <mxCell id="act_player" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontColor=#f8fafc;strokeColor=#38bdf8;fillColor=#1e293b;fontSize=12;fontStyle=1;" value="Zalogowany Gracz" vertex="1">
-          <mxGeometry height="90" width="55" x="140" y="990" as="geometry" />
+        <mxCell id="UC_REG" value="Rejestracja konta" style="html=1;whiteSpace=wrap;fillColor=#dbeafe;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="514.18" y="394.40" width="218.78" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="act_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontColor=#fef08a;strokeColor=#eab308;fillColor=#1e293b;fontSize=12;fontStyle=1;" value="Administrator" vertex="1">
-          <mxGeometry height="90" width="55" x="2160" y="430" as="geometry" />
+        <mxCell id="UC_LOGIN" value="Logowanie / wylogowanie" style="html=1;whiteSpace=wrap;fillColor=#dbeafe;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="472.81" y="475.00" width="301.51" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="gen_player_guest" edge="1" parent="1" source="act_player" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=0;endSize=14;html=1;strokeColor=#94a3b8;strokeWidth=2;fontSize=12;fontColor=#94a3b8;labelBackgroundColor=#0d1424;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="act_guest" value="&amp;lt;&amp;lt;dziedziczy&amp;gt;&amp;gt;">
+        <mxCell id="STARTER" value="Zapewnienie wędki startowej" style="html=1;whiteSpace=wrap;fillColor=#dcfce7;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="1037.37" y="658.30" width="336.45" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="BONUS" value="Przyznanie salda startowego" style="html=1;whiteSpace=wrap;fillColor=#dcfce7;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="1038.29" y="394.40" width="334.60" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_CASE" value="Otwarcie skrzynki z wędką" style="html=1;whiteSpace=wrap;fillColor=#dbeafe;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="1049.32" y="233.20" width="312.54" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_DAILY" value="Odbiór darmowej skrzynki" style="html=1;whiteSpace=wrap;fillColor=#dcfce7;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="470.98" y="636.20" width="305.18" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="DAILY_CHECK" value="Sprawdzenie limitu 24 godzin" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="1036.45" y="577.70" width="338.28" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="CASE_NEW" value="Trwałe odblokowanie nowego modelu" style="html=1;whiteSpace=wrap;fillColor=#dcfce7;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="414.90" y="313.80" width="417.33" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="CASE_DUP" value="Rekompensata za duplikat" style="html=1;whiteSpace=wrap;fillColor=#fef3c7;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="469.14" y="152.60" width="308.86" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="CASE_RETRY" value="Odzyskanie wyniku po utracie odpowiedzi" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="391.00" y="233.20" width="465.14" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_FISH" value="Łowienie ryb" style="html=1;whiteSpace=wrap;fillColor=#dbeafe;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="539.00" y="716.80" width="169.14" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="ROD_CHECK" value="Sprawdzenie własności wędki" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="1035.54" y="738.90" width="340.11" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_INV" value="Ekwipunek i sprzedaż ryb" style="html=1;whiteSpace=wrap;fillColor=#dbeafe;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="474.65" y="797.40" width="297.84" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_UPGRADE" value="Ulepszanie ryb w upgraderze" style="html=1;whiteSpace=wrap;fillColor=#dbeafe;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="455.35" y="878.00" width="336.45" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="UC_TRADE" value="Wymiana ryb w traderze" style="html=1;whiteSpace=wrap;fillColor=#dbeafe;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="478.33" y="555.60" width="290.48" height="47.80" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-1" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=none;" edge="1" parent="1" source="Guest" target="UC_REG">
           <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
             <Array as="points">
-              <mxPoint x="95" y="1035" />
-              <mxPoint x="95" y="245" />
+              <mxPoint x="359.31" y="468.83" />
+              <mxPoint x="380.60" y="458.60" />
+              <mxPoint x="380.60" y="458.60" />
+              <mxPoint x="380.60" y="458.60" />
+              <mxPoint x="466.63" y="444.25" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="as_guest_reg" edge="1" parent="1" source="act_guest" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_REG">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-2" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=none;" edge="1" parent="1" source="Guest" target="UC_LOGIN">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="372.28" y="498.90" />
+              <mxPoint x="423.31" y="498.90" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="as_guest_login" edge="1" parent="1" source="act_guest" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_LOGIN">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-0" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=block;endFill=0;" edge="1" parent="1" source="Player" target="Guest">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="178.66" y="605.90" />
+              <mxPoint x="225.90" y="561.30" />
+              <mxPoint x="225.90" y="561.30" />
+              <mxPoint x="225.90" y="561.30" />
+              <mxPoint x="242.07" y="546.52" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="as_player_case" edge="1" parent="1" source="act_player" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_CASE">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-3" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=none;" edge="1" parent="1" source="Player" target="UC_CASE">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="185.13" y="531.06" />
+              <mxPoint x="380.60" y="136.20" />
+              <mxPoint x="380.60" y="136.20" />
+              <mxPoint x="380.60" y="136.20" />
+              <mxPoint x="856.14" y="136.20" />
+              <mxPoint x="856.14" y="136.20" />
+              <mxPoint x="856.14" y="136.20" />
+              <mxPoint x="1009.54" y="175.20" />
+              <mxPoint x="1009.54" y="175.20" />
+              <mxPoint x="1009.54" y="175.20" />
+              <mxPoint x="1092.91" y="210.26" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="as_player_upgrade" edge="1" parent="1" source="act_player" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_UPGRADE">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-4" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=none;" edge="1" parent="1" source="Player" target="UC_DAILY">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="272.43" y="660.10" />
+              <mxPoint x="381.56" y="660.10" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="as_player_fish" edge="1" parent="1" source="act_player" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_FISH">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-5" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=none;" edge="1" parent="1" source="Player" target="UC_FISH">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="295.98" y="688.21" />
+              <mxPoint x="456.56" y="714.04" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="as_player_trade" edge="1" parent="1" source="act_player" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;" target="UC_TRADE">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-6" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=none;" edge="1" parent="1" source="Player" target="UC_INV">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="250.24" y="720.23" />
+              <mxPoint x="380.60" y="781.00" />
+              <mxPoint x="380.60" y="781.00" />
+              <mxPoint x="380.60" y="781.00" />
+              <mxPoint x="453.65" y="793.18" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="as_admin_1" edge="1" parent="1" source="act_admin" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="UC_ADM1">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-7" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=none;" edge="1" parent="1" source="Player" target="UC_UPGRADE">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="190.47" y="716.71" />
+              <mxPoint x="253.20" y="768.00" />
+              <mxPoint x="253.20" y="768.00" />
+              <mxPoint x="253.20" y="768.00" />
+              <mxPoint x="380.60" y="861.60" />
+              <mxPoint x="380.60" y="861.60" />
+              <mxPoint x="380.60" y="861.60" />
+              <mxPoint x="449.31" y="873.06" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="as_admin_2" edge="1" parent="1" source="act_admin" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="UC_ADM2">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-8" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=none;" edge="1" parent="1" source="Player" target="UC_TRADE">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="214.90" y="638.00" />
+              <mxPoint x="225.90" y="635.40" />
+              <mxPoint x="225.90" y="635.40" />
+              <mxPoint x="225.90" y="635.40" />
+              <mxPoint x="395.08" y="611.54" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="as_admin_3" edge="1" parent="1" source="act_admin" style="endArrow=none;html=1;strokeColor=#94a3b8;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="UC_ADM3">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-9" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_REG" target="STARTER">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="775.67" y="444.57" />
+              <mxPoint x="856.14" y="458.60" />
+              <mxPoint x="856.14" y="458.60" />
+              <mxPoint x="856.14" y="458.60" />
+              <mxPoint x="882.14" y="541.80" />
+              <mxPoint x="882.14" y="541.80" />
+              <mxPoint x="882.14" y="541.80" />
+              <mxPoint x="1009.54" y="601.60" />
+              <mxPoint x="1009.54" y="601.60" />
+              <mxPoint x="1009.54" y="601.60" />
+              <mxPoint x="1035.54" y="641.90" />
+              <mxPoint x="1035.54" y="641.90" />
+              <mxPoint x="1035.54" y="641.90" />
+              <mxPoint x="1070.26" y="650.19" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="UC_REG" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Rejestracja konta" vertex="1">
-          <mxGeometry height="70" width="280" x="430" y="120" as="geometry" />
+        <mxCell id="edge-10" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_REG" target="BONUS">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="815.81" y="418.30" />
+              <mxPoint x="931.41" y="418.30" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="REG_ACC" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=12;shadow=1;" value="Przyznanie bonusu powitalnego (50 monet)" vertex="1">
-          <mxGeometry height="60" width="280" x="820" y="120" as="geometry" />
+        <mxCell id="edge-13" value="«extend»&lt;br/&gt;[skrzynka dzienna]" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_DAILY" target="UC_CASE">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="788.45" y="631.59" />
+              <mxPoint x="856.14" y="619.80" />
+              <mxPoint x="856.14" y="619.80" />
+              <mxPoint x="856.14" y="619.80" />
+              <mxPoint x="882.14" y="526.20" />
+              <mxPoint x="882.14" y="526.20" />
+              <mxPoint x="882.14" y="526.20" />
+              <mxPoint x="1009.54" y="452.10" />
+              <mxPoint x="1009.54" y="452.10" />
+              <mxPoint x="1009.54" y="452.10" />
+              <mxPoint x="1035.54" y="378.00" />
+              <mxPoint x="1035.54" y="378.00" />
+              <mxPoint x="1035.54" y="378.00" />
+              <mxPoint x="1112.38" y="322.94" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="REG_ERR" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Login lub e-mail już zajęty" vertex="1">
-          <mxGeometry height="56" width="240" x="820" y="230" as="geometry" />
+        <mxCell id="edge-14" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_DAILY" target="DAILY_CHECK">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="842.22" y="638.16" />
+              <mxPoint x="962.75" y="625.99" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="UC_LOGIN" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Zalogowanie do systemu" vertex="1">
-          <mxGeometry height="80" width="300" x="430" y="460" as="geometry" />
+        <mxCell id="edge-15" value="«extend»&lt;br/&gt;[nieposiadany model]" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="CASE_NEW" target="UC_CASE">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="877.03" y="307.02" />
+              <mxPoint x="1009.54" y="290.90" />
+              <mxPoint x="1009.54" y="290.90" />
+              <mxPoint x="1009.54" y="290.90" />
+              <mxPoint x="1048.07" y="284.22" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="ERR_BADLOGIN" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Niepoprawne dane logowania" vertex="1">
-          <mxGeometry height="56" width="240" x="820" y="440" as="geometry" />
+        <mxCell id="edge-16" value="«extend»&lt;br/&gt;[posiadany model]" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="CASE_DUP" target="UC_CASE">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="858.34" y="204.91" />
+              <mxPoint x="1009.54" y="223.30" />
+              <mxPoint x="1009.54" y="223.30" />
+              <mxPoint x="1009.54" y="223.30" />
+              <mxPoint x="1048.07" y="229.98" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="ERR_BANNED" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Konto zablokowane" vertex="1">
-          <mxGeometry height="56" width="240" x="820" y="530" as="geometry" />
+        <mxCell id="edge-17" value="«extend»&lt;br/&gt;[ten sam request_id]" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="CASE_RETRY" target="UC_CASE">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="917.36" y="257.10" />
+              <mxPoint x="981.93" y="257.10" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="UC_CASE" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Otwarcie skrzynki" vertex="1">
-          <mxGeometry height="70" width="260" x="430" y="800" as="geometry" />
+        <mxCell id="edge-12" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_FISH" target="STARTER">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="794.23" y="723.61" />
+              <mxPoint x="945.00" y="708.38" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="CASE_ERR" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Brak środków" vertex="1">
-          <mxGeometry height="54" width="210" x="820" y="770" as="geometry" />
+        <mxCell id="edge-11" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_FISH" target="ROD_CHECK">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="791.69" y="747.06" />
+              <mxPoint x="923.64" y="752.10" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="CASE_SELL" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#2e1065;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=12;strokeDashed=1;shadow=1;" value="Natychmiastowa sprzedaż wygranej" vertex="1">
-          <mxGeometry height="60" width="250" x="820" y="870" as="geometry" />
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="uc-admin" name="2. Przypadki użycia — administrator">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1709" pageHeight="613" math="0" shadow="0" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="page-title" value="2. Przypadki użycia — administrator&lt;br/&gt;&lt;span style=&quot;font-size:12px;font-weight:normal&quot;&gt;Administrator jest specjalizacją gracza; wszystkie operacje wymagają roli admin&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#0f172a;" vertex="1" parent="1">
+          <mxGeometry x="40" y="8" width="1629" height="68" as="geometry" />
         </mxCell>
-        <mxCell id="UC_UPGRADE" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Ulepszenie przedmiotu (Upgrader)" vertex="1">
-          <mxGeometry height="70" width="280" x="430" y="1000" as="geometry" />
+        <mxCell id="Admin" value="«aktor»&lt;br/&gt;Administrator" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;rounded=1;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40.00" y="296.10" width="127.40" height="49.40" as="geometry" />
         </mxCell>
-        <mxCell id="UC_FISH" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Łowienie ryb (łowisko)" vertex="1">
-          <mxGeometry height="70" width="260" x="430" y="1200" as="geometry" />
+        <mxCell id="UC_ADM1" value="Zarządzanie skrzynkami" style="html=1;whiteSpace=wrap;fillColor=#dbeafe;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="240.01" y="216.30" width="286.80" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="UC_TRADE" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Wymiana przedmiotów (Trader)" vertex="1">
-          <mxGeometry height="70" width="280" x="430" y="1400" as="geometry" />
+        <mxCell id="POOL" value="Wybór modeli wędek i wag" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="764.79" y="233.20" width="312.54" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="TRADE_ERR" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Odrzucenie: za niska wartość" vertex="1">
-          <mxGeometry height="60" width="240" x="820" y="1400" as="geometry" />
+        <mxCell id="CASE_FLAGS" value="Cena, aktywność i flaga dzienna" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="737.21" y="152.60" width="367.70" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="UC_ADM1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Zarządzanie skrzynkami" vertex="1">
-          <mxGeometry height="64" width="300" x="1150" y="110" as="geometry" />
+        <mxCell id="UC_ADM2" value="Zarządzanie użytkownikami" style="html=1;whiteSpace=wrap;fillColor=#dbeafe;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="221.62" y="296.90" width="323.58" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="ADM1_ERR" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Błędne wagi lub ujemna cena" vertex="1">
-          <mxGeometry height="54" width="250" x="1200" y="194" as="geometry" />
+        <mxCell id="BALANCE" value="Korekta salda" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="830.98" y="394.40" width="180.17" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="UC_ADM2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Zarządzanie użytkownikami" vertex="1">
-          <mxGeometry height="64" width="300" x="1150" y="352" as="geometry" />
+        <mxCell id="BAN" value="Blokada / odblokowanie konta" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="749.17" y="313.80" width="343.79" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="ADM2_S2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=12;shadow=1;" value="Zmiana salda gracza" vertex="1">
-          <mxGeometry height="58" width="230" x="1080" y="450" as="geometry" />
+        <mxCell id="UC_ADM3" value="Monitoring aktywności" style="html=1;whiteSpace=wrap;fillColor=#dbeafe;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="786.85" y="475.00" width="268.42" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="ADM2_S3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=12;shadow=1;" value="Zablokowanie konta" vertex="1">
-          <mxGeometry height="58" width="240" x="1340" y="450" as="geometry" />
+        <mxCell id="RTP" value="RTP płatnych losowań i osobno bonusy" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="1214.06" y="475.00" width="433.88" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="ADM2_ERR" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#450a0a;strokeColor=#ef4444;strokeWidth=1.5;fontColor=#fee2e2;fontSize=12;strokeDashed=1;shadow=1;" value="Próba zablokowania głównego administratora" vertex="1">
-          <mxGeometry height="64" width="240" x="1340" y="540" as="geometry" />
+        <mxCell id="AUDIT" value="Przegląd dziennika audytowego" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="1249.91" y="394.40" width="362.18" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="UC_ADM3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2.2;fontColor=#ffffff;fontSize=12;fontStyle=1;shadow=1;" value="Monitoring aktywności" vertex="1">
-          <mxGeometry height="64" width="300" x="1150" y="730" as="geometry" />
+        <mxCell id="REPORT" value="Eksport CSV / JSON" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="1313.34" y="313.80" width="235.33" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="ADM3_S1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=12;shadow=1;" value="Przegląd statystyk wygranych" vertex="1">
-          <mxGeometry height="58" width="220" x="1090" y="830" as="geometry" />
+        <mxCell id="ALERT" value="Wykrycie podejrzanych serii" style="html=1;whiteSpace=wrap;fillColor=#f1f5f9;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;ellipse;" vertex="1" parent="1">
+          <mxGeometry x="220.70" y="377.50" width="325.41" height="47.80" as="geometry" />
         </mxCell>
-        <mxCell id="ADM3_S3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#064e3b;strokeColor=#10b981;strokeWidth=1.5;fontColor=#ecfdf5;fontSize=12;shadow=1;" value="Eksport raportu" vertex="1">
-          <mxGeometry height="58" width="220" x="1340" y="830" as="geometry" />
+        <mxCell id="RULE" value="Skrzynka dzienna: cena = 0.&lt;br/&gt;Wagi muszą być dodatnie.&lt;br/&gt;Nie wolno zbanować administratora." style="html=1;whiteSpace=wrap;fillColor=#fef3c7;strokeColor=#475569;fontColor=#243449;fontSize=14;fontFamily=Helvetica;shape=note;size=15;align=left;spacing=10;" vertex="1" parent="1">
+          <mxGeometry x="237.81" y="457.30" width="291.20" height="65.00" as="geometry" />
         </mxCell>
-        <mxCell id="ADM3_EXT" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#2e1065;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#f3e8ff;fontSize=12;strokeDashed=1;shadow=1;" value="Alert: podejrzane serie wygranych" vertex="1">
-          <mxGeometry height="64" width="250" x="1090" y="920" as="geometry" />
+        <mxCell id="edge-0" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=none;" edge="1" parent="1" source="Admin" target="UC_ADM1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="190.15" y="288.21" />
+              <mxPoint x="210.30" y="280.50" />
+              <mxPoint x="210.30" y="280.50" />
+              <mxPoint x="210.30" y="280.50" />
+              <mxPoint x="255.29" y="269.94" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="pad_right" parent="1" style="ellipse;html=1;fillColor=none;strokeColor=none;opacity=0;" value="" vertex="1">
-          <mxGeometry height="30" width="30" x="2300" y="850" as="geometry" />
+        <mxCell id="edge-1" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=none;" edge="1" parent="1" source="Admin" target="UC_ADM2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="183.97" y="320.80" />
+              <mxPoint x="202.49" y="320.80" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="pad_left" parent="1" style="ellipse;html=1;fillColor=none;strokeColor=none;opacity=0;" value="" vertex="1">
-          <mxGeometry height="30" width="30" x="10" y="850" as="geometry" />
+        <mxCell id="edge-2" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;endArrow=none;" edge="1" parent="1" source="Admin" target="UC_ADM3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="144.74" y="403.22" />
+              <mxPoint x="210.30" y="539.20" />
+              <mxPoint x="210.30" y="539.20" />
+              <mxPoint x="210.30" y="539.20" />
+              <mxPoint x="546.12" y="539.20" />
+              <mxPoint x="546.12" y="539.20" />
+              <mxPoint x="546.12" y="539.20" />
+              <mxPoint x="695.73" y="523.06" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_reg_acc" edge="1" parent="1" source="UC_REG" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="REG_ACC" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-3" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_ADM1" target="POOL">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="595.71" y="246.87" />
+              <mxPoint x="682.55" y="249.61" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_reg_err" edge="1" parent="1" source="REG_ERR" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_REG" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-4" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_ADM1" target="CASE_FLAGS">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="581.00" y="216.83" />
+              <mxPoint x="688.25" y="204.06" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_err_badlogin" edge="1" parent="1" source="ERR_BADLOGIN" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_LOGIN" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-5" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_ADM2" target="BALANCE">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="587.77" y="357.80" />
+              <mxPoint x="741.02" y="385.74" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_err_banned" edge="1" parent="1" source="ERR_BANNED" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_LOGIN" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-6" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_ADM2" target="BAN">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="604.92" y="327.75" />
+              <mxPoint x="677.73" y="330.06" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_case_err" edge="1" parent="1" source="CASE_ERR" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_CASE" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-7" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_ADM3" target="RTP">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="1100.57" y="498.90" />
+              <mxPoint x="1152.48" y="498.90" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_case_sell" edge="1" parent="1" source="CASE_SELL" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#a855f7;fontColor=#c084fc;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_CASE" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-8" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_ADM3" target="AUDIT">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="1102.70" y="470.25" />
+              <mxPoint x="1216.88" y="452.12" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_trade_err" edge="1" parent="1" source="TRADE_ERR" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_TRADE" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-9" value="«include»" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="UC_ADM3" target="REPORT">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="1054.14" y="469.81" />
+              <mxPoint x="1104.91" y="458.60" />
+              <mxPoint x="1104.91" y="458.60" />
+              <mxPoint x="1104.91" y="458.60" />
+              <mxPoint x="1130.91" y="437.80" />
+              <mxPoint x="1130.91" y="437.80" />
+              <mxPoint x="1130.91" y="437.80" />
+              <mxPoint x="1214.11" y="378.00" />
+              <mxPoint x="1214.11" y="378.00" />
+              <mxPoint x="1214.11" y="378.00" />
+              <mxPoint x="1275.68" y="366.50" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_adm1_err" edge="1" parent="1" source="ADM1_ERR" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="UC_ADM1" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-10" value="«extend»&lt;br/&gt;[przekroczenie progów]" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="ALERT" target="UC_ADM3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="580.90" y="437.15" />
+              <mxPoint x="720.47" y="462.58" />
+            </Array>
+          </mxGeometry>
         </mxCell>
-        <mxCell id="e_adm2_s2" edge="1" parent="1" source="UC_ADM2" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM2_S2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_adm2_s3" edge="1" parent="1" source="UC_ADM2" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM2_S3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_adm2_err" edge="1" parent="1" source="ADM2_ERR" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#ef4444;fontColor=#f87171;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM2_S3" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_adm3_s1" edge="1" parent="1" source="UC_ADM3" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM3_S1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_adm3_s3" edge="1" parent="1" source="UC_ADM3" style="endArrow=open;endSize=7;html=1;strokeColor=#10b981;fontColor=#34d399;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM3_S3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_adm3_ext" edge="1" parent="1" source="ADM3_EXT" style="endArrow=open;endSize=7;dashed=1;html=1;strokeColor=#a855f7;fontColor=#c084fc;strokeWidth=1.5;fontSize=12;labelBackgroundColor=#0d1424;" target="ADM3_S1" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="edge-11" value="" style="edgeStyle=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=#475569;strokeColor=#64748b;endArrow=block;endFill=1;dashed=1;endArrow=open;endFill=0;" edge="1" parent="1" source="RULE" target="UC_ADM1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+            <Array as="points">
+              <mxPoint x="235.16" y="448.61" />
+              <mxPoint x="210.30" y="441.70" />
+              <mxPoint x="210.30" y="441.70" />
+              <mxPoint x="210.30" y="441.70" />
+              <mxPoint x="188.85" y="425.45" />
+              <mxPoint x="188.85" y="425.45" />
+              <mxPoint x="188.85" y="425.45" />
+              <mxPoint x="188.85" y="296.75" />
+              <mxPoint x="188.85" y="296.75" />
+              <mxPoint x="188.85" y="296.75" />
+              <mxPoint x="210.30" y="280.50" />
+              <mxPoint x="210.30" y="280.50" />
+              <mxPoint x="210.30" y="280.50" />
+              <mxPoint x="248.82" y="271.53" />
+            </Array>
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>

@@ -115,7 +115,7 @@ final class PrzedmiotTest extends TestCase
         $gracz = Fixtures::user($this->db, 'wedkarz', 1000.0);
         $wedkaId = Fixtures::readmeWedka($this->db, 0.0);
 
-        $wynik = FishingService::cast($gracz['id'], $wedkaId, Fixtures::scriptedRandom([0.0]), $this->db);
+        $wynik = Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedkaId, Fixtures::scriptedRandom([0.0]), $this->db);
 
         $pula = Wedka::wymagaj($wedkaId, $this->db)->pula($this->db);
         $przedmiot = Przedmiot::zPuli($pula[0]);

@@ -70,7 +70,7 @@ final class Database
         // klika stronę naraz podczas testów integracyjnych.
         $pdo->exec('PRAGMA journal_mode = WAL;');
 
-        if ($isNew) {
+        if ($isNew || (int) $pdo->query('PRAGMA user_version')->fetchColumn() < 2) {
             self::applySchema($pdo);
         }
 
@@ -85,6 +85,7 @@ final class Database
         // SQLite domyślnie IGNORUJE klucze obce. Bez tej linijki ON DELETE
         // CASCADE z schema.sql po cichu by nie działał.
         $pdo->exec('PRAGMA foreign_keys = ON;');
+        $pdo->exec('PRAGMA busy_timeout = 5000;');
 
         return $pdo;
     }
@@ -104,6 +105,6 @@ final class Database
             throw new RuntimeException('Plik schematu jest pusty: ' . $schema);
         }
 
-        $pdo->exec($sql);
+        Migracje::zastosuj($pdo, $sql);
     }
 }

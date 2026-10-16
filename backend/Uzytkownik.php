@@ -92,6 +92,7 @@ class Uzytkownik
             $this->id = (int) $db->lastInsertId();
 
             Portfel::utworz($this->id, null, $db);
+            PosiadaneWedki::startowa($this->id, $db);
 
             $db->commit();
         } catch (Throwable $e) {

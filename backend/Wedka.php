@@ -18,10 +18,8 @@ use PDO;
  *
  * Asocjacja z diagramu: Uzytkownik ◆— Wedka (1 : 0..*).
  *
- * Implementacja jest katalogowa, a nie własnościowa: gracz NIE kupuje wędki na
- * stałe, tylko płaci `kosztUzycia` za każdy zarzut (strona 2 diagramu PROJEKT:
- * „Wybór wędki i przynęty (Pobranie opłaty z portfela)"). Stąd brak kolumny
- * user_id w tabeli `wedki`.
+ * Model w katalogu jest odblokowywany przez skrzynki. Własność gracza
+ * zapisuje uzytkownik_wedki; FishingService sprawdza ją przed zarzutem.
  *
  * Diagram nie rysuje asocjacji Wedka — Przedmiot, ale mechanika potrzebuje puli
  * z wagami, więc jest tabela łącząca `wedka_przedmioty` (odpowiednik
@@ -176,8 +174,13 @@ final class Wedka
     public function doApi(): array
     {
         $pula = $this->pula();
-
+        $stmt = $this->polaczenie()->prepare('SELECT w.czy_startowa, w.rekompensata, z.nazwa AS rzadkosc, z.kolor FROM wedki w JOIN rzadkosci z ON z.kod = w.rzadkosc_kod WHERE w.id = ?');
+        $stmt->execute([$this->id]);
+        $meta = $stmt->fetch();
         return [
+            'czy_startowa' => (bool) $meta['czy_startowa'],
+            'rekompensata' => (float) $meta['rekompensata'],
+            'rzadkosc' => $meta['rzadkosc'], 'kolor' => $meta['kolor'],
             'id' => $this->id,
             'nazwa' => $this->nazwa,
             'opis' => $this->opis,

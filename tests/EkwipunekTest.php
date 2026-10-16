@@ -149,8 +149,8 @@ final class EkwipunekTest extends TestCase
         Fixtures::przedmiot($this->db, $wedka, 'Jesiotr', 'niesamowita', 400.0, null, 'sturgeon.png');
 
         // Dwie przedmioty o wagach 50 i 1, suma = 51, próg = 50/51 ≈ 0.9804.
-        FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.5]));
-        FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.99]));
+        Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.5]));
+        Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.99]));
 
         $podsumowanie = (new Ekwipunek($gracz['id'], $this->db))->podsumowanie();
 
@@ -167,8 +167,8 @@ final class EkwipunekTest extends TestCase
         Fixtures::przedmiot($this->db, $wedka, 'Anchois', 'pospolita', 2.0, null, 'anchovy.png');
         Fixtures::przedmiot($this->db, $wedka, 'Jesiotr', 'niesamowita', 400.0, null, 'sturgeon.png');
 
-        FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.5]));
-        FishingService::cast($gracz['id'], $wedka, Fixtures::scriptedRandom([0.99]));
+        Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.5]));
+        Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka, Fixtures::scriptedRandom([0.99]));
 
         $ekwipunek = (new Ekwipunek($gracz['id'], $this->db))->lista();
 
@@ -202,7 +202,7 @@ final class EkwipunekTest extends TestCase
 
         Fixtures::przedmiot($this->db, $wedka, 'Anchois', 'pospolita', $wartoscPrzedmiotu, null, 'anchovy.png');
 
-        FishingService::cast($gracz['id'], $wedka);
+        Fixtures::zarzucPosiadanaWedka($this->db, $gracz['id'], $wedka);
 
         return $gracz;
     }
