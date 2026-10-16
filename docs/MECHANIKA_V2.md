@@ -79,9 +79,13 @@ Do aktualizacji istniejącej gry używamy polecenia bez tej flagi.
 Ponowny import aktualizuje konfigurację modeli, skrzynek i wag zapisanych
 w CSV. Może więc nadpisać ręczne ustawienia administratora dla seedowanych
 pozycji; nie należy wykonywać go przy każdym restarcie serwera. Nie usuwa
-przedmiotów graczy. `skrzynka_przedmioty.csv`, klasa `SkrzynkaPrzedmiot`
-i oryginalne pliki Draw.io opisują mechanikę v1; nie sterują nowymi nagrodami.
-Aktualny przepływ v2 pokazuje diagram powyżej. `Skrzynka::losuj()` oraz
+przedmiotów graczy. `skrzynka_przedmioty.csv` i klasa `SkrzynkaPrzedmiot`
+opisują mechanikę v1; nie sterują nowymi nagrodami.
+Aktualny przepływ v2 pokazuje diagram powyżej oraz zaktualizowane pliki
+Draw.io w katalogu głównym: `MOCNYDROP_USECASEUML.drawio` (przypadki użycia),
+`MOCNYDROP_diagram_klas.drawio` (klasy, usługi i struktura danych)
+i `MOCNYDROP_PROJEKT.drawio` (przebiegi działania).
+`Skrzynka::losuj()` oraz
 `otworz()` zwracają teraz `Wedka`; stary `ILosujacy(): Przedmiot` pozostaje
 wyłącznie dla historycznej klasy wpisu puli.
 
