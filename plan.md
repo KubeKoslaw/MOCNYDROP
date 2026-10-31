@@ -32,3 +32,12 @@
 - [ ] Testy czterech trybów
 - [ ] README z instalacją i uruchomieniem
 - [ ] Diagramy zgodne z kodem
+## @jgpostrach — JavaScript
+
+- [ ] Klient API po ustaleniu kontraktu
+- [ ] Obsługa błędów w UI
+- [ ] Logowanie i rejestracja
+- [ ] Lista ekwipunku i sprzedaż
+- [ ] Lista skrzynek i wędek
+- [ ] Walidacja formularzy
+- [ ] Animacja łowienia
