@@ -40,7 +40,7 @@
 - [ ] Klient OAuth 2.0 (kod → token → refresh)
 - [ ] Obsługa błędów w UI
 - [ ] Logowanie i rejestracja
-- [ ] Profil: lista ekwipunku w modalu (bez sprzedaży)
+- [ ] Profil: lista ekwipunku w modalu
 - [ ] Lista skrzynek i wędek
 - [ ] Walidacja formularzy
 - [ ] Animacja łowienia (pasek ikon)
@@ -52,7 +52,6 @@
 - [ ] Ekran logowania i rejestracji
 - [ ] Profil jako modal (dane, przedmioty, zarzuty)
 - [ ] Widoki trzech trybów (Łowisko, Skrzynki, Historia)
-- [ ] ~~Panel admina~~ — tylko API, bez UI
 - [ ] Mobile i desktop
 - [ ] Puste stany i ładowanie
 - [ ] Testy klikane po stronie (manualna checklista)
