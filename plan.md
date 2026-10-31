@@ -23,3 +23,12 @@
 - [ ] Panel admina: skrzynki
 - [ ] Panel admina: użytkownicy i saldo
 - [ ] Panel admina: RTP, audyt, eksport
+## @moxmar26 — dane, testy, dokumentacja
+
+- [ ] Seed skrzynek
+- [ ] Seed wędek i ryb
+- [ ] Wagi rzadkości
+- [ ] Test rozkładu losowania
+- [ ] Testy czterech trybów
+- [ ] README z instalacją i uruchomieniem
+- [ ] Diagramy zgodne z kodem
