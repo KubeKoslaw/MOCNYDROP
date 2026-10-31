@@ -14,37 +14,6 @@ Strona z elementami hazardu z nagrodami o różnych wartościach, oparta na wirt
 - MariaDB 10.6+; do testów SQLite i generowania instalatora SQL także `pdo_sqlite`
 - Dowolne IDE wspierające powyższe języki programowania *(Rekomendowane: VSCode, VSCodium, Apache NetBeans, PhpStorm itp.)*
 
-## Szybki start
-
-```bash
-cp config/database.example.php config/database.local.php
-# Uzupełnij plik lokalny danymi utworzonej bazy i użytkownika MariaDB.
-php database/migrate.php          # tabele + dane gry; zachowuje istniejące dane
-php -S localhost:8000             # serwer lokalny
-```
-
-Konfiguracja lokalna z hasłem jest
-ignorowana przez Git. MariaDB nie tworzy tabel przy żądaniu API; inicjalizację
-wykonaj przed uruchomieniem strony. Opcja `--fresh` jest dla MariaDB blokowana.
-
-Opcjonalnie, do lokalnej pracy bez serwera MariaDB:
-
-```bash
-DB_DRIVER=sqlite php database/migrate.php --fresh
-DB_DRIVER=sqlite php -S localhost:8000
-```
-
-Testy: `php tests/run.php` (SQLite w pamięci), a wariant MariaDB opisano
-w [sekcji testów](#testy-lokalne).
-
-Gra: <http://localhost:8000/dev/playground.html>
-
-Animacja łowienia (mock, bez logowania): <http://localhost:8000/dev/fishing-demo.html>
-
-`dev/playground.html` to tymczasowa konsola developerska do testowania API —
-docelowy layout powstanie w `public/`. Konsola pokrywa wszystkie przypadki
-użycia z diagramu: łowisko, skrzynki, upgrader, trader, ekwipunek, historię
-i panel administratora.
 
 
 ## Zespół
