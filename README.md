@@ -24,7 +24,7 @@ Podział obowiązków:
 |---|---|
 | @KubeKoslaw | Backend_1 - api, autoryzacja, rdzenne funkcje | 
 | @moxmar26 | Backend_2 - Testy, integracja z bazą danych | 
-| @jgpostrach | Frontend_1 - JS, logika łowienie i interakcji na stronie
+| @jgpostrach | Frontend_1 - JS, logika łowienia i interakcji na stronie
 | @THOPA174 | Frontend_2 - ayout w HTML/CSS |
 
 ## Jak to działa
