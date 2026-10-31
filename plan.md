@@ -1,55 +1,62 @@
 # MOCNYDROP — plan projektu
 
+
 ## @KubeKoslaw — backend
 
 - [ ] Struktura katalogów
-- [ ] Konfiguracja i połączenie z bazą
+- [ ] Konfiguracja i połączenie z bazą (SQLite/PDO)
 - [ ] Schemat bazy: użytkownicy, przedmioty, ekwipunek, skrzynki, historia
 - [ ] Migracje tworzą bazę
 - [ ] Kontrakt API: format JSON odpowiedzi
 - [ ] Rejestracja i logowanie
-- [ ] Sesje i role użytkowników
+- [ ] OAuth 2.0 i role użytkowników (access + refresh token, rola admin)
 - [ ] Portfel i saldo
 - [ ] Ważone losowanie
 - [ ] Zapis losowań do historii
 - [ ] Ekwipunek i zarzuty wędek (`inventory.php`)
-- [ ] Sprzedaż przedmiotu (`sell.php`)
+- [ ] ~~Sprzedaż przedmiotu (`sell.php`)~~ — usunięte; tylko sprzedaż natychmiastowa przy skrzynce
 - [ ] Katalog skrzynek i wędek (`skrzynki.php`, `wedki.php`)
 - [ ] Łowisko (`fish.php`)
 - [ ] Skrzynki (`open_case.php`)
-- [ ] Upgrader (`upgrade.php`)
-- [ ] Trader (`trade_up.php`)
+- [ ] ~~Upgrader (`upgrade.php`)~~ — usunięte
+- [ ] ~~Trader (`trade_up.php`)~~ — usunięte
 - [ ] Darmowa skrzynka raz na 24 h
-- [ ] Panel admina: skrzynki
-- [ ] Panel admina: użytkownicy i saldo
-- [ ] Panel admina: RTP, audyt, eksport
+- [ ] Panel admina: skrzynki (API)
+- [ ] Panel admina: użytkownicy i saldo (API)
+- [ ] Panel admina: RTP, audyt, eksport (API)
+- [ ] Kontrakt animacji: pasek ikon z serwera (`reel`)
+
 ## @moxmar26 — dane, testy, dokumentacja
 
 - [ ] Seed skrzynek
 - [ ] Seed wędek i ryb
 - [ ] Wagi rzadkości
 - [ ] Test rozkładu losowania
-- [ ] Testy czterech trybów
+- [ ] Testy trybów (łowisko, skrzynki, darmowa skrzynka)
+- [ ] Testy OAuth 2.0 i tokenów
+- [ ] Test kontraktu animacji (`tests/check-fishing.mjs`)
 - [ ] README z instalacją i uruchomieniem
 - [ ] Diagramy zgodne z kodem
+
 ## @jgpostrach — JavaScript
 
 - [ ] Klient API po ustaleniu kontraktu
+- [ ] Klient OAuth 2.0 (kod → token → refresh)
 - [ ] Obsługa błędów w UI
 - [ ] Logowanie i rejestracja
-- [ ] Lista ekwipunku i sprzedaż
+- [ ] Profil: lista ekwipunku w modalu (bez sprzedaży)
 - [ ] Lista skrzynek i wędek
 - [ ] Walidacja formularzy
-- [ ] Animacja łowienia
-
+- [ ] Animacja łowienia (pasek ikon)
+- [ ] Animacja otwierania skrzynki (rolka)
 
 ## @THOPA174 — layout HTML/CSS
 
 - [ ] Szkielet strony i nawigacja
 - [ ] Ekran logowania i rejestracji
-- [ ] Ekwipunek
-- [ ] Widoki czterech trybów
-- [ ] Panel admina
+- [ ] Profil jako modal (dane, przedmioty, zarzuty)
+- [ ] Widoki trzech trybów (Łowisko, Skrzynki, Historia)
+- [ ] ~~Panel admina~~ — tylko API, bez UI
 - [ ] Mobile i desktop
 - [ ] Puste stany i ładowanie
-- [ ] Testy klikane po stronie
+- [ ] Testy klikane po stronie (manualna checklista)
