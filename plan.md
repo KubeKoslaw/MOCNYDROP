@@ -1,6 +1,5 @@
 # MOCNYDROP — plan projektu
 
-
 ## @KubeKoslaw — backend
 
 - [ ] Struktura katalogów
@@ -14,12 +13,9 @@
 - [ ] Ważone losowanie
 - [ ] Zapis losowań do historii
 - [ ] Ekwipunek i zarzuty wędek (`inventory.php`)
-- [ ] ~~Sprzedaż przedmiotu (`sell.php`)~~ — usunięte; tylko sprzedaż natychmiastowa przy skrzynce
 - [ ] Katalog skrzynek i wędek (`skrzynki.php`, `wedki.php`)
 - [ ] Łowisko (`fish.php`)
 - [ ] Skrzynki (`open_case.php`)
-- [ ] ~~Upgrader (`upgrade.php`)~~ — usunięte
-- [ ] ~~Trader (`trade_up.php`)~~ — usunięte
 - [ ] Darmowa skrzynka raz na 24 h
 - [ ] Panel admina: skrzynki (API)
 - [ ] Panel admina: użytkownicy i saldo (API)
