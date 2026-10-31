@@ -41,3 +41,15 @@
 - [ ] Lista skrzynek i wędek
 - [ ] Walidacja formularzy
 - [ ] Animacja łowienia
+
+
+## @THOPA174 — layout HTML/CSS
+
+- [ ] Szkielet strony i nawigacja
+- [ ] Ekran logowania i rejestracji
+- [ ] Ekwipunek
+- [ ] Widoki czterech trybów
+- [ ] Panel admina
+- [ ] Mobile i desktop
+- [ ] Puste stany i ładowanie
+- [ ] Testy klikane po stronie
