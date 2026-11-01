@@ -2,11 +2,11 @@
 
 ## @KubeKoslaw — backend
 
-- [ ] Struktura katalogów
-- [ ] Konfiguracja i połączenie z bazą (SQLite/PDO)
-- [ ] Schemat bazy: użytkownicy, przedmioty, ekwipunek, skrzynki, historia
-- [ ] Migracje tworzą bazę
-- [ ] Kontrakt API: format JSON odpowiedzi
+- [x] Struktura katalogów
+- [x] Konfiguracja i połączenie z bazą (SQLite/PDO)
+- [x] Schemat bazy: użytkownicy, przedmioty, ekwipunek, skrzynki, historia
+- [x] Migracje tworzą bazę
+- [x] Kontrakt API: format JSON odpowiedzi
 - [ ] Rejestracja i logowanie
 - [ ] OAuth 2.0 i role użytkowników (access + refresh token, rola admin)
 - [ ] Portfel i saldo
