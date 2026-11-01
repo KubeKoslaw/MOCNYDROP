@@ -2,14 +2,14 @@
 
 ## @KubeKoslaw — backend
 
-- [ ] Struktura katalogów
-- [ ] Konfiguracja i połączenie z bazą (SQLite/PDO)
-- [ ] Schemat bazy: użytkownicy, przedmioty, ekwipunek, skrzynki, historia
-- [ ] Migracje tworzą bazę
-- [ ] Kontrakt API: format JSON odpowiedzi
-- [ ] Rejestracja i logowanie
-- [ ] OAuth 2.0 i role użytkowników (access + refresh token, rola admin)
-- [ ] Portfel i saldo
+- [x] Struktura katalogów
+- [x] Konfiguracja i połączenie z bazą (SQLite/PDO)
+- [x] Schemat bazy: użytkownicy, przedmioty, ekwipunek, skrzynki, historia
+- [x] Migracje tworzą bazę
+- [x] Kontrakt API: format JSON odpowiedzi
+- [x] Rejestracja i logowanie
+- [x] OAuth 2.0 i role użytkowników (access + refresh token, rola admin)
+- [x] Portfel i saldo
 - [ ] Ważone losowanie
 - [ ] Zapis losowań do historii
 - [ ] Ekwipunek i zarzuty wędek (`inventory.php`)
