@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS portfele (
 
 CREATE TABLE IF NOT EXISTS oauth_kody (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    kod             TEXT    NOT NULL UNIQUE,
+    kod_hash        TEXT    NOT NULL UNIQUE,
     user_id         INTEGER NOT NULL,
     expires_at      TEXT    NOT NULL,
     czy_zuzyty      INTEGER NOT NULL DEFAULT 0 CHECK (czy_zuzyty IN (0, 1)),

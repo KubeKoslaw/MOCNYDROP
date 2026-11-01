@@ -11,10 +11,11 @@ final class OauthKod
     public function __construct(
         public readonly int $id,
         public readonly int $userId,
-        public readonly string $kod,
+        public readonly string $kodHash,
         public readonly string $expiresAt,
         public readonly bool $czyZuzyty = false,
         private ?PDO $db = null,
+        public readonly ?string $kod = null,
     ) {
     }
 
@@ -29,14 +30,15 @@ final class OauthKod
         }
 
         $kod = bin2hex(random_bytes(32));
+        $kodHash = self::hashKod($kod);
         $expiresAt = date('Y-m-d H:i:s', time() + $sekundy);
 
-        $stmt = $db->prepare('INSERT INTO oauth_kody (user_id, kod, expires_at) VALUES (?, ?, ?)');
-        $stmt->execute([$userId, $kod, $expiresAt]);
+        $stmt = $db->prepare('INSERT INTO oauth_kody (user_id, kod_hash, expires_at) VALUES (?, ?, ?)');
+        $stmt->execute([$userId, $kodHash, $expiresAt]);
 
         self::posprzatajWygasle($db);
 
-        return new self((int) $db->lastInsertId(), $userId, $kod, $expiresAt, false, $db);
+        return new self((int) $db->lastInsertId(), $userId, $kodHash, $expiresAt, false, $db, $kod);
     }
 
     public static function znajdz(string $kod, ?PDO $pdo = null): ?self
@@ -49,8 +51,8 @@ final class OauthKod
 
         $db = $pdo ?? Database::connection();
 
-        $stmt = $db->prepare('SELECT id, user_id, kod, expires_at, czy_zuzyty FROM oauth_kody WHERE kod = ?');
-        $stmt->execute([$kod]);
+        $stmt = $db->prepare('SELECT id, user_id, kod_hash, expires_at, czy_zuzyty FROM oauth_kody WHERE kod_hash = ?');
+        $stmt->execute([self::hashKod($kod)]);
 
         $row = $stmt->fetch();
 
@@ -61,11 +63,16 @@ final class OauthKod
         return new self(
             (int) $row['id'],
             (int) $row['user_id'],
-            (string) $row['kod'],
+            (string) $row['kod_hash'],
             (string) $row['expires_at'],
             (int) $row['czy_zuzyty'] === 1,
             $db,
         );
+    }
+
+    private static function hashKod(string $kod): string
+    {
+        return hash('sha256', $kod);
     }
 
     public function czyWygasl(): bool
