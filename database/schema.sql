@@ -51,8 +51,8 @@ CREATE INDEX IF NOT EXISTS idx_oauth_kody_user ON oauth_kody (user_id);
 CREATE TABLE IF NOT EXISTS oauth_tokeny (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id             INTEGER NOT NULL,
-    token               TEXT    NOT NULL UNIQUE,
-    refresh_token       TEXT    NOT NULL UNIQUE,
+    token_hash          TEXT    NOT NULL UNIQUE,
+    refresh_token_hash  TEXT    NOT NULL UNIQUE,
     expires_at          TEXT    NOT NULL,
     refresh_expires_at  TEXT    NOT NULL,
     created_at          TEXT    NOT NULL DEFAULT (datetime('now')),
