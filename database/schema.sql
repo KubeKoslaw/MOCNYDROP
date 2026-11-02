@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS portfele (
 
 CREATE TABLE IF NOT EXISTS oauth_kody (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    kod             TEXT    NOT NULL UNIQUE,
+    kod_hash        TEXT    NOT NULL UNIQUE,
     user_id         INTEGER NOT NULL,
     expires_at      TEXT    NOT NULL,
     czy_zuzyty      INTEGER NOT NULL DEFAULT 0 CHECK (czy_zuzyty IN (0, 1)),
@@ -51,8 +51,8 @@ CREATE INDEX IF NOT EXISTS idx_oauth_kody_user ON oauth_kody (user_id);
 CREATE TABLE IF NOT EXISTS oauth_tokeny (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id             INTEGER NOT NULL,
-    token               TEXT    NOT NULL UNIQUE,
-    refresh_token       TEXT    NOT NULL UNIQUE,
+    token_hash          TEXT    NOT NULL UNIQUE,
+    refresh_token_hash  TEXT    NOT NULL UNIQUE,
     expires_at          TEXT    NOT NULL,
     refresh_expires_at  TEXT    NOT NULL,
     created_at          TEXT    NOT NULL DEFAULT (datetime('now')),
