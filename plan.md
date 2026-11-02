@@ -24,7 +24,7 @@
 
 ## @moxmar26 — dane, testy, dokumentacja
 
-- [ ] Seed skrzynek
+- [X] Seed skrzynek
 - [ ] Seed wędek i ryb
 - [ ] Wagi rzadkości
 - [ ] Test rozkładu losowania
