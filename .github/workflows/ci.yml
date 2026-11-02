@@ -1,0 +1,78 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Lint, schemat i testy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo_sqlite
+          coverage: none
+
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Lint PHP
+        run: |
+          err=0
+          while IFS= read -r f; do
+            php -l "$f" > /dev/null || err=1
+          done < <(git ls-files '*.php')
+          exit $err
+
+      - name: Składnia JS / MJS
+        run: |
+          err=0
+          while IFS= read -r f; do
+            node --check "$f" || err=1
+          done < <(git ls-files '*.js' '*.mjs')
+          exit $err
+
+      - name: Schemat bazy (SQLite in-memory)
+        run: |
+          php <<'PHP'
+          <?php
+          require 'backend/bootstrap.php';
+
+          $pdo = MocnyDrop\Database::openMemory();
+          $tabele = (int) $pdo->query(
+              "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
+          )->fetchColumn();
+
+          if ($tabele < 10) {
+              fwrite(STDERR, "Za mało tabel: {$tabele}\n");
+              exit(1);
+          }
+
+          echo "Schemat OK: {$tabele} tabel\n";
+          PHP
+
+      - name: Testy backendu (jeśli są)
+        run: |
+          if [ -f tests/run.php ]; then php tests/run.php; else echo 'Brak tests/run.php — pomijam.'; fi
+
+      - name: Testy JS / kontrakt animacji (jeśli są)
+        run: |
+          if [ -f tests/check-fishing.mjs ]; then node tests/check-fishing.mjs; else echo 'Brak tests/check-fishing.mjs — pomijam.'; fi
