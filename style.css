@@ -588,3 +588,92 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
   .win-modal-content.is-rolling .win-icon-large,
   .win-modal-content.is-revealed .win-icon-large { animation: none; }
 }
+
+
+
+#toast-container {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 260px;
+  max-width: 420px;
+  padding: 11px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 0.87rem;
+  pointer-events: auto;
+  animation: toast-in 0.22s ease both;
+}
+.toast.success { border-left-color: var(--green); }
+.toast.error { border-left-color: var(--red); }
+.toast.info { border-left-color: var(--accent); }
+.toast.gold { border-left-color: var(--gold); }
+.toast-close { flex-shrink: 0; background: transparent; border: none; color: var(--text-muted); font-size: 1rem; font-weight: 700; }
+.toast-close:hover { color: var(--text); }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Splash --------------------------------------------------------------- */
+
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 40%, #0d2b45 0%, var(--bg-deep) 72%);
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+.splash-screen.is-hidden { opacity: 0; visibility: hidden; }
+.splash-inner { display: flex; flex-direction: column; align-items: center; gap: 18px; animation: splash-in 0.7s ease both; }
+.splash-icon { font-size: 4.2rem; animation: gentle-bob 1.8s ease-in-out infinite; }
+.splash-title { color: var(--text); font-size: clamp(2.3rem, 8vw, 4rem); font-weight: 900; letter-spacing: -0.03em; }
+.splash-title span { color: var(--accent); }
+.splash-bar { width: min(260px, 70vw); height: 4px; overflow: hidden; background: rgba(255, 255, 255, 0.08); border-radius: var(--radius-pill); }
+.splash-bar span { display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: left; animation: splash-progress 2.8s linear both; }
+@keyframes gentle-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes splash-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes splash-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* --- Stopka --------------------------------------------------------------- */
+
+.site-footer {
+  margin-top: auto;
+  padding: 28px 24px;
+  background: var(--bg-deep);
+  border-top: 1px solid var(--line);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+.footer-title { color: var(--text-secondary); font-weight: 800; letter-spacing: 0.1em; }
+.footer-note { margin-top: 4px; font-size: 0.78rem; }
+.footer-team-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+.footer-pill { padding: 3px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-pill); font-size: 0.74rem; }
