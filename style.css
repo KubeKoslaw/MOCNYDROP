@@ -501,3 +501,90 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 }
 .profile-content { min-height: 140px; }
 .auth-demo-row { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+
+
+
+
+.profile-account { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.profile-row { padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.profile-row dt {
+  margin-bottom: 3px;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.profile-row dd { font-weight: 700; overflow-wrap: anywhere; }
+.profile-saldo { color: var(--accent); }
+.profile-heading { margin-bottom: 10px; font-size: 0.95rem; }
+.profile-empty { grid-column: 1 / -1; padding: 10px 0; }
+.profile-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+/* --- Modal wygranej ------------------------------------------------------- */
+
+.win-modal-content { text-align: center; }
+.win-kicker { color: var(--text-secondary); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.win-icon-large {
+  width: 112px;
+  height: 112px;
+  margin: 12px auto 14px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.25));
+}
+.win-fish-name { margin-bottom: 4px; font-size: 1.5rem; font-weight: 900; }
+.win-rarity-pill { display: inline-block; padding: 4px 12px; margin-bottom: 16px; border-radius: var(--radius-pill); font-size: 0.8rem; font-weight: 700; }
+.win-meta-box {
+  display: flex;
+  justify-content: space-around;
+  gap: 12px;
+  padding: 13px;
+  margin-bottom: 18px;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+}
+.win-value { color: var(--gold); }
+.win-message { margin-bottom: 18px; color: var(--text-secondary); font-size: 0.87rem; }
+
+/* --- Animacja „rolki” v1 przy otwieraniu skrzynki ------------------------- */
+
+.win-modal-content.is-rolling .win-fish-name,
+.win-modal-content.is-rolling .win-rarity-pill,
+.win-modal-content.is-rolling .win-meta-box,
+.win-modal-content.is-rolling .win-message {
+  visibility: hidden;
+}
+
+.win-modal-content.is-rolling .win-icon-large {
+  animation: win-roll 0.12s linear infinite alternate;
+}
+
+.win-modal-content.is-revealed .win-icon-large {
+  animation: win-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes win-roll {
+  from { transform: translateY(-6px) scale(0.94) rotate(-3deg); }
+  to { transform: translateY(6px) scale(1.05) rotate(3deg); }
+}
+
+@keyframes win-pop {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .win-modal-content.is-rolling .win-icon-large,
+  .win-modal-content.is-revealed .win-icon-large { animation: none; }
+}
