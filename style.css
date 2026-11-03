@@ -1,0 +1,50 @@
+
+:root {
+  /* tło i powierzchnie */
+  --bg: #060d17;
+  --bg-deep: #040a12;
+  --surface: #0c1928;
+  --surface-2: #112236;
+  --surface-3: #16293f;
+  --line: #1d3350;
+  --line-strong: #2d4c70;
+
+  /* tekst */
+  --text: #e9f2fa;
+  --text-secondary: #a7bbcf;
+  --text-muted: #71889f;
+
+  /* akcenty */
+  --accent: #38bdf8;
+  --accent-strong: #0ea5e9;
+  --accent-soft: rgba(56, 189, 248, 0.12);
+  --gold: #fbbf24;
+  --green: #34d399;
+  --red: #fb7185;
+  --purple: #a78bfa;
+
+  /* rzadkości — fallback dla --rarity ustawianego inline z API */
+  --rarity: #94a3b8;
+  --rarity-pospolita: #94a3b8;
+  --rarity-przecietna: #4ade80;
+  --rarity-niezla: #60a5fa;
+  --rarity-mityczna: #a78bfa;
+  --rarity-niesamowita: #fbbf24;
+  --rarity-ultra: #22d3ee;
+
+  /* kształty, cienie, ruch */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  --focus-ring: 0 0 0 3px rgba(56, 189, 248, 0.3);
+  --transition: 0.18s ease;
+
+  /* typografia */
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  color-scheme: dark;
+}
