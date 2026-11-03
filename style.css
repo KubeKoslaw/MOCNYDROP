@@ -369,3 +369,47 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
   cursor: pointer;
 }
 .case-options-row input { width: 16px; height: 16px; accent-color: var(--purple); }
+
+
+
+.data-table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.data-table { width: 100%; font-size: 0.87rem; text-align: left; }
+.data-table th, .data-table td { padding: 11px 15px; border-bottom: 1px solid var(--line); }
+.data-table th {
+  background: var(--bg-deep);
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: rgba(255, 255, 255, 0.025); }
+
+/* --- Ekwipunek (modal profilu) -------------------------------------------- */
+
+.inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; }
+.fish-item-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: var(--radius);
+  text-align: center;
+  transition: transform var(--transition), background var(--transition);
+}
+.fish-item-card:hover { background: var(--surface-3); transform: translateY(-2px); }
+.fish-item-card img { width: 50px; height: 50px; margin-bottom: 7px; object-fit: contain; }
+.fish-name { font-size: 0.8rem; font-weight: 700; line-height: 1.3; }
+.fish-rarity { margin-bottom: 4px; color: var(--text-muted); font-size: 0.72rem; }
+.fish-casts { margin-bottom: 4px; color: var(--accent); font-size: 0.72rem; font-weight: 700; }
+.fish-val { margin-top: auto; color: var(--gold); font-size: 0.82rem; font-weight: 800; }
