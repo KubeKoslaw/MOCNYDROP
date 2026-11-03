@@ -161,3 +161,33 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
   text-transform: uppercase;
 }
 .user-role-pill.admin { background: rgba(251, 113, 133, 0.16); border-color: rgba(251, 113, 133, 0.4); color: var(--red); }
+
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #04121f; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-strong); }
+.btn-secondary { background: var(--surface-2); border-color: var(--line-strong); color: var(--text); }
+.btn-secondary:hover:not(:disabled) { background: var(--surface-3); }
+.btn-ghost { border-color: var(--line); color: var(--text-secondary); }
+.btn-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.05); border-color: var(--line-strong); color: var(--text); }
+.btn-gold { background: var(--gold); color: #1a1000; }
+.btn-gold:hover:not(:disabled) { background: #fcd34d; }
+.btn-danger { background: rgba(251, 113, 133, 0.14); border-color: rgba(251, 113, 133, 0.35); color: var(--red); }
+.btn-danger:hover:not(:disabled) { background: rgba(251, 113, 133, 0.24); }
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+.btn-lg { padding: 13px 26px; font-size: 1rem; border-radius: var(--radius); }
+.btn-block { width: 100%; }
