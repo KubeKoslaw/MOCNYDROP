@@ -48,3 +48,35 @@
 
   color-scheme: dark;
 }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg);
+  background-image: radial-gradient(ellipse 90% 45% at 50% -10%, #0b2b45 0%, transparent 70%);
+  background-repeat: no-repeat;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+table { border-collapse: collapse; }
+h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
+:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* --- Pomocnicze ----------------------------------------------------------- */
+
+.hint { color: var(--text-muted); font-size: 0.85rem; }
+.error-text { color: var(--red); }
+.gain-positive { color: var(--green); font-weight: 700; }
+.gain-negative { color: var(--red); font-weight: 700; }
