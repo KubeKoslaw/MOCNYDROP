@@ -677,3 +677,50 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 .footer-note { margin-top: 4px; font-size: 0.78rem; }
 .footer-team-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
 .footer-pill { padding: 3px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-pill); font-size: 0.74rem; }
+
+
+
+@media (max-width: 980px) {
+  .main-content { padding: 20px 16px 44px; }
+  .mode-arena-section { padding: 18px; }
+  .cases-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .site-navbar { padding: 10px 14px; }
+  .site-navbar nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .site-navbar nav::-webkit-scrollbar { display: none; }
+  .nav-links { width: max-content; }
+  .nav-auth { margin-left: auto; }
+  .free-case-box { flex-wrap: wrap; }
+  .free-case-text { flex: 1 1 180px; }
+  #btn-free-case { width: 100%; }
+  .win-meta-box { flex-direction: column; align-items: center; }
+  #toast-container { right: 12px; left: 12px; bottom: 12px; }
+  .toast { width: 100%; min-width: 0; max-width: none; }
+  .fishing-arena-layout { gap: 16px; }
+}
+
+@media (max-width: 520px) {
+  .brand-title { font-size: 1rem; }
+  .nav-item-btn { padding: 8px 11px; font-size: 0.84rem; }
+  .main-content { padding: 14px 10px 36px; }
+  .mode-arena-section { padding: 14px; border-radius: var(--radius); }
+  .arena-title-bar h3 { font-size: 1.12rem; }
+  .rods-grid, .cases-grid { grid-template-columns: 1fr; }
+  .inv-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
+  .modal-backdrop { padding: 10px; }
+  .modal-box { padding: 20px 16px; max-height: calc(100vh - 20px); }
+  .data-table th, .data-table td { padding: 9px 10px; }
+}
+
+/* --- Ograniczony ruch ----------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
