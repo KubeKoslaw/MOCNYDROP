@@ -1,4 +1,7 @@
-
+/* ==========================================================================
+   MOCNY DROP — arkusz główny (ciemny motyw oceaniczny)
+   Zwięzły system: tokeny → baza → nawigacja → komponenty → modale → RWD.
+   ========================================================================== */
 :root {
   /* tło i powierzchnie */
   --bg: #060d17;
@@ -8,12 +11,10 @@
   --surface-3: #16293f;
   --line: #1d3350;
   --line-strong: #2d4c70;
-
   /* tekst */
   --text: #e9f2fa;
   --text-secondary: #a7bbcf;
   --text-muted: #71889f;
-
   /* akcenty */
   --accent: #38bdf8;
   --accent-strong: #0ea5e9;
@@ -22,7 +23,6 @@
   --green: #34d399;
   --red: #fb7185;
   --purple: #a78bfa;
-
   /* rzadkości — fallback dla --rarity ustawianego inline z API */
   --rarity: #94a3b8;
   --rarity-pospolita: #94a3b8;
@@ -31,7 +31,6 @@
   --rarity-mityczna: #a78bfa;
   --rarity-niesamowita: #fbbf24;
   --rarity-ultra: #22d3ee;
-
   /* kształty, cienie, ruch */
   --radius-sm: 8px;
   --radius: 12px;
@@ -41,14 +40,12 @@
   --shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
   --focus-ring: 0 0 0 3px rgba(56, 189, 248, 0.3);
   --transition: 0.18s ease;
-
   /* typografia */
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-
   color-scheme: dark;
 }
-
+/* --- Reset i baza --------------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
 html { scroll-behavior: smooth; }
@@ -73,17 +70,12 @@ button { cursor: pointer; }
 table { border-collapse: collapse; }
 h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 :focus-visible { outline: none; box-shadow: var(--focus-ring); }
-
 /* --- Pomocnicze ----------------------------------------------------------- */
-
 .hint { color: var(--text-muted); font-size: 0.85rem; }
 .error-text { color: var(--red); }
 .gain-positive { color: var(--green); font-weight: 700; }
 .gain-negative { color: var(--red); font-weight: 700; }
-
-
-
-
+/* --- Nawigacja ------------------------------------------------------------ */
 .site-navbar {
   position: sticky;
   top: 0;
@@ -161,8 +153,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
   text-transform: uppercase;
 }
 .user-role-pill.admin { background: rgba(251, 113, 133, 0.16); border-color: rgba(251, 113, 133, 0.4); color: var(--red); }
-
-
+/* --- Przyciski ------------------------------------------------------------ */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -191,11 +182,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
 .btn-lg { padding: 13px 26px; font-size: 1rem; border-radius: var(--radius); }
 .btn-block { width: 100%; }
-
-
-
-
-
+/* --- Układ główny i areny ------------------------------------------------- */
 .main-content {
   flex: 1;
   width: 100%;
@@ -225,10 +212,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 .arena-title-bar h3 { display: flex; align-items: center; gap: 9px; font-size: 1.3rem; }
 .arena-subtitle { margin-bottom: 12px; font-size: 1rem; font-weight: 700; }
 .arena-meta { color: var(--text-muted); font-size: 0.85rem; }
-
-
-
-
+/* --- Łowisko: scena i wędki ----------------------------------------------- */
 .fishing-arena-layout { display: grid; gap: 22px; }
 .scene-wrapper {
   width: 100%;
@@ -308,10 +292,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
   pointer-events: none;
   box-shadow: var(--shadow-sm);
 }
-
-
-
-
+/* --- Skrzynki ------------------------------------------------------------- */
 .free-case-box {
   display: flex;
   align-items: center;
@@ -369,9 +350,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
   cursor: pointer;
 }
 .case-options-row input { width: 16px; height: 16px; accent-color: var(--purple); }
-
-
-
+/* --- Historia ------------------------------------------------------------- */
 .data-table-container {
   width: 100%;
   overflow-x: auto;
@@ -391,9 +370,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 }
 .data-table tbody tr:last-child td { border-bottom: none; }
 .data-table tbody tr:hover td { background: rgba(255, 255, 255, 0.025); }
-
 /* --- Ekwipunek (modal profilu) -------------------------------------------- */
-
 .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; }
 .fish-item-card {
   display: flex;
@@ -413,9 +390,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 .fish-rarity { margin-bottom: 4px; color: var(--text-muted); font-size: 0.72rem; }
 .fish-casts { margin-bottom: 4px; color: var(--accent); font-size: 0.72rem; font-weight: 700; }
 .fish-val { margin-top: auto; color: var(--gold); font-size: 0.82rem; font-weight: 800; }
-
-
-
+/* --- Modale --------------------------------------------------------------- */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -474,9 +449,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 }
 .modal-tab-btn.active { border-bottom-color: var(--accent); color: var(--accent); }
 .modal-close-trigger { cursor: pointer; }
-
 /* --- Formularze ----------------------------------------------------------- */
-
 .form-group { margin-bottom: 14px; }
 .form-label { display: block; margin-bottom: 6px; color: var(--text-secondary); font-size: 0.84rem; font-weight: 600; }
 .form-input {
@@ -501,10 +474,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 }
 .profile-content { min-height: 140px; }
 .auth-demo-row { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
-
-
-
-
+/* --- Profil --------------------------------------------------------------- */
 .profile-account { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 20px; }
 .profile-row { padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); }
 .profile-row dt {
@@ -528,9 +498,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
   padding-top: 14px;
   border-top: 1px solid var(--line);
 }
-
 /* --- Modal wygranej ------------------------------------------------------- */
-
 .win-modal-content { text-align: center; }
 .win-kicker { color: var(--text-secondary); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; }
 .win-icon-large {
@@ -555,42 +523,33 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 }
 .win-value { color: var(--gold); }
 .win-message { margin-bottom: 18px; color: var(--text-secondary); font-size: 0.87rem; }
-
 /* --- Animacja „rolki” v1 przy otwieraniu skrzynki ------------------------- */
-
 .win-modal-content.is-rolling .win-fish-name,
 .win-modal-content.is-rolling .win-rarity-pill,
 .win-modal-content.is-rolling .win-meta-box,
 .win-modal-content.is-rolling .win-message {
   visibility: hidden;
 }
-
 .win-modal-content.is-rolling .win-icon-large {
   animation: win-roll 0.12s linear infinite alternate;
 }
-
 .win-modal-content.is-revealed .win-icon-large {
   animation: win-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
-
 @keyframes win-roll {
   from { transform: translateY(-6px) scale(0.94) rotate(-3deg); }
   to { transform: translateY(6px) scale(1.05) rotate(3deg); }
 }
-
 @keyframes win-pop {
   0% { transform: scale(0.7); }
   60% { transform: scale(1.08); }
   100% { transform: scale(1); }
 }
-
 @media (prefers-reduced-motion: reduce) {
   .win-modal-content.is-rolling .win-icon-large,
   .win-modal-content.is-revealed .win-icon-large { animation: none; }
 }
-
-
-
+/* --- Toasty --------------------------------------------------------------- */
 #toast-container {
   position: fixed;
   right: 22px;
@@ -629,9 +588,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 /* --- Splash --------------------------------------------------------------- */
-
 .splash-screen {
   position: fixed;
   inset: 0;
@@ -661,9 +618,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
-
 /* --- Stopka --------------------------------------------------------------- */
-
 .site-footer {
   margin-top: auto;
   padding: 28px 24px;
@@ -677,15 +632,12 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 .footer-note { margin-top: 4px; font-size: 0.78rem; }
 .footer-team-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
 .footer-pill { padding: 3px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-pill); font-size: 0.74rem; }
-
-
-
+/* --- Responsywność -------------------------------------------------------- */
 @media (max-width: 980px) {
   .main-content { padding: 20px 16px 44px; }
   .mode-arena-section { padding: 18px; }
   .cases-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 }
-
 @media (max-width: 760px) {
   .site-navbar { padding: 10px 14px; }
   .site-navbar nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; }
@@ -700,7 +652,6 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
   .toast { width: 100%; min-width: 0; max-width: none; }
   .fishing-arena-layout { gap: 16px; }
 }
-
 @media (max-width: 520px) {
   .brand-title { font-size: 1rem; }
   .nav-item-btn { padding: 8px 11px; font-size: 0.84rem; }
@@ -713,9 +664,7 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
   .modal-box { padding: 20px 16px; max-height: calc(100vh - 20px); }
   .data-table th, .data-table td { padding: 9px 10px; }
 }
-
 /* --- Ograniczony ruch ----------------------------------------------------- */
-
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {
