@@ -80,3 +80,84 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 .error-text { color: var(--red); }
 .gain-positive { color: var(--green); font-weight: 700; }
 .gain-negative { color: var(--red); font-weight: 700; }
+
+
+
+
+.site-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  padding: 10px 24px;
+  background: rgba(6, 13, 23, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 1.15rem; }
+.brand-icon { font-size: 1.35rem; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.45)); }
+.brand-title {
+  background: linear-gradient(90deg, var(--text) 40%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+.nav-item-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
+}
+.nav-item-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.05); }
+.nav-item-btn.active { color: var(--accent); background: var(--accent-soft); border-color: rgba(56, 189, 248, 0.35); }
+.nav-auth, .nav-auth-box { display: flex; align-items: center; gap: 8px; }
+.wallet-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+}
+.wallet-coin { font-size: 1.05rem; }
+.wallet-amount { color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums; }
+.user-profile-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 13px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  transition: background var(--transition), border-color var(--transition);
+}
+.user-profile-btn:hover { background: var(--surface-2); border-color: var(--line-strong); }
+.user-role-pill {
+  padding: 1px 7px;
+  background: rgba(148, 163, 184, 0.16);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.user-role-pill.admin { background: rgba(251, 113, 133, 0.16); border-color: rgba(251, 113, 133, 0.4); color: var(--red); }
