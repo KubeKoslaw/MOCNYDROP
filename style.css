@@ -225,3 +225,86 @@ h1, h2, h3, h4 { font-weight: 800; line-height: 1.25; }
 .arena-title-bar h3 { display: flex; align-items: center; gap: 9px; font-size: 1.3rem; }
 .arena-subtitle { margin-bottom: 12px; font-size: 1rem; font-weight: 700; }
 .arena-meta { color: var(--text-muted); font-size: 0.85rem; }
+
+
+
+
+.fishing-arena-layout { display: grid; gap: 22px; }
+.scene-wrapper {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.rods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+.rod-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color var(--transition), background var(--transition), transform var(--transition);
+}
+.rod-card:hover { background: var(--surface-3); border-color: var(--line-strong); transform: translateY(-2px); }
+.rod-card.is-locked .rod-icon, .rod-card.is-locked .rod-pool { opacity: 0.55; filter: grayscale(0.7); }
+.rod-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.rod-title { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.rod-icon { width: 34px; height: 34px; flex-shrink: 0; object-fit: contain; }
+.rod-name { font-size: 1.02rem; font-weight: 700; }
+.rod-casts {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  background: var(--accent-soft);
+  border-radius: var(--radius-pill);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.rod-casts.is-empty { background: rgba(148, 163, 184, 0.12); color: var(--text-muted); }
+.rod-desc { margin-bottom: 12px; color: var(--text-secondary); font-size: 0.82rem; line-height: 1.45; }
+.rod-pool { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.pool-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: var(--bg-deep);
+  border: 1px solid var(--line-strong);
+  border-color: color-mix(in srgb, var(--rarity) 55%, transparent);
+  border-radius: var(--radius-sm);
+  cursor: help;
+  transition: transform var(--transition), border-color var(--transition);
+}
+.pool-icon img { width: 24px; height: 24px; object-fit: contain; }
+.pool-icon:hover, .pool-icon:focus-visible { border-color: var(--rarity); transform: translateY(-2px); }
+.pool-tip {
+  position: fixed;
+  z-index: 500;
+  max-width: calc(100vw - 16px);
+  padding: 5px 9px;
+  overflow: hidden;
+  background: var(--bg-deep);
+  border: 1px solid var(--rarity);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  box-shadow: var(--shadow-sm);
+}
