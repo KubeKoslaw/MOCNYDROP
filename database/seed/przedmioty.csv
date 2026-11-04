@@ -1,0 +1,55 @@
+nazwa,rzadkosc_kod,wartosc,ikona,opis
+Zielony Glon,pospolita,1,green_seaweed.png,Plącze się na żyłce zamiast ryby
+Stary But,pospolita,1,waterlogged_boot.png,Ktoś wrzucił go tu lata temu
+Muszla Ślimaka,pospolita,2,snail_shell.png,Pusta skorupka z dna
+Anchois,pospolita,3,anchovy.png,Mała srebrzysta rybka
+Płoć,pospolita,4,roach.png,Najczęstszy gość w naszych wodach
+Kielonek,pospolita,5,chub.png,Krzepki i wszędobylski
+Neonka,pospolita,6,neon_tetra.png,Świeci w akwarium i na pasku ruletki
+Zielona Żaba,pospolita,7,green_frog.png,Wskoczyła na hak przez pomyłkę
+Rak Brązowy,pospolita,8,brown_crayfish.png,Nie ryba ale też się liczy
+Butelka z Listem,pospolita,9,message_bottle.png,Ktoś napisał - złowiłeś ty
+Lin,przecietna,12,tench.png,Złocisty mieszkaniec mułu
+Crappie Czarny,przecietna,14,black_crappie.png,Drobny ale smaczny
+Haddock,przecietna,16,haddock.png,Klasyk z północnych wód
+Bass Małogębowy,przecietna,18,smallmouth_bass.png,Waleczny i popularny
+Sum Wąsaty,przecietna,20,whiskered_catfish.png,Wąsy dłuższe od całej ryby
+Pstrąg Tęczowy,przecietna,22,rainbow_trout.png,Mieni się w słońcu
+Błazenek,przecietna,24,clownfish.png,Pomarańczowy mieszkaniec rafy
+Słonecznica,przecietna,26,bluegill_sunfish.png,Niebieski błysk na płetwie
+Bass Wielkogębowy,niezla,30,largemouth_bass.png,Król wędkarskich opowieści
+Palia Arktyczna,niezla,34,arctic_char.png,Zimnolubny krewny łososia
+Pstrąg Potokowy,niezla,38,brown_trout.png,Cętkowany i szybki
+Papugoryba,niezla,42,colorful_parrotfish.png,Gryzie koral jak orzeszki
+Karaś Złoty,niezla,48,golden_carp.png,Błyszcząca ozdoba stawu
+Red Snapper,niezla,55,red_snapper.png,Czerwony mieszkaniec rafy
+Barakuda,niezla,65,barracuda.png,Zęby jak igły
+Jesiotr,mityczna,120,sturgeon.png,Pancerna ryba z głębin
+Grouper,mityczna,150,big_grouper.png,Ogromny i bardzo ciężki
+Sum Kanałowy,mityczna,180,channel_catfish.png,Wąsaty olbrzym z rozlewisk
+Royal Kingfish,mityczna,220,royal_kingfish.png,Królewska zdobycz
+Blue Marlin,mityczna,280,blue_marlin.png,Wyskakuje z wody jak torpeda
+Tuńczyk Błękitnopłetwy,mityczna,350,bluefin_tuna.png,Najdroższy tuńczyk świata
+Rozdymka Kolczasta,niesamowita,400,spiky_pufferfish.png,Pompuje się gdy się złości
+Meduza Przejrzysta,niesamowita,450,translucent_jellyfish.png,Świeci w ciemności
+Pirania,niesamowita,520,piranha.png,Nie wkładaj ręki do wody
+Lwica Pasiasta,niesamowita,600,striped_lionfish.png,Piękna i jadowita
+Ryba Duch,niesamowita,750,ghost_fish.png,Przezroczysta jak mgła
+Złota Mahi-Mahi,niesamowita,900,gold_mahi-mahi.png,Złoto w czystej postaci
+Żółw Morski,niesamowita,1100,sea_turtle.png,Stary i spokojny podróżnik
+Koi Pomarańczowe,niesamowita,1400,orange_koi.png,Ryba cesarzy
+Ryba Robot,niesamowita,1800,robotic_fish.png,Ktoś ją zgubił albo celowo wypuścił
+Kaczy Wabik,ultra,3500,duck_decoy.png,Udaje rybę i podobno działa
+Żyłka,ultra,4500,fishing_line.png,Niewidzialna i niezrywalna
+Hak,ultra,5000,fishing_hook.png,Ostry jak igła
+Hak Podwójny,ultra,5500,fishing_hook_2.png,Jeszcze ostrzejszy od zwykłego
+Przynęta,ultra,6000,fishing_lure.png,Błyszcząca i legendarna
+Buty Wędkarza,ultra,7000,fishing_boots.png,Ponoć przynoszą szczęście
+Kamizelka Wędkarska,ultra,8000,fishing_vest.png,Zapach starego jeziora w gratisie
+Ryba Cukierkowa,ultra,9000,candy_fish.png,Słodka pułapka na dzieci
+Starożytny Skamieniec,ultra,12000,ancient_fossil.png,Pamięta czasy dinozaurów
+Ryba Fantazja,ultra,15000,fantasy_fish.png,Istnieje tylko w legendach
+Ryba Lawy,ultra,18000,lava_fish.png,Pływa w temperaturze tysiąca stopni
+Ryba Zombie,ultra,20000,zombie_fish.png,Umarła raz a potem znowu
+Ryba Otchłani,ultra,25000,void_fish.png,Nikt nie wie skąd się wzięła
+Mapa Skarbów,ultra,30000,treasure_map.png,Wskazuje miejsce którego nie ma

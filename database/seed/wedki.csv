@@ -1,0 +1,7 @@
+nazwa,opis,koszt_uzycia,ikona,kolejnosc,limit_zarzutow,rzadkosc_kod
+Wędka Bambusowa,Lekki sprzęt dla początkujących wędkarzy,5,rod_bambusowa.svg,1,20,pospolita
+Wędka Spławikowa,Leniwe popołudnia i sporo drobnicy,10,rod_splawikowa.svg,2,15,przecietna
+Kij Spinningowy,Szybki nurt i waleczne ryby,25,rod_spinningowa.svg,3,12,niezla
+Wędka Morska,Kolorowe ryby i słona woda,60,rod_morska.svg,4,10,mityczna
+Wędka Głębinowa,Sprzęt dla odważnych - tu padają rekordy,150,rod_glebinowa.svg,5,8,niesamowita
+Wędka z Otchłani,Nikt nie wie skąd się wzięła i nikt nie wraca bez opowieści,500,rod_otchlani.svg,6,3,ultra
