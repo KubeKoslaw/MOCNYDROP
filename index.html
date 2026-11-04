@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MOCNY DROP</title>
+  <meta name="description" content="MOCNY DROP — łowisko, skrzynki i historia połowów. Łów ryby, otwieraj skrzynki i kolekcjonuj zdobycze na wirtualną walutę.">
+
+  <link rel="stylesheet" href="public/assets/css/fishing-scene.css">
+  <link rel="stylesheet" href="public/assets/css/style.css">
+
+  <script type="module" src="public/assets/js/fishing/index.js"></script>
+  <script type="module" src="public/assets/js/main.js"></script>
+</head>
+<body>
+
+  <div id="splash-screen" class="splash-screen" aria-hidden="true">
+    <div class="splash-inner">
+      <div class="splash-icon">🎣</div>
+      <div class="splash-title">MOCNY <span>DROP</span></div>
+      <div class="splash-bar"><span></span></div>
+    </div>
+  </div>
+
+  <header class="site-navbar">
+    <div class="brand">
+      <span class="brand-icon">🎣</span>
+      <span class="brand-title">MOCNY DROP</span>
+    </div>
+
+    <nav aria-label="Tryby gry">
+      <ul class="nav-links">
+        <li><button class="nav-item-btn active" data-target-mode="fish"> Łowisko</button></li>
+        <li><button class="nav-item-btn" data-target-mode="cases"> Skrzynki</button></li>
+        <li><button class="nav-item-btn" data-target-mode="history"> Historia</button></li>
+      </ul>
+    </nav>
+
+    <div class="nav-auth">
+      <div id="nav-guest-box" class="nav-auth-box">
+        <button id="btn-nav-login" class="btn btn-ghost btn-sm">Zaloguj się</button>
+        <button id="btn-nav-register" class="btn btn-primary btn-sm">Rejestracja</button>
+        <button id="btn-demo-account" class="btn btn-gold btn-sm"> Szybkie Demo</button>
+      </div>
+
+      <div id="nav-auth-box" class="nav-auth-box" style="display: none;">
+        <div class="wallet-badge" title="Twoje saldo">
+          <span class="wallet-coin">🪙</span>
+          <span id="nav-saldo-val" class="wallet-amount">0,00</span>
+        </div>
+        <button id="btn-profile" class="user-profile-btn" type="button"
+                aria-haspopup="dialog" aria-controls="profile-modal" title="Otwórz profil">
+          <span id="nav-user-login">Gracz</span>
+          <span id="nav-user-role" class="user-role-pill">user</span>
+        </button>
+        <button id="btn-nav-logout" class="btn btn-ghost btn-sm">Wyloguj</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <section id="arena-fish" class="mode-arena-section active-mode-arena">
+      <div class="arena-title-bar">
+        <h3> Łowisko</h3>
+      </div>
+
+      <div class="fishing-arena-layout">
+        <div class="scene-wrapper">
+          <fishing-scene id="main-fishing-scene" api-base="api/" token-key="mocnydrop_access_token"></fishing-scene>
+        </div>
+
+        <div>
+          <h4 class="arena-subtitle">Twoje wędki</h4>
+          <div id="rods-container" class="rods-grid">
+            <p class="hint">Wczytywanie…</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="arena-cases" class="mode-arena-section active-mode-arena" style="display: none;">
+      <div class="arena-title-bar">
+        <h3> Skrzynki</h3>
+      </div>
+
+      <div id="free-case-box" class="free-case-box">
+        <div class="free-case-icon">🎁</div>
+        <div class="free-case-text">
+          <h4>Darmowa skrzynka</h4>
+          <p id="free-case-desc">Raz na 24 godziny.</p>
+        </div>
+        <button id="btn-free-case" class="btn btn-gold">Odbierz</button>
+      </div>
+
+      <div id="cases-container" class="cases-grid">
+        <p class="hint">Wczytywanie…</p>
+      </div>
+    </section>
+
+    <section id="arena-history" class="mode-arena-section active-mode-arena" style="display: none;">
+      <div class="arena-title-bar">
+        <h3> Historia</h3>
+      </div>
+
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tryb</th>
+              <th>Przedmiot</th>
+              <th>Koszt</th>
+              <th>Bilans</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr>
+              <td colspan="5" class="hint" style="text-align:center; padding:16px">Brak historii.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="auth-modal" class="modal-backdrop">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-label="Logowanie i rejestracja">
+      <button class="modal-close-btn modal-close-trigger" type="button" aria-label="Zamknij">&times;</button>
+
+      <div class="modal-tabs">
+        <button id="tab-btn-login" class="modal-tab-btn active" type="button">Logowanie</button>
+        <button id="tab-btn-register" class="modal-tab-btn" type="button">Rejestracja</button>
+      </div>
+
+      <p id="auth-error" class="form-error" hidden></p>
+
+      <form id="form-login">
+        <div class="form-group">
+          <label class="form-label" for="auth-login-val">Login lub e-mail</label>
+          <input type="text" id="auth-login-val" class="form-input" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="auth-pass-val">Hasło</label>
+          <input type="password" id="auth-pass-val" class="form-input" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Zaloguj się</button>
+      </form>
+
+      <form id="form-register" style="display: none;">
+        <div class="form-group">
+          <label class="form-label" for="reg-login-val">Login</label>
+          <input type="text" id="reg-login-val" class="form-input" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-email-val">E-mail</label>
+          <input type="email" id="reg-email-val" class="form-input" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-pass-val">Hasło (min. 8 znaków)</label>
+          <input type="password" id="reg-pass-val" class="form-input" minlength="8" required autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Utwórz konto</button>
+      </form>
+
+      <div class="auth-demo-row">
+        <button id="btn-modal-demo" class="btn btn-gold btn-sm btn-block" type="button">⚡ Szybkie konto demo</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="profile-modal" class="modal-backdrop">
+    <div class="modal-box modal-box-wide" role="dialog" aria-modal="true" aria-label="Profil gracza">
+      <button class="modal-close-btn modal-close-trigger" type="button" aria-label="Zamknij">&times;</button>
+      <h3 class="modal-title"> Profil gracza</h3>
+      <div id="profile-content" class="profile-content">
+        <p class="hint">Wczytywanie profilu…</p>
+      </div>
+      <div class="profile-actions">
+        <button id="btn-profile-logout" class="btn btn-danger btn-sm" type="button">Wyloguj się</button>
+        <button class="btn btn-secondary btn-sm modal-close-trigger" type="button">Zamknij</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="win-modal" class="modal-backdrop">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-label="Nowa zdobycz">
+      <button class="modal-close-btn modal-close-trigger" type="button" aria-label="Zamknij">&times;</button>
+      <div class="win-modal-content">
+        <h3 class="win-kicker"> Nowa zdobycz!</h3>
+        <img id="win-modal-img" class="win-icon-large" src="assets/icons/anchovy.png" alt="">
+        <div id="win-modal-name" class="win-fish-name"></div>
+        <div id="win-modal-rarity" class="win-rarity-pill"></div>
+
+        <div class="win-meta-box">
+          <div>Wartość: <strong id="win-modal-val" class="win-value">0,00 🪙</strong></div>
+          <div>Koszt: <strong id="win-modal-cost">0,00 🪙</strong></div>
+        </div>
+
+        <p id="win-modal-msg" class="win-message"></p>
+
+        <button class="btn btn-primary btn-block modal-close-trigger" type="button">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <footer class="site-footer">
+    <p class="footer-title">MOCNY DROP</p>
+    <p class="footer-note">Projekt zespołowy — wirtualna waluta bez wartości pieniężnej.</p>
+    <div class="footer-team-pills">
+      <span class="footer-pill">@KubeKoslaw</span>
+      <span class="footer-pill">@moxmar26</span>
+      <span class="footer-pill">@jgpostrach</span>
+      <span class="footer-pill">@THOPA174</span>
+    </div>
+  </footer>
+
+</body>
+</html>
