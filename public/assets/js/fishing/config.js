@@ -1,0 +1,6 @@
+export const CONFIG = {
+  ANIMATION_SPEED: 1.0,
+  DEFAULT_ROD_ID: 1,
+  CANVAS_WIDTH: 800,
+  CANVAS_HEIGHT: 600
+};
