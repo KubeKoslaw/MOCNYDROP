@@ -12,15 +12,15 @@
 - [x] Portfel i saldo
 - [x] Ważone losowanie
 - [x] Zapis losowań do historii
-- [ ] Ekwipunek i zarzuty wędek (`inventory.php`)
-- [~] Katalog skrzynek i wędek (`skrzynki.php`, `wedki.php`)
-- [ ] Łowisko (`fish.php`)
-- [~] Skrzynki (`open_case.php`)
-- [ ] Darmowa skrzynka raz na 24 h
-- [ ] Panel admina: skrzynki (API)
-- [ ] Panel admina: użytkownicy i saldo (API)
-- [ ] Panel admina: RTP, audyt, eksport (API)
-- [ ] Kontrakt animacji: pasek ikon z serwera (`reel`)
+- [x] Ekwipunek i zarzuty wędek (`inventory.php`)
+- [x] Katalog skrzynek i wędek (`skrzynki.php`, `wedki.php`)
+- [x] Łowisko (`fish.php`)
+- [x] Skrzynki (`open_case.php`)
+- [x] Darmowa skrzynka raz na 24 h
+- [x] Panel admina: skrzynki (API)
+- [x] Panel admina: użytkownicy i saldo (API)
+- [x] Panel admina: RTP, audyt, eksport (API)
+- [x] Kontrakt animacji: pasek ikon z serwera (`reel`)
 
 ## @moxmar26 — dane, testy, dokumentacja
 
@@ -40,7 +40,7 @@
 - [~] Klient OAuth 2.0 (kod → token → refresh)
 - [~] Obsługa błędów w UI
 - [~] Logowanie i rejestracja
-- [~] Profil: lista ekwipunku w modalu
+- [~] Profil: lista ekwipunku w modelu
 - [~] Lista skrzynek i wędek
 - [~] Walidacja formularzy
 - [~] Animacja łowienia (pasek ikon)
