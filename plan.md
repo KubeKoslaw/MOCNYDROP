@@ -9,9 +9,9 @@
 - [x] Kontrakt API: format JSON odpowiedzi
 - [x] Rejestracja i logowanie
 - [x] OAuth 2.0 i role użytkowników (access + refresh token, rola admin)
-- [~] Portfel i saldo
-- [~] Ważone losowanie
-- [ ] Zapis losowań do historii
+- [x] Portfel i saldo
+- [x] Ważone losowanie
+- [x] Zapis losowań do historii
 - [ ] Ekwipunek i zarzuty wędek (`inventory.php`)
 - [~] Katalog skrzynek i wędek (`skrzynki.php`, `wedki.php`)
 - [ ] Łowisko (`fish.php`)
@@ -24,15 +24,15 @@
 
 ## @moxmar26 — dane, testy, dokumentacja
 
-- [ ] Seed skrzynek
-- [ ] Seed wędek i ryb
-- [ ] Wagi rzadkości
-- [ ] Test rozkładu losowania
-- [ ] Testy trybów (łowisko, skrzynki, darmowa skrzynka)
-- [ ] Testy OAuth 2.0 i tokenów
-- [ ] Test kontraktu animacji (`tests/check-fishing.mjs`)
-- [ ] README z instalacją i uruchomieniem
-- [ ] Diagramy zgodne z kodem
+- [x] Seed skrzynek
+- [x] Seed wędek i ryb
+- [x] Wagi rzadkości
+- [x] Test rozkładu losowania
+- [x] Testy trybów (łowisko, skrzynki, darmowa skrzynka)
+- [x] Testy OAuth 2.0 i tokenów
+- [x] Test kontraktu animacji (`tests/check-fishing.mjs`)
+- [x] README z instalacją i uruchomieniem
+- [x] Diagramy zgodne z kodem
 
 ## @jgpostrach — JavaScript
 
