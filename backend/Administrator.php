@@ -91,6 +91,121 @@ final class Administrator extends Uzytkownik
             $db
         );
     }
+
+    public function edytujSkrzynke(Skrzynka $s): void
+    {
+        self::walidujSkrzynke($s);
+
+        $db = $this->polaczenie();
+
+        $stmt = $db->prepare('SELECT COUNT(*) FROM skrzynki WHERE nazwa = ? AND id != ?');
+        $stmt->execute([$s->nazwa, $s->id]);
+
+        if ((int) $stmt->fetchColumn() > 0) {
+            throw ApiException::conflict('Skrzynka o tej nazwie już istnieje.', 'case_name_taken');
+        }
+
+        $tworzenie = $s->id <= 0;
+
+        if (!$tworzenie) {
+            $stmt = $db->prepare('SELECT COUNT(*) FROM skrzynki WHERE id = ?');
+            $stmt->execute([$s->id]);
+
+            if ((int) $stmt->fetchColumn() === 0) {
+                throw ApiException::notFound('Nie ma skrzynki o id ' . $s->id . '.', 'case_not_found');
+            }
+        }
+
+        $wlasna = !$db->inTransaction();
+
+        if ($wlasna) {
+            $db->beginTransaction();
+        }
+
+        try {
+            if ($tworzenie) {
+                $stmt = $db->prepare(
+                    'INSERT INTO skrzynki (nazwa, opis, cena, ikona, aktywna, kolejnosc)
+                     VALUES (?, ?, ?, ?, ?, ?)'
+                );
+                $stmt->execute([
+                    $s->nazwa,
+                    $s->opis,
+                    $s->cena,
+                    $s->ikona,
+                    $s->aktywna ? 1 : 0,
+                    $s->kolejnosc,
+                ]);
+
+                $s->id = (int) $db->lastInsertId();
+            } else {
+                $stmt = $db->prepare(
+                    'UPDATE skrzynki
+                     SET nazwa = ?, opis = ?, cena = ?, ikona = ?, aktywna = ?, kolejnosc = ?
+                     WHERE id = ?'
+                );
+                $stmt->execute([
+                    $s->nazwa,
+                    $s->opis,
+                    $s->cena,
+                    $s->ikona,
+                    $s->aktywna ? 1 : 0,
+                    $s->kolejnosc,
+                    $s->id,
+                ]);
+            }
+
+            $wpisow = 0;
+
+            if ($s->pulaDoZapisu !== null) {
+                $wpisow = SkrzynkaPrzedmiot::ustawPule($s->id, $s->pulaDoZapisu, $db);
+            }
+
+            LogAudytowy::wpis(
+                $tworzenie ? 'skrzynka_utworzona' : 'skrzynka_edycja',
+                $this->id,
+                sprintf(
+                    'skrzynka_id=%d nazwa=%s cena=%.2f aktywna=%d wpisy_puli=%d',
+                    $s->id,
+                    $s->nazwa,
+                    $s->cena,
+                    $s->aktywna ? 1 : 0,
+                    $wpisow
+                ),
+                $db
+            );
+
+            if ($wlasna) {
+                $db->commit();
+            }
+        } catch (Throwable $e) {
+            if ($wlasna && $db->inTransaction()) {
+                $db->rollBack();
+            }
+
+            throw $e;
+        }
+    }
+
+    private static function walidujSkrzynke(Skrzynka $s): void
+    {
+        if (trim($s->nazwa) === '' || mb_strlen($s->nazwa) > 100) {
+            throw ApiException::badRequest('Nazwa skrzynki musi mieć od 1 do 100 znaków.', 'invalid_case_name');
+        }
+
+        if (!is_finite($s->cena) || $s->cena < 0) {
+            throw ApiException::badRequest('Cena skrzynki nie może być ujemna.', 'invalid_price');
+        }
+
+        if (mb_strlen($s->opis) > 500) {
+            throw ApiException::badRequest('Opis skrzynki może mieć maksymalnie 500 znaków.', 'invalid_case_description');
+        }
+
+        if ($s->kolejnosc < 0) {
+            throw ApiException::badRequest('Kolejność wyświetlania nie może być ujemna.', 'invalid_case_order');
+        }
+    }
+
     public function odbanuj(Uzytkownik $u): void
     {
         $db = $this->polaczenie();
@@ -120,4 +235,59 @@ final class Administrator extends Uzytkownik
         $u->zablokowany = false;
     }
 
+    public function eksportujRaport(): string
+    {
+        $db = $this->polaczenie();
+
+        $rows = $db->query(
+            'SELECT h.id, h.czas, h.typ, u.login, h.koszt, h.wygrana_wartosc
+             FROM historia_losowan h
+             LEFT JOIN uzytkownicy u ON u.id = h.user_id
+             ORDER BY h.id ASC'
+        )->fetchAll();
+
+        $handle = fopen('php://temp', 'r+');
+
+        if ($handle === false) {
+            throw new \RuntimeException('Nie udało się otworzyć strumienia tymczasowego dla raportu.');
+        }
+
+        fputcsv($handle, ['id', 'czas', 'typ', 'login', 'koszt', 'wygrana_wartosc', 'bilans'], ',', '"', '');
+
+        $sumaKoszt = 0.0;
+        $sumaWygrana = 0.0;
+
+        foreach ($rows as $row) {
+            $koszt = (float) $row['koszt'];
+            $wygrana = (float) $row['wygrana_wartosc'];
+
+            $sumaKoszt += $koszt;
+            $sumaWygrana += $wygrana;
+
+            fputcsv($handle, [
+                (int) $row['id'],
+                (string) $row['czas'],
+                (string) $row['typ'],
+                (string) ($row['login'] ?? ''),
+                $koszt,
+                $wygrana,
+                round($wygrana - $koszt, 2),
+            ], ',', '"', '');
+        }
+
+        fputcsv($handle, [
+            'SUMA', '', '', '',
+            round($sumaKoszt, 2),
+            round($sumaWygrana, 2),
+            round($sumaWygrana - $sumaKoszt, 2),
+        ], ',', '"', '');
+
+        rewind($handle);
+        $csv = (string) stream_get_contents($handle);
+        fclose($handle);
+
+        LogAudytowy::wpis('eksport_raportu', $this->id, sprintf('wierszy=%d', count($rows)), $db);
+
+        return $csv;
+    }
 }
