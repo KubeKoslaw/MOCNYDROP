@@ -9,9 +9,9 @@
 - [x] Kontrakt API: format JSON odpowiedzi
 - [x] Rejestracja i logowanie
 - [x] OAuth 2.0 i role użytkowników (access + refresh token, rola admin)
-- [~] Portfel i saldo
-- [~] Ważone losowanie
-- [ ] Zapis losowań do historii
+- [x] Portfel i saldo
+- [x] Ważone losowanie
+- [x] Zapis losowań do historii
 - [ ] Ekwipunek i zarzuty wędek (`inventory.php`)
 - [~] Katalog skrzynek i wędek (`skrzynki.php`, `wedki.php`)
 - [ ] Łowisko (`fish.php`)
