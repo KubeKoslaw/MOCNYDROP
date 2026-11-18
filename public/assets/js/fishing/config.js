@@ -1,6 +1,9 @@
-export const CONFIG = {
-  ANIMATION_SPEED: 1.0,
-  DEFAULT_ROD_ID: 1,
-  CANVAS_WIDTH: 800,
-  CANVAS_HEIGHT: 600
-};
+export const API_BASE = 'api/';
+export const ACCESS_KEY = 'mocnydrop_access_token';
+export const REFRESH_KEY = 'mocnydrop_refresh_token';
+export const EXPIRES_KEY = 'mocnydrop_access_expires_at';
+export const LEGACY_KEY = 'mocnydrop_token';
+export const SPLASH_MS = 3000;
+export const REFRESH_MARGIN_MS = 60 * 1000;
+export const HISTORY_LIMIT = 15;
+export const DEFAULT_ICON = 'assets/icons/anchovy.png';

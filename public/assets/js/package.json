@@ -1,6 +1,1 @@
-{
-  "name": "mocnydrop-fishing",
-  "version": "1.0.0",
-  "type": "module",
-  "description": "Moduł łowiska dla projektu MocnyDrop"
-}
+<script type="module" src="public/assets/js/main.js"></script>

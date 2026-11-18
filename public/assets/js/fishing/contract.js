@@ -1,6 +1,146 @@
-export const CONTRACT_VERSION = '1.0.0';
-export const EVENTS = {
+import { ACCESS_KEY, REFRESH_KEY, EXPIRES_KEY, LEGACY_KEY, DEFAULT_ICON } from './config.js';
+
+export const SCENE_EVENTS = {
   CATCH: 'catch',
   CAST_REQUEST: 'castrequest',
-  ERROR: 'error'
+  ERROR: 'error',
 };
+
+export function storageGet(key) {
+  try { return window.localStorage.getItem(key); } catch { return null; }
+}
+
+export function storageSet(key, value) {
+  try { window.localStorage.setItem(key, value); } catch { /* prywatny tryb przeglądarki */ }
+}
+
+export function storageRemove(key) {
+  try { window.localStorage.removeItem(key); } catch { /* prywatny tryb przeglądarki */ }
+}
+
+export function getAccessToken() { return storageGet(ACCESS_KEY); }
+export function getRefreshToken() { return storageGet(REFRESH_KEY); }
+
+export function getAccessExpiresAt() {
+  const value = Number(storageGet(EXPIRES_KEY));
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+export function migrateLegacyStorage() {
+  storageRemove(LEGACY_KEY);
+}
+
+export const SoundFx = {
+  ctx: null,
+  init() {
+    if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioCtx();
+    }
+  },
+  playTone(freq, type = 'sine', duration = 0.15, vol = 0.1) {
+    try {
+      this.init();
+      if (!this.ctx || this.ctx.state === 'suspended') {
+        this.ctx?.resume();
+      }
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch {}
+  },
+  coin() {
+    this.playTone(987.77, 'triangle', 0.1, 0.12);
+    setTimeout(() => this.playTone(1318.51, 'triangle', 0.2, 0.15), 80);
+  },
+  splash() {
+    this.playTone(220, 'sine', 0.25, 0.1);
+    setTimeout(() => this.playTone(330, 'sine', 0.2, 0.08), 100);
+  },
+  fanfare() {
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'triangle', 0.28, 0.18), idx * 110);
+    });
+  },
+  loss() {
+    this.playTone(260, 'sawtooth', 0.2, 0.08);
+    setTimeout(() => this.playTone(190, 'sawtooth', 0.35, 0.1), 160);
+  }
+};
+
+export function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const text = document.createElement('span');
+  text.textContent = message;
+  const close = document.createElement('button');
+  close.className = 'toast-close';
+  close.type = 'button';
+  close.setAttribute('aria-label', 'Zamknij powiadomienie');
+  close.innerHTML = '&times;';
+  close.addEventListener('click', () => toast.remove());
+  toast.append(text, close);
+
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 4200);
+}
+
+export function formatMoney(amount) {
+  return Number(amount ?? 0).toFixed(2).replace('.', ',');
+}
+
+export function formatChance(value) {
+  const n = Number(value ?? 0);
+  if (n >= 10) return `${n.toFixed(1)}%`;
+  if (n >= 1) return `${n.toFixed(2)}%`;
+  return `${Number(n.toFixed(3))}%`;
+}
+
+export function formatCountdown(seconds) {
+  const s = Math.max(0, Math.floor(seconds));
+  const pad = (v) => String(v).padStart(2, '0');
+  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+}
+
+export function castsLabel(count) {
+  const n = Math.abs(Number(count) || 0);
+  const last = n % 10;
+  const lastTwo = n % 100;
+  if (n === 1) return '1 zarzut';
+  if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return `${n} zarzuty`;
+  return `${n} zarzutów`;
+}
+
+export function esc(str) {
+  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return String(str ?? '').replace(/[&<>"']/g, (c) => map[c]);
+}
+
+export function iconOf(item) {
+  return esc(item.ikona || DEFAULT_ICON);
+}
+
+export function poolIcons(items) {
+  return (items || []).map(item => {
+    const tip = `${item.nazwa} · ${formatChance(item.szansa_procent)}`;
+    return `
+      <span class="pool-icon" tabindex="0" style="--rarity:${esc(item.kolor)}" data-tip="${esc(tip)}" aria-label="${esc(tip)}">
+        <img src="${iconOf(item)}" alt="">
+      </span>
+    `;
+  }).join('');
+}
