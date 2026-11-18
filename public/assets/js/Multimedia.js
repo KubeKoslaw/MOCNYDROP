@@ -1,4 +1,38 @@
-const SoundFx = {
+export const API_BASE = 'api/';
+export const ACCESS_KEY = 'mocnydrop_access_token';
+export const REFRESH_KEY = 'mocnydrop_refresh_token';
+export const EXPIRES_KEY = 'mocnydrop_access_expires_at';
+export const LEGACY_KEY = 'mocnydrop_token';
+export const SPLASH_MS = 3000;
+export const REFRESH_MARGIN_MS = 60 * 1000;
+export const HISTORY_LIMIT = 15;
+export const DEFAULT_ICON = 'assets/icons/anchovy.png';
+
+export function storageGet(key) {
+  try { return window.localStorage.getItem(key); } catch { return null; }
+}
+
+export function storageSet(key, value) {
+  try { window.localStorage.setItem(key, value); } catch {}
+}
+
+export function storageRemove(key) {
+  try { window.localStorage.removeItem(key); } catch {}
+}
+
+export function getAccessToken() { return storageGet(ACCESS_KEY); }
+export function getRefreshToken() { return storageGet(REFRESH_KEY); }
+
+export function getAccessExpiresAt() {
+  const value = Number(storageGet(EXPIRES_KEY));
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+export function migrateLegacyStorage() {
+  storageRemove(LEGACY_KEY);
+}
+
+export const SoundFx = {
   ctx: null,
   init() {
     if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
@@ -43,7 +77,7 @@ const SoundFx = {
   }
 };
 
-function showToast(message, type = 'info') {
+export function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
   if (!container) return;
 
@@ -67,7 +101,53 @@ function showToast(message, type = 'info') {
   }, 4200);
 }
 
-function bindPoolTooltip() {
+export function formatMoney(amount) {
+  return Number(amount ?? 0).toFixed(2).replace('.', ',');
+}
+
+export function formatChance(value) {
+  const n = Number(value ?? 0);
+  if (n >= 10) return `${n.toFixed(1)}%`;
+  if (n >= 1) return `${n.toFixed(2)}%`;
+  return `${Number(n.toFixed(3))}%`;
+}
+
+export function formatCountdown(seconds) {
+  const s = Math.max(0, Math.floor(seconds));
+  const pad = (v) => String(v).padStart(2, '0');
+  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+}
+
+export function castsLabel(count) {
+  const n = Math.abs(Number(count) || 0);
+  const last = n % 10;
+  const lastTwo = n % 100;
+  if (n === 1) return '1 zarzut';
+  if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return `${n} zarzuty`;
+  return `${n} zarzutów`;
+}
+
+export function esc(str) {
+  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return String(str ?? '').replace(/[&<>"']/g, (c) => map[c]);
+}
+
+export function iconOf(item) {
+  return esc(item.ikona || DEFAULT_ICON);
+}
+
+export function poolIcons(items) {
+  return (items || []).map(item => {
+    const tip = `${item.nazwa} · ${formatChance(item.szansa_procent)}`;
+    return `
+      <span class="pool-icon" tabindex="0" style="--rarity:${esc(item.kolor)}" data-tip="${esc(tip)}" aria-label="${esc(tip)}">
+        <img src="${iconOf(item)}" alt="">
+      </span>
+    `;
+  }).join('');
+}
+
+export function bindPoolTooltip() {
   const tip = document.createElement('div');
   tip.className = 'pool-tip';
   tip.hidden = true;
