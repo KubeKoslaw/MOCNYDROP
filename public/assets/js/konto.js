@@ -1,231 +1,111 @@
-async loadMe() {
-    try {
-      const data = await this.api.fetch('me.php');
-      this.user = data.user;
-      this.saldo = data.saldo ?? data.user?.saldo ?? 0;
-      this.renderSessionState();
-      await Promise.allSettled([
-        this.loadInventory(),
-        this.loadHistory(),
-        this.loadFreeCase(),
-      ]);
-    } catch (err) {
-      if (err.status === 401) return;
-      showToast(err.message, 'error');
-    }
+import { 
+  API_BASE, ACCESS_KEY, REFRESH_KEY, EXPIRES_KEY, REFRESH_MARGIN_MS,
+  getAccessToken, getRefreshToken, getAccessExpiresAt, storageSet, storageRemove,
+  showToast, SoundFx, formatMoney, esc, iconOf, castsLabel 
+} from './Multimedia.js';
+
+export async function tokenRequest(body) {
+  let response;
+  try {
+    response = await fetch(API_BASE + 'token.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    const err = new Error('Brak połączenia z serwerem.');
+    err.kod = 'network_error';
+    throw err;
   }
 
-  renderSessionState() {
-    const isLogged = Boolean(this.user);
-    const authBox = document.getElementById('nav-auth-box');
-    const guestBox = document.getElementById('nav-guest-box');
-
-    if (isLogged) {
-      if (guestBox) guestBox.style.display = 'none';
-      if (authBox) authBox.style.display = 'flex';
-
-      const saldoEl = document.getElementById('nav-saldo-val');
-      const loginEl = document.getElementById('nav-user-login');
-      const roleEl = document.getElementById('nav-user-role');
-      if (saldoEl) saldoEl.textContent = formatMoney(this.saldo);
-      if (loginEl) loginEl.textContent = this.user.login;
-      if (roleEl) {
-        const role = String(this.user.rola || 'user').toLowerCase();
-        roleEl.textContent = role;
-        roleEl.classList.toggle('admin', role === 'admin');
-      }
-    } else {
-      if (guestBox) guestBox.style.display = 'flex';
-      if (authBox) authBox.style.display = 'none';
-      this.renderFreeCase();
-    }
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    const err = new Error(`Błąd serwera (HTTP ${response.status})`);
+    err.kod = 'bad_response';
+    err.status = response.status;
+    throw err;
   }
 
-  async login(login, password) {
-    this.setAuthBusy(true);
-    this.clearAuthError();
-    try {
-      await this.beginOAuth(login, password);
-      await this.loadMe();
-      this.closeModal('auth-modal');
-      this.resetAuthForms();
-      showToast(`Witaj, ${this.user?.login || login}!`, 'success');
-      SoundFx.coin();
-    } catch (err) {
-      const message = err.message || this.loginErrorMessage(err.kod || '');
-      this.setAuthError(message);
-      showToast(message, 'error');
-      SoundFx.loss();
-    } finally {
-      this.setAuthBusy(false);
-    }
+  if (!response.ok || data.success === false) {
+    const err = new Error(data.error || `Błąd serwera (HTTP ${response.status})`);
+    err.kod = data.kod || 'error';
+    err.status = response.status;
+    throw err;
   }
 
-  async register(login, email, password) {
+  return data;
+}
+
+export class ApiClient {
+  constructor(app, baseUrl = API_BASE) {
+    this.app = app;
+    this.baseUrl = baseUrl.replace(/\/$/, '') + '/';
+  }
+
+  getToken() {
+    return getAccessToken();
+  }
+
+  async fetch(endpoint, options = {}) {
+    return this.request(endpoint, options, true);
+  }
+
+  async request(endpoint, options, allowRefresh) {
+    const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+    if (options.auth !== false) {
+      const token = this.getToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+    }
+
+    const url = `${this.baseUrl}${endpoint.replace(/^\//, '')}`;
+    let response;
     try {
-      const data = await this.api.fetch('register.php', {
-        method: 'POST',
-        body: { login, email, password },
-        auth: false,
+      response = await fetch(url, {
+        method: options.method || 'GET',
+        headers,
+        body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
       });
-      showToast(data.message || 'Konto utworzone.', 'success');
-      SoundFx.fanfare();
-      await this.login(login, password);
-    } catch (err) {
-      this.setAuthError(err.message);
-      showToast(err.message, 'error');
+    } catch {
+      const err = new Error('Brak połączenia z serwerem.');
+      err.kod = 'network_error';
+      throw err;
     }
-  }
 
-  async registerDemo() {
-    const suffix = Math.random().toString(36).slice(2, 8);
-    const demoLogin = `gracz_${suffix}`;
-    this.setAuthBusy(true);
+    let data;
     try {
-      await this.register(demoLogin, `${demoLogin}@mocnydrop.local`, 'demo12345');
-    } finally {
-      this.setAuthBusy(false);
-    }
-  }
-
-  async logout(userInitiated = true) {
-    if (getAccessToken() && userInitiated) {
-      try { await this.api.fetch('logout.php', { method: 'POST' }); } catch {}
+      data = await response.json();
+    } catch {
+      const err = new Error(`Błąd serwera (HTTP ${response.status})`);
+      err.kod = 'bad_response';
+      err.status = response.status;
+      throw err;
     }
 
-    this.clearTokens();
-    this.user = null;
-    this.saldo = 0;
-    this.inventory = [];
-    this.freeCaseReadyAt = null;
-    clearInterval(this.freeCaseTimer);
-    this.freeCaseTimer = null;
+    const unauthorized = response.status === 401 || data.kod === 'unauthorized';
 
-    this.renderSessionState();
-    this.renderRods();
-    this.renderHistoryTable([]);
-    this.closeModal('profile-modal');
-
-    if (userInitiated) {
-      showToast('Wylogowano.', 'info');
-    }
-  }
-
-  requireLogin(message) {
-    if (this.user) return true;
-    showToast(message, 'info');
-    this.switchAuthTab('login');
-    this.openModal('auth-modal');
-    return false;
-  }
-
-  setSaldo(value) {
-    this.saldo = Number(value ?? 0);
-    this.renderSessionState();
-  }
-
-  bindProfile() {
-    document.getElementById('btn-profile')?.addEventListener('click', () => this.openProfile());
-    document.getElementById('btn-profile-logout')?.addEventListener('click', () => this.logout(true));
-  }
-
-  async openProfile() {
-    if (!this.requireLogin('Zaloguj się, aby zobaczyć profil.')) return;
-    const content = document.getElementById('profile-content');
-    if (content) content.innerHTML = '<p class="hint">Wczytywanie profilu…</p>';
-    this.openModal('profile-modal');
-    await this.renderProfile();
-  }
-
-  async renderProfile() {
-    const content = document.getElementById('profile-content');
-    if (!content) return;
-
-    try {
-      const [me, inventory] = await Promise.all([
-        this.api.fetch('me.php'),
-        this.api.fetch('inventory.php'),
-      ]);
-
-      if (me.user) {
-        this.user = me.user;
-        this.saldo = me.saldo ?? me.user.saldo ?? this.saldo;
-        this.renderSessionState();
+    if (unauthorized && options.auth !== false) {
+      if (allowRefresh && getRefreshToken()) {
+        const result = await this.app.refreshAccessToken();
+        if (result === 'ok') {
+          return this.request(endpoint, options, false);
+        }
+        if (result === 'expired') {
+          this.app.handleSessionExpired();
+        }
+      } else if (!getRefreshToken() && (getAccessToken() || this.app.user)) {
+        this.app.handleSessionExpired();
       }
-
-      this.inventory = inventory.ekwipunek || [];
-      const summary = inventory.podsumowanie || me.ekwipunek || {};
-
-      content.innerHTML = this.profileTemplate(this.user, summary, this.inventory);
-      this.renderRods();
-    } catch (err) {
-      content.innerHTML = `<p class="hint error-text">${esc(err.message)}</p>`;
-    }
-  }
-
-  profileTemplate(user, summary, items) {
-    if (!user) {
-      return '<p class="hint">Nie jesteś zalogowany.</p>';
     }
 
-    const role = String(user.rola || 'user').toLowerCase();
-    const rows = [
-      ['Login', esc(user.login)],
-      ['E-mail', user.email ? esc(user.email) : '—'],
-      ['Rola', `<span class="user-role-pill ${role === 'admin' ? 'admin' : ''}">${esc(role)}</span>`],
-      ['Saldo', `<strong class="profile-saldo">${formatMoney(this.saldo)} 🪙</strong>`],
-      [
-        'Ekwipunek',
-        `<b>${Number(summary.liczba_przedmiotow ?? items.length)}</b> szt. · wartość
-         <b>${formatMoney(summary.laczna_wartosc)} 🪙</b>`,
-      ],
-    ];
+    if (!response.ok || data.success === false) {
+      const err = new Error(data.error || `Błąd serwera (HTTP ${response.status})`);
+      err.kod = data.kod || 'error';
+      err.status = response.status;
+      throw err;
+    }
 
-    const cards = items.length
-      ? items.map(item => `
-          <div class="fish-item-card" style="border-left-color:${esc(item.kolor)}">
-            <img src="${iconOf(item)}" alt="">
-            <div class="fish-name" style="color:${esc(item.kolor)}">${esc(item.nazwa)}</div>
-            <div class="fish-rarity">${esc(item.rzadkosc)}</div>
-            ${item.zarzuty_pozostale !== null && item.zarzuty_pozostale !== undefined
-              ? `<div class="fish-casts">🎣 ${castsLabel(item.zarzuty_pozostale)}</div>` : ''}
-            <div class="fish-val">${formatMoney(item.wartosc)} 🪙</div>
-          </div>
-        `).join('')
-      : '<p class="hint profile-empty">Ekwipunek jest pusty — zarzuć wędkę albo otwórz skrzynkę.</p>';
-
-    return `
-      <dl class="profile-account">
-        ${rows.map(([label, value]) => `
-          <div class="profile-row">
-            <dt>${label}</dt>
-            <dd>${value}</dd>
-          </div>
-        `).join('')}
-      </dl>
-      <h4 class="profile-heading">🎒 Posiadane przedmioty</h4>
-      <div class="inv-grid">${cards}</div>
-    `;
+    return data;
   }
-
-  bindNavigation() {
-    document.querySelectorAll('[data-target-mode]').forEach(btn => {
-      btn.addEventListener('click', () => this.switchMode(btn.dataset.targetMode));
-    });
-
-    document.getElementById('btn-nav-logout')?.addEventListener('click', () => this.logout(true));
-  }
-
-  switchMode(modeId) {
-    this.currentMode = modeId;
-
-    document.querySelectorAll('[data-target-mode]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.targetMode === modeId);
-    });
-
-    document.querySelectorAll('.mode-arena-section').forEach(sec => {
-      sec.style.display = sec.id === `arena-${modeId}` ? 'block' : 'none';
-    });
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+}
