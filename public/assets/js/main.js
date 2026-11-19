@@ -186,3 +186,140 @@ function poolIcons(items) {
   }).join('');
 }
 
+/**
+ * Klient JSON API.
+ *
+ * OAuth 2.0: każde żądanie (poza login/register) idzie z nagłówkiem
+ * `Authorization: Bearer <access>`. Gdy serwer zwróci 401 / kod
+ * `unauthorized`, klient RAZ próbuje odświeżyć access token przez
+ * `token.php`, a następnie powtarza oryginalne żądanie.
+ */
+class ApiClient {
+  constructor(app, baseUrl = API_BASE) {
+    this.app = app;
+    this.baseUrl = baseUrl.replace(/\/$/, '') + '/';
+  }
+
+  getToken() {
+    return getAccessToken();
+  }
+
+  async fetch(endpoint, options = {}) {
+    return this.request(endpoint, options, true);
+  }
+
+  async request(endpoint, options, allowRefresh) {
+    const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+    if (options.auth !== false) {
+      const token = this.getToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+    }
+
+    const url = `${this.baseUrl}${endpoint.replace(/^\//, '')}`;
+    let response;
+    try {
+      response = await fetch(url, {
+        method: options.method || 'GET',
+        headers,
+        body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      });
+    } catch {
+      const err = new Error('Brak połączenia z serwerem.');
+      err.kod = 'network_error';
+      throw err;
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      const err = new Error(`Błąd serwera (HTTP ${response.status})`);
+      err.kod = 'bad_response';
+      err.status = response.status;
+      throw err;
+    }
+
+    const unauthorized = response.status === 401 || data.kod === 'unauthorized';
+
+    if (unauthorized && options.auth !== false) {
+      if (allowRefresh && getRefreshToken()) {
+        const result = await this.app.refreshAccessToken();
+        if (result === 'ok') {
+          return this.request(endpoint, options, false);
+        }
+        if (result === 'expired') {
+          this.app.handleSessionExpired();
+        }
+      } else if (!getRefreshToken() && (getAccessToken() || this.app.user)) {
+        this.app.handleSessionExpired();
+      }
+    }
+
+    if (!response.ok || data.success === false) {
+      const err = new Error(data.error || `Błąd serwera (HTTP ${response.status})`);
+      err.kod = data.kod || 'error';
+      err.status = response.status;
+      throw err;
+    }
+
+    return data;
+  }
+}
+
+class MocnyDropApp {
+  constructor() {
+    this.api = new ApiClient(this);
+    this.user = null;
+    this.saldo = 0;
+    this.currentMode = 'fish';
+    this.activeRods = [];
+    this.activeCases = [];
+    this.inventory = [];
+    this.isCasting = false;
+    this.selectedRodId = null;
+
+    this.freeCaseReadyAt = null;
+    this.freeCaseTimer = null;
+    this.refreshPromise = null;
+    this.authBusy = false;
+    this.winRollTimer = null;
+    this.winRollTimeout = null;
+  }
+
+  async init() {
+    // Migracja: stary token z poprzedniej wersji UI nie jest już używany.
+    migrateLegacyStorage();
+
+    this.hideSplash();
+    this.bindPoolTooltip();
+    this.bindNavigation();
+    this.bindAuthModals();
+    this.bindSceneControls();
+    this.bindFreeCase();
+    this.bindProfile();
+
+    await Promise.allSettled([
+      this.loadRods(),
+      this.loadCases(),
+    ]);
+
+    const params = this.readUrlParams();
+
+    if (params.code) {
+      this.clearUrlParams();
+      await this.completeOAuthRedirect(params.code);
+    } else if (params.loginError) {
+      this.clearUrlParams();
+      const message = this.loginErrorMessage(params.loginError);
+      showToast(message, 'error');
+      this.setAuthError(message);
+      this.switchAuthTab('login');
+      this.openModal('auth-modal');
+    } else if (getAccessToken() || getRefreshToken()) {
+      await this.loadMe();
+    }
+
+    this.renderSessionState();
+  }
+
+
