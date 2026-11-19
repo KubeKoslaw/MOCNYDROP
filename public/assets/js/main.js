@@ -1164,4 +1164,101 @@ class MocnyDropApp {
     }).join('');
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Modal wygranej                                                      */
+  /* ------------------------------------------------------------------ */
+
+  /**
+   * Modal zdobyczy + prosta „rolka” v1 przy otwieraniu skrzynki.
+   * `options.rollPool` (opcjonalnie) — pula przedmiotów: przez ~800 ms ikona
+   * szybko się podmienia, potem pokazywany jest zwycięzca (klasy
+   * `is-rolling` / `is-revealed`; wygląd w style.css).
+   * Reduced-motion pomija rolkę i od razu pokazuje wynik.
+   */
+  showWinModal(item, message = '', cost = null, options = {}) {
+    if (!item) return;
+
+    const img = document.getElementById('win-modal-img');
+    const nameEl = document.getElementById('win-modal-name');
+    const rarityEl = document.getElementById('win-modal-rarity');
+    const valEl = document.getElementById('win-modal-val');
+    const costEl = document.getElementById('win-modal-cost');
+    const msgEl = document.getElementById('win-modal-msg');
+    const content = document.querySelector('#win-modal .win-modal-content');
+    const pool = Array.isArray(options.rollPool)
+      ? options.rollPool.filter(entry => entry && entry.ikona)
+      : [];
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    this.stopWinRoll();
+
+    if (content) {
+      content.classList.remove('is-revealed');
+      content.classList.add('is-rolling');
+    }
+
+    if (img) img.src = item.ikona || DEFAULT_ICON;
+
+    if (nameEl) {
+      nameEl.textContent = item.nazwa;
+      nameEl.style.color = item.kolor;
+    }
+
+    if (rarityEl) {
+      rarityEl.textContent = item.rzadkosc;
+      rarityEl.style.background = `${item.kolor}22`;
+      rarityEl.style.color = item.kolor;
+      rarityEl.style.border = `1px solid ${item.kolor}66`;
+    }
+
+    if (valEl) valEl.textContent = `${formatMoney(item.wartosc)} 🪙`;
+
+    if (costEl) {
+      costEl.parentElement.hidden = cost === null;
+      costEl.textContent = cost ? `${formatMoney(cost)} 🪙` : 'za darmo';
+    }
+
+    const rod = this.rodForItem(item.przedmiot_id);
+    if (msgEl) {
+      msgEl.textContent = rod
+        ? `${message} Wędka ma ${castsLabel(rod.limit_zarzutow)} — łów nią w Łowisku!`
+        : message;
+    }
+
+    this.openModal('win-modal');
+
+    const reveal = () => {
+      this.stopWinRoll();
+      if (content) {
+        content.classList.remove('is-rolling');
+        content.classList.add('is-revealed');
+      }
+      if (img) img.src = item.ikona || DEFAULT_ICON;
+      SoundFx.coin();
+    };
+
+    if (pool.length < 2 || reduced) {
+      reveal();
+      return;
+    }
+
+    let index = 0;
+    this.winRollTimer = setInterval(() => {
+      if (img) img.src = pool[index % pool.length].ikona;
+      index += 1;
+    }, 90);
+    this.winRollTimeout = setTimeout(reveal, 800);
+  }
+
+  stopWinRoll() {
+    if (this.winRollTimer) {
+      clearInterval(this.winRollTimer);
+      this.winRollTimer = null;
+    }
+    if (this.winRollTimeout) {
+      clearTimeout(this.winRollTimeout);
+      this.winRollTimeout = null;
+    }
+  }
+
 
