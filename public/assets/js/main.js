@@ -671,4 +671,92 @@ class MocnyDropApp {
     ]);
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Profil gracza (dane konta + posiadane przedmioty)                   */
+  /* ------------------------------------------------------------------ */
+
+  bindProfile() {
+    document.getElementById('btn-profile')?.addEventListener('click', () => this.openProfile());
+    document.getElementById('btn-profile-logout')?.addEventListener('click', () => this.logout(true));
+  }
+
+  async openProfile() {
+    if (!this.requireLogin('Zaloguj się, aby zobaczyć profil.')) return;
+    const content = document.getElementById('profile-content');
+    if (content) content.innerHTML = '<p class="hint">Wczytywanie profilu…</p>';
+    this.openModal('profile-modal');
+    await this.renderProfile();
+  }
+
+  async renderProfile() {
+    const content = document.getElementById('profile-content');
+    if (!content) return;
+
+    try {
+      const [me, inventory] = await Promise.all([
+        this.api.fetch('me.php'),
+        this.api.fetch('inventory.php'),
+      ]);
+
+      if (me.user) {
+        this.user = me.user;
+        this.saldo = me.saldo ?? me.user.saldo ?? this.saldo;
+        this.renderSessionState();
+      }
+
+      this.inventory = inventory.ekwipunek || [];
+      const summary = inventory.podsumowanie || me.ekwipunek || {};
+
+      content.innerHTML = this.profileTemplate(this.user, summary, this.inventory);
+      this.renderRods();
+    } catch (err) {
+      content.innerHTML = `<p class="hint error-text">${esc(err.message)}</p>`;
+    }
+  }
+
+  profileTemplate(user, summary, items) {
+    if (!user) {
+      return '<p class="hint">Nie jesteś zalogowany.</p>';
+    }
+
+    const role = String(user.rola || 'user').toLowerCase();
+    const rows = [
+      ['Login', esc(user.login)],
+      ['E-mail', user.email ? esc(user.email) : '—'],
+      ['Rola', `<span class="user-role-pill ${role === 'admin' ? 'admin' : ''}">${esc(role)}</span>`],
+      ['Saldo', `<strong class="profile-saldo">${formatMoney(this.saldo)} 🪙</strong>`],
+      [
+        'Ekwipunek',
+        `<b>${Number(summary.liczba_przedmiotow ?? items.length)}</b> szt. · wartość
+         <b>${formatMoney(summary.laczna_wartosc)} 🪙</b>`,
+      ],
+    ];
+
+    const cards = items.length
+      ? items.map(item => `
+          <div class="fish-item-card" style="border-left-color:${esc(item.kolor)}">
+            <img src="${iconOf(item)}" alt="">
+            <div class="fish-name" style="color:${esc(item.kolor)}">${esc(item.nazwa)}</div>
+            <div class="fish-rarity">${esc(item.rzadkosc)}</div>
+            ${item.zarzuty_pozostale !== null && item.zarzuty_pozostale !== undefined
+              ? `<div class="fish-casts">🎣 ${castsLabel(item.zarzuty_pozostale)}</div>` : ''}
+            <div class="fish-val">${formatMoney(item.wartosc)} 🪙</div>
+          </div>
+        `).join('')
+      : '<p class="hint profile-empty">Ekwipunek jest pusty — zarzuć wędkę albo otwórz skrzynkę.</p>';
+
+    return `
+      <dl class="profile-account">
+        ${rows.map(([label, value]) => `
+          <div class="profile-row">
+            <dt>${label}</dt>
+            <dd>${value}</dd>
+          </div>
+        `).join('')}
+      </dl>
+      <h4 class="profile-heading">🎒 Posiadane przedmioty</h4>
+      <div class="inv-grid">${cards}</div>
+    `;
+  }
+
 
