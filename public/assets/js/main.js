@@ -1114,4 +1114,54 @@ class MocnyDropApp {
     this.renderFreeCase();
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Ekwipunek / historia                                                */
+  /* ------------------------------------------------------------------ */
+
+  async loadInventory() {
+    if (!this.user) return;
+    try {
+      const data = await this.api.fetch('inventory.php');
+      this.inventory = data.ekwipunek || [];
+      this.renderRods();
+    } catch (err) {
+      if (err.status !== 401) showToast(err.message, 'error');
+    }
+  }
+
+  async loadHistory() {
+    if (!this.user) return;
+    try {
+      const data = await this.api.fetch(`history.php?limit=${HISTORY_LIMIT}`);
+      this.renderHistoryTable(data.historia || []);
+    } catch (err) {
+      if (err.status !== 401) showToast(err.message, 'error');
+    }
+  }
+
+  renderHistoryTable(entries) {
+    const tbody = document.getElementById('history-tbody');
+    if (!tbody) return;
+
+    if (!entries.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px" class="hint">Brak historii.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = entries.map(row => {
+      const gain = Number(row.bilans);
+      return `
+        <tr>
+          <td>${esc(row.czas)}</td>
+          <td><b>${esc(row.typ_nazwa)}</b> <span class="hint">${esc(row.zrodlo || '')}</span></td>
+          <td style="color:${esc(row.kolor)}; font-weight:700">
+            ${esc(row.nazwa)} ${row.udane === false ? '<span class="gain-negative">(porażka)</span>' : ''}
+          </td>
+          <td>${formatMoney(row.koszt)} 🪙</td>
+          <td class="${gain >= 0 ? 'gain-positive' : 'gain-negative'}">${gain >= 0 ? '+' : ''}${formatMoney(gain)} 🪙</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
 
