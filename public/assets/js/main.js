@@ -759,4 +759,30 @@ class MocnyDropApp {
     `;
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Nawigacja                                                           */
+  /* ------------------------------------------------------------------ */
+
+  bindNavigation() {
+    document.querySelectorAll('[data-target-mode]').forEach(btn => {
+      btn.addEventListener('click', () => this.switchMode(btn.dataset.targetMode));
+    });
+
+    document.getElementById('btn-nav-logout')?.addEventListener('click', () => this.logout(true));
+  }
+
+  switchMode(modeId) {
+    this.currentMode = modeId;
+
+    document.querySelectorAll('[data-target-mode]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.targetMode === modeId);
+    });
+
+    document.querySelectorAll('.mode-arena-section').forEach(sec => {
+      sec.style.display = sec.id === `arena-${modeId}` ? 'block' : 'none';
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
 
