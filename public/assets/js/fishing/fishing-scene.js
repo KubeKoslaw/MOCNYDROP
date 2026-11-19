@@ -455,3 +455,87 @@ export class FishingScene extends HTMLElement {
     });
   }
 
+  #closeReveal() {
+    this.refs.reveal.hidden = true;
+    const waiter = this.#closeWaiter;
+    this.#closeWaiter = null;
+    if (waiter) { waiter(); return; }
+    if (!this.#busy) { this.#resetToIdle(); }
+  }
+
+  async #again() {
+    const running = this.#runPromise;
+    const rodId = this.#rodId;
+
+    this.#closeReveal();
+    if (running) {
+      try { await running; } catch (error) { /* wynik pokazał się w karcie */ }
+    }
+
+    if (this.demoMode) { this.play(buildDemoPayload()).catch(() => {}); return; }
+    if (rodId === null) { this.#onCastClick(); return; }
+    this.cast(rodId).catch(() => {});
+  }
+
+  #onCastClick() {
+    if (this.#busy || this.#phase !== PHASES.IDLE) { return; }
+    if (this.demoMode) { this.play(buildDemoPayload()).catch(() => {}); return; }
+
+    if (this.#rodId === null) {
+      this.dispatchEvent(new CustomEvent('castrequest', { detail: { rodId: null }, bubbles: true }));
+      return;
+    }
+
+    this.cast(this.#rodId).catch(() => {});
+  }
+
+  #resetToIdle() {
+    this.refs.reveal.hidden = true;
+    this.refs.error.hidden = true;
+    this.refs.card.hidden = false;
+    this.#fillIdlePreview();
+    this.#setPhase(PHASES.IDLE);
+  }
+
+  #fillCard(payload, fish) {
+    const refs = this.refs;
+    const color = safeColor(fish.kolor);
+    const icon = safeIcon(fish);
+    const casts = payload.wedka ? payload.wedka.zarzuty_pozostale : undefined;
+
+    refs.card.style.setProperty('--fs-rarity', color);
+    refs.cardKicker.textContent = payload.wedka && payload.wedka.nazwa ? 'Złowiono • ' + payload.wedka.nazwa : 'Złowiono';
+    refs.cardIcon.src = icon;
+    refs.cardIcon.hidden = icon === '';
+    refs.cardIcon.alt = icon === '' ? '' : String(fish.nazwa || '');
+    refs.cardName.textContent = String(fish.nazwa || '');
+    refs.cardRarity.textContent = String(fish.rzadkosc || '');
+    refs.cardValue.textContent = moneyOrDash(fish.wartosc);
+    refs.cardCasts.textContent = casts === undefined ? '—' : castsLabel(casts);
+
+    if (casts !== undefined) { this.setAttribute('casts', String(casts)); }
+  }
+
+  #fail(error) {
+    const kod = (error && error.kod) || 'error';
+    const message = (error && error.message) || 'Nieznany błąd.';
+    const box = this.refs.error;
+    const close = document.createElement('button');
+
+    this.#setPhase(PHASES.ERROR);
+    box.replaceChildren(document.createTextNode(message + ' '));
+    close.type = 'button'; close.className = 'fs-btn fs-btn--ghost'; close.textContent = 'Zamknij';
+    close.addEventListener('click', () => this.#closeReveal());
+    box.appendChild(close);
+    this.refs.card.hidden = true;
+    box.hidden = false; this.refs.reveal.hidden = false;
+    this.dispatchEvent(new CustomEvent('error', {
+      detail: { kod, message, status: (error && error.status) || 0 },
+      bubbles: true,
+    }));
+  }
+}
+
+if (typeof customElements !== 'undefined' && !customElements.get('fishing-scene')) {
+  customElements.define('fishing-scene', FishingScene);
+}
