@@ -1261,4 +1261,123 @@ class MocnyDropApp {
     }
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Modale i formularze auth                                            */
+  /* ------------------------------------------------------------------ */
+
+  bindAuthModals() {
+    document.getElementById('btn-nav-login')?.addEventListener('click', () => {
+      this.clearAuthError();
+      this.switchAuthTab('login');
+      this.openModal('auth-modal');
+    });
+
+    document.getElementById('btn-nav-register')?.addEventListener('click', () => {
+      this.clearAuthError();
+      this.switchAuthTab('register');
+      this.openModal('auth-modal');
+    });
+
+    document.getElementById('btn-demo-account')?.addEventListener('click', () => this.registerDemo());
+    document.getElementById('btn-modal-demo')?.addEventListener('click', () => this.registerDemo());
+
+    document.getElementById('tab-btn-login')?.addEventListener('click', () => {
+      this.clearAuthError();
+      this.switchAuthTab('login');
+    });
+    document.getElementById('tab-btn-register')?.addEventListener('click', () => {
+      this.clearAuthError();
+      this.switchAuthTab('register');
+    });
+
+    document.getElementById('form-login')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const login = document.getElementById('auth-login-val')?.value.trim();
+      const pass = document.getElementById('auth-pass-val')?.value;
+      if (login && pass) this.login(login, pass);
+    });
+
+    document.getElementById('form-register')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const login = document.getElementById('reg-login-val')?.value.trim();
+      const email = document.getElementById('reg-email-val')?.value.trim();
+      const pass = document.getElementById('reg-pass-val')?.value;
+      if (login && email && pass) this.register(login, email, pass);
+    });
+
+    document.querySelectorAll('#auth-modal input').forEach(input => {
+      input.addEventListener('input', () => this.clearAuthError());
+    });
+
+    document.querySelectorAll('.modal-close-trigger').forEach(trigger => {
+      trigger.addEventListener('click', () => {
+        trigger.closest('.modal-backdrop')?.classList.remove('open');
+      });
+    });
+
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) backdrop.classList.remove('open');
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      document.querySelectorAll('.modal-backdrop.open').forEach(backdrop => backdrop.classList.remove('open'));
+    });
+  }
+
+  openModal(modalId) {
+    document.getElementById(modalId)?.classList.add('open');
+  }
+
+  closeModal(modalId) {
+    document.getElementById(modalId)?.classList.remove('open');
+  }
+
+  switchAuthTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('tab-btn-login')?.classList.toggle('active', isLogin);
+    document.getElementById('tab-btn-register')?.classList.toggle('active', !isLogin);
+    const loginForm = document.getElementById('form-login');
+    const registerForm = document.getElementById('form-register');
+    if (loginForm) loginForm.style.display = isLogin ? 'block' : 'none';
+    if (registerForm) registerForm.style.display = isLogin ? 'none' : 'block';
+  }
+
+  setAuthError(message) {
+    const el = document.getElementById('auth-error');
+    if (!el) return;
+    el.textContent = message;
+    el.hidden = false;
+  }
+
+  clearAuthError() {
+    const el = document.getElementById('auth-error');
+    if (!el) return;
+    el.textContent = '';
+    el.hidden = true;
+  }
+
+  setAuthBusy(busy) {
+    this.authBusy = Boolean(busy);
+    document
+      .querySelectorAll('#form-login button[type="submit"], #form-register button[type="submit"], #btn-modal-demo, #btn-demo-account')
+      .forEach(btn => { btn.disabled = this.authBusy; });
+  }
+
+  resetAuthForms() {
+    ['auth-pass-val', 'reg-pass-val', 'reg-login-val', 'reg-email-val'].forEach(id => {
+      const input = document.getElementById(id);
+      if (input) input.value = '';
+    });
+    this.clearAuthError();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const app = new MocnyDropApp();
+  window.mocnyDropApp = app;
+  app.init();
+});
 
