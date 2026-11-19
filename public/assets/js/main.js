@@ -940,4 +940,100 @@ class MocnyDropApp {
     });
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Skrzynki                                                            */
+  /* ------------------------------------------------------------------ */
+
+  async loadCases() {
+    const container = document.getElementById('cases-container');
+    try {
+      const data = await this.api.fetch('skrzynki.php', { auth: false });
+      this.activeCases = data.skrzynki || [];
+      this.renderCases();
+    } catch (err) {
+      if (container) container.innerHTML = `<p class="hint error-text">${esc(err.message)}</p>`;
+    }
+  }
+
+  renderCases() {
+    const container = document.getElementById('cases-container');
+    if (!container) return;
+
+    if (!this.activeCases.length) {
+      container.innerHTML = '<p class="hint">Brak dostępnych skrzynek.</p>';
+      return;
+    }
+
+    const withCasts = (items) => (items || []).map(item => {
+      const rod = this.rodForItem(item.przedmiot_id);
+      return rod
+        ? { ...item, nazwa: `${item.nazwa} · ${castsLabel(rod.limit_zarzutow)}`, ikona: item.ikona || rod.ikona }
+        : item;
+    });
+
+    container.innerHTML = this.activeCases.map(caseItem => `
+      <div class="case-card">
+        <div>
+          <div class="case-card-header">
+            <div class="case-icon-box">📦</div>
+            <div class="case-meta">
+              <h4>${esc(caseItem.nazwa)}</h4>
+              <div class="case-cost">${formatMoney(caseItem.cena)} 🪙</div>
+            </div>
+          </div>
+          <p class="rod-desc">${esc(caseItem.opis || '')}</p>
+          <div class="rod-pool">${poolIcons(withCasts(caseItem.przedmioty))}</div>
+        </div>
+        <div>
+          <label class="case-options-row">
+            <input type="checkbox" id="case-sell-check-${caseItem.id}">
+            <span>Sprzedaj od razu</span>
+          </label>
+          <button class="btn btn-primary btn-open-case" data-case-id="${caseItem.id}" style="width:100%; margin-top:10px">
+            Otwórz
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    container.querySelectorAll('.btn-open-case').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const caseId = Number(btn.dataset.caseId);
+        const autoSell = document.getElementById(`case-sell-check-${caseId}`)?.checked || false;
+        this.openCase(caseId, autoSell, btn);
+      });
+    });
+  }
+
+  async openCase(caseId, autoSell, button) {
+    if (!this.requireLogin('Zaloguj się, aby otwierać skrzynki.')) return;
+
+    const c = this.activeCases.find(item => Number(item.id) === Number(caseId));
+    if (c && this.saldo < Number(c.cena)) {
+      showToast('Za mało monet na tę skrzynkę.', 'error');
+      SoundFx.loss();
+      return;
+    }
+
+    button.disabled = true;
+    try {
+      SoundFx.splash();
+      const data = await this.api.fetch('open_case.php', {
+        method: 'POST',
+        body: { skrzynka_id: caseId, sprzedaj_natychmiast: autoSell },
+      });
+
+      this.setSaldo(data.saldo_po);
+      SoundFx.fanfare();
+      this.showWinModal(data.przedmiot, data.message, data.otwarcie?.cena, {
+        rollPool: c?.przedmioty || null,
+      });
+      await this.refreshPlayerData();
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
 
