@@ -1036,4 +1036,82 @@ class MocnyDropApp {
     }
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Darmowa skrzynka (raz na 24 h)                                      */
+  /* ------------------------------------------------------------------ */
+
+  bindFreeCase() {
+    document.getElementById('btn-free-case')?.addEventListener('click', () => this.claimFreeCase());
+  }
+
+  async loadFreeCase() {
+    if (!this.user) return;
+    try {
+      const data = await this.api.fetch('free_case.php');
+      this.freeCaseReadyAt = Date.now() + Number(data.za_sekund || 0) * 1000;
+    } catch {
+      this.freeCaseReadyAt = null;
+    }
+    this.renderFreeCase();
+  }
+
+  renderFreeCase() {
+    const btn = document.getElementById('btn-free-case');
+    const desc = document.getElementById('free-case-desc');
+    if (!btn || !desc) return;
+
+    clearInterval(this.freeCaseTimer);
+    this.freeCaseTimer = null;
+
+    if (!this.user) {
+      btn.disabled = false;
+      btn.textContent = 'Odbierz';
+      desc.textContent = 'Raz na 24 godziny. Zaloguj się, aby odebrać.';
+      return;
+    }
+
+    const tick = () => {
+      const left = this.freeCaseReadyAt === null ? 0 : (this.freeCaseReadyAt - Date.now()) / 1000;
+      if (left <= 0) {
+        btn.disabled = false;
+        btn.textContent = 'Odbierz';
+        desc.textContent = 'Gotowa do odebrania!';
+        clearInterval(this.freeCaseTimer);
+        this.freeCaseTimer = null;
+      } else {
+        btn.disabled = true;
+        btn.textContent = formatCountdown(left);
+        desc.textContent = 'Następna darmowa skrzynka za:';
+      }
+    };
+
+    tick();
+    if (btn.disabled) {
+      this.freeCaseTimer = setInterval(tick, 1000);
+    }
+  }
+
+  async claimFreeCase() {
+    if (!this.requireLogin('Zaloguj się, aby odebrać darmową skrzynkę.')) return;
+
+    const btn = document.getElementById('btn-free-case');
+    if (!btn) return;
+    btn.disabled = true;
+    try {
+      SoundFx.splash();
+      const data = await this.api.fetch('free_case.php', { method: 'POST' });
+      this.setSaldo(data.saldo_po);
+      this.freeCaseReadyAt = Date.now() + Number(data.darmowa?.za_sekund || 86400) * 1000;
+      SoundFx.fanfare();
+      const freePool = data.skrzynka?.przedmioty || data.darmowa?.skrzynka?.przedmioty || null;
+      this.showWinModal(data.przedmiot, data.message, 0, { rollPool: freePool });
+      await this.refreshPlayerData();
+    } catch (err) {
+      showToast(err.message, 'error');
+      await this.loadFreeCase();
+      return;
+    }
+    this.renderFreeCase();
+  }
+
 
