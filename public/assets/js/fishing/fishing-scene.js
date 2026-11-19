@@ -201,3 +201,257 @@ export class FishingScene extends HTMLElement {
     });
   }
 
+  #syncLabels() {
+    if (!this.refs) { return; }
+    const label = this.getAttribute('label');
+    const name = this.getAttribute('rod-name');
+    const cost = this.getAttribute('cost');
+    const casts = this.getAttribute('casts');
+
+    if (label && this.#phase === PHASES.IDLE) { this.refs.castBtn.textContent = label; }
+    this.refs.cost.replaceChildren();
+
+    if (name) {
+      const strong = document.createElement('strong');
+      strong.textContent = name;
+      this.refs.cost.appendChild(strong);
+    }
+    if (casts !== null) {
+      this.refs.cost.appendChild(document.createTextNode((name ? ' • ' : '') + castsLabel(casts)));
+    } else if (cost) {
+      this.refs.cost.appendChild(document.createTextNode((name ? ' • ' : '') + money(cost) + ' monet za zarzut'));
+    }
+  }
+
+  #setPhase(phase) {
+    this.#phase = phase;
+    this.stage.dataset.phase = phase;
+    this.refs.status.textContent = STATUS_TEXT[phase] || '';
+
+    const label = this.getAttribute('label');
+
+    this.refs.castBtn.textContent = (phase === PHASES.IDLE && label)
+      ? label
+      : (BUTTON_TEXT[phase] || BUTTON_TEXT.idle);
+    this.refs.castBtn.disabled = phase !== PHASES.IDLE;
+    this.dispatchEvent(new CustomEvent('phasechange', { detail: { phase }, bubbles: true }));
+  }
+
+  get phase() { return this.#phase; }
+  get busy() { return this.#busy; }
+  get rodId() { return this.#rodId; }
+  get reduced() { return this.#reduced; }
+  get demoMode() { return this.hasAttribute('demo'); }
+
+  select(rodId, meta = {}) {
+    this.#rodId = (rodId === null || rodId === undefined || rodId === '') ? null : Number(rodId);
+    if (meta.nazwa !== undefined) { this.setAttribute('rod-name', String(meta.nazwa)); }
+    if (meta.koszt !== undefined) { this.setAttribute('cost', String(meta.koszt)); }
+    if (meta.zarzuty !== undefined) { this.setAttribute('casts', String(meta.zarzuty)); }
+    if (this.#rodId !== null) { this.setAttribute('rod-id', String(this.#rodId)); }
+    this.#syncLabels();
+    return this;
+  }
+
+  /** Losowanie z serwera: POST api/fish.php, potem pasek i karta zdobyczy. */
+  async cast(rodId = this.#rodId) {
+    const id = Number(rodId);
+
+    if (!Number.isFinite(id)) {
+      const error = new ApiError('Nie wybrano wędki.', 'missing_field', 0);
+      this.#fail(error);
+      throw error;
+    }
+
+    return this.#start(async (run) => {
+      this.#setPhase(PHASES.REQUESTING);
+      const payload = await this.#api.cast(id);
+      if (run.cancelled) { return null; }
+      return this.#runSequence(payload, run);
+    });
+  }
+
+  /** Tryb demo/offline: payload z zewnątrz, bez backendu. */
+  async play(payload) {
+    return this.#start(async (run) => {
+      this.#setPhase(PHASES.REQUESTING);
+      return this.#runSequence(payload, run);
+    });
+  }
+
+  reset() {
+    this.#abort(); this.#busy = false; this.#run = null; this.#runPromise = null; this.#resetToIdle();
+  }
+
+  #start(runner) {
+    if (this.#busy) { return Promise.resolve(null); }
+    const run = { cancelled: false };
+    this.#run = run; this.#busy = true;
+    this.#runPromise = (async () => {
+      try {
+        return await runner(run);
+      } catch (error) {
+        if (!run.cancelled) { this.#fail(error); }
+        throw error;
+      } finally {
+        if (this.#run === run) {
+          this.#busy = false; this.#run = null; this.#runPromise = null; this.#clearTimer();
+        }
+      }
+    })();
+    return this.#runPromise;
+  }
+
+  #abort() {
+    if (this.#run) { this.#run.cancelled = true; }
+    this.#clearTimer();
+    if (this.#spinDone) { this.#spinDone(); }
+    const waiter = this.#closeWaiter;
+    this.#closeWaiter = null;
+    if (waiter) { waiter(); }
+  }
+
+  #clearTimer() {
+    if (this.#timer !== null) { clearTimeout(this.#timer); this.#timer = null; }
+    const cancel = this.#timerResolve;
+    this.#timerResolve = null;
+    if (cancel) { cancel(); }
+    if (this.#spinTimer !== null) { clearTimeout(this.#spinTimer); this.#spinTimer = null; }
+  }
+
+  #scale(ms) {
+    return Math.round(ms * (this.#reduced ? TIMINGS.reducedScale : 1));
+  }
+
+  #delay(ms) {
+    return new Promise((resolve) => {
+      const run = this.#run;
+      if (!run || run.cancelled) { resolve(false); return; }
+      this.#timerResolve = () => resolve(false);
+      this.#timer = setTimeout(() => {
+        this.#timer = null; this.#timerResolve = null; resolve(!run.cancelled);
+      }, this.#scale(ms));
+    });
+  }
+
+  /**
+   * Statyczne rybki w pasku — scena nie jest pusta przed pierwszym rzutem
+   * (prosta dekoracja; prawdziwy pasek podmienia się przy losowaniu).
+   */
+  #fillIdlePreview() {
+    this.#buildStrip(DEMO_FISH.slice(0, 8));
+    this.refs.strip.classList.add('is-idle');
+  }
+
+  #spinDuration() {
+    const base = TIMINGS.spinMin + Math.random() * (TIMINGS.spinMax - TIMINGS.spinMin);
+    return Math.round(base * (this.#reduced ? TIMINGS.reducedScale : 1));
+  }
+
+  #buildStrip(reel) {
+    const strip = this.refs.strip;
+
+    strip.replaceChildren();
+    strip.classList.remove('is-spinning');
+    strip.classList.remove('is-idle');
+    strip.style.setProperty('--fs-index', '0');
+
+    buildStrip(reel).forEach((item) => {
+      const cell = document.createElement('div');
+      const icon = safeIcon(item);
+      const name = document.createElement('span');
+
+      cell.className = 'fs-item';
+      cell.style.setProperty('--item-color', safeColor(item.kolor));
+      if (icon !== '') {
+        const img = document.createElement('img');
+        img.src = icon;
+        img.alt = '';
+        cell.appendChild(img);
+      }
+      name.textContent = String(item.nazwa || '');
+      cell.appendChild(name);
+      strip.appendChild(cell);
+    });
+  }
+
+  #startSpin(reelLength, winnerIndex, duration) {
+    const strip = this.refs.strip;
+
+    strip.style.setProperty('--fs-spin-duration', duration + 'ms');
+    void strip.offsetWidth;
+    strip.classList.add('is-spinning');
+    strip.style.setProperty('--fs-index', String(stripTargetIndex(reelLength, winnerIndex)));
+  }
+
+  #waitSpin(run, duration) {
+    return new Promise((resolve) => {
+      const strip = this.refs.strip;
+      const done = () => {
+        if (this.#spinDone !== done) { return; }
+        this.#spinDone = null;
+        if (this.#spinTimer !== null) { clearTimeout(this.#spinTimer); this.#spinTimer = null; }
+        strip.removeEventListener('transitionend', onEnd);
+        resolve();
+      };
+      const onEnd = (event) => {
+        if (event.target === strip && event.propertyName === 'transform') { done(); }
+      };
+
+      if (run.cancelled) { resolve(); return; }
+      this.#spinDone = done;
+      strip.addEventListener('transitionend', onEnd);
+      this.#spinTimer = setTimeout(done, duration + 160);
+    });
+  }
+
+  async #runSequence(payload, run) {
+    const fish = validateFishPayload(payload);
+
+    // W trybie demo nie ma żądania do API, więc pomijamy sztuczne „requesting”
+    // (dzięki temu `?auto=1` od razu pokazuje kręcący się pasek).
+    if (!this.demoMode) {
+      if (!(await this.#delay(TIMINGS.requesting))) { return null; }
+      if (run.cancelled) { return null; }
+    }
+
+    this.#buildStrip(payload.reel);
+    this.#setPhase(PHASES.SPINNING);
+
+    const duration = this.#spinDuration();
+
+    this.#startSpin(payload.reel.length, payload.reel_indeks_wygranej, duration);
+
+    await this.#waitSpin(run, duration);
+
+    if (run.cancelled) { return null; }
+
+    return this.#reveal(payload, fish, run);
+  }
+
+  async #reveal(payload, fish, run) {
+    this.#fillCard(payload, fish);
+    this.refs.error.hidden = true;
+    this.refs.card.hidden = false;
+    this.refs.reveal.hidden = false;
+    this.#setPhase(PHASES.REVEAL);
+    this.refs.closeBtn.focus();
+    this.dispatchEvent(new CustomEvent('catch', { detail: { payload, fish }, bubbles: true }));
+
+    await this.#waitClose(run);
+    if (run.cancelled) { return null; }
+
+    this.#resetToIdle();
+    return payload;
+  }
+
+  #waitClose(run) {
+    return new Promise((resolve) => {
+      if (run.cancelled || !this.#busy) { resolve(); return; }
+      this.#closeWaiter = () => {
+        this.#closeWaiter = null;
+        resolve();
+      };
+    });
+  }
+
