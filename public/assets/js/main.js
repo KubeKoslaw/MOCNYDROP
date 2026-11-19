@@ -322,4 +322,216 @@ class MocnyDropApp {
     this.renderSessionState();
   }
 
+ /* ------------------------------------------------------------------ */
+  /* Splash i tooltipy                                                   */
+  /* ------------------------------------------------------------------ */
+
+  hideSplash() {
+    const splash = document.getElementById('splash-screen');
+    if (!splash) return;
+    setTimeout(() => {
+      splash.classList.add('is-hidden');
+      setTimeout(() => splash.remove(), 600);
+    }, SPLASH_MS);
+  }
+
+  bindPoolTooltip() {
+    const tip = document.createElement('div');
+    tip.className = 'pool-tip';
+    tip.hidden = true;
+    document.body.appendChild(tip);
+
+    const show = (icon) => {
+      tip.textContent = icon.dataset.tip;
+      tip.style.setProperty('--rarity', icon.style.getPropertyValue('--rarity'));
+      tip.hidden = false;
+      const r = icon.getBoundingClientRect();
+      const w = tip.offsetWidth;
+      const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+      const top = r.top - tip.offsetHeight - 8;
+      tip.style.left = `${left}px`;
+      tip.style.top = `${top < 8 ? r.bottom + 8 : top}px`;
+    };
+    const hide = () => { tip.hidden = true; };
+
+    document.addEventListener('mouseover', (e) => {
+      const icon = e.target.closest?.('.pool-icon');
+      if (icon) show(icon); else hide();
+    });
+    document.addEventListener('focusin', (e) => {
+      const icon = e.target.closest?.('.pool-icon');
+      if (icon) show(icon); else hide();
+    });
+    document.addEventListener('scroll', hide, { passive: true });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* OAuth 2.0 front: kod autoryzacyjny -> access + refresh token        */
+  /* ------------------------------------------------------------------ */
+
+  readUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    return { code: params.get('code'), loginError: params.get('login_error') };
+  }
+
+  clearUrlParams() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('code');
+    url.searchParams.delete('login_error');
+    if (!url.searchParams.toString()) url.search = '';
+    window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+  }
+
+  loginErrorMessage(raw) {
+    const known = {
+      invalid_credentials: 'Nieprawidłowy login lub hasło.',
+      account_blocked: 'Konto jest zablokowane.',
+      unauthorized: 'Nieprawidłowy login lub hasło.',
+      access_denied: 'Autoryzacja została odrzucona.',
+      invalid_grant: 'Kod autoryzacyjny jest nieprawidłowy lub wygasł.',
+      invalid_request: 'Nieprawidłowe żądanie autoryzacji.',
+      server_error: 'Błąd serwera — spróbuj ponownie.',
+    };
+    const key = String(raw ?? '').trim();
+    if (!key) return 'Logowanie nie udało się.';
+    return known[key] || `Logowanie nie udało się (${key}).`;
+  }
+
+  /** Krok 1: login + hasło -> jednorazowy kod autoryzacyjny z login.php. */
+  async beginOAuth(login, password) {
+    const data = await this.api.fetch('login.php', {
+      method: 'POST',
+      body: { login, password },
+      auth: false,
+    });
+
+    if (!data.code) {
+      const err = new Error('Serwer nie zwrócił kodu autoryzacyjnego.');
+      err.kod = 'invalid_grant';
+      throw err;
+    }
+
+    return this.exchangeCode(data.code);
+  }
+
+  /** Krok 2: kod autoryzacyjny -> access token + refresh token. */
+  async exchangeCode(code) {
+    const data = await tokenRequest({ grant_type: 'authorization_code', code });
+
+    if (!data.access_token) {
+      const err = new Error('Serwer nie zwrócił tokenu dostępu.');
+      err.kod = 'invalid_grant';
+      throw err;
+    }
+
+    this.storeTokens(data);
+
+    if (data.user) {
+      this.user = data.user;
+      this.saldo = data.user.saldo ?? 0;
+    }
+
+    this.renderSessionState();
+    return data;
+  }
+
+  /**
+   * Wymienia refresh token na nowy access token.
+   * Zwraca: 'ok' | 'expired' (serwer odrzucił refresh) | 'offline' (sieć).
+   * Wywołania równoległe współdzielą jedno żądanie.
+   */
+  async refreshAccessToken() {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) return 'expired';
+    if (this.refreshPromise) return this.refreshPromise;
+
+    this.refreshPromise = (async () => {
+      try {
+        const data = await tokenRequest({ grant_type: 'refresh_token', refresh_token: refreshToken });
+        this.storeTokens(data);
+        if (data.user) {
+          this.user = data.user;
+          this.saldo = data.user.saldo ?? this.saldo;
+        }
+        this.renderSessionState();
+        return 'ok';
+      } catch (err) {
+        if (err.kod === 'network_error' || err.kod === 'bad_response') return 'offline';
+        return 'expired';
+      }
+    })();
+
+    try {
+      return await this.refreshPromise;
+    } finally {
+      this.refreshPromise = null;
+    }
+  }
+
+  /** Proaktywne odświeżenie, gdy access token wkrótce wygaśnie. */
+  async ensureFreshToken() {
+    if (!getAccessToken() && !getRefreshToken()) return false;
+
+    const expiresAt = getAccessExpiresAt();
+    if (getAccessToken() && (!expiresAt || expiresAt - Date.now() > REFRESH_MARGIN_MS)) {
+      return true;
+    }
+
+    // Brak refresh tokenu, a access token jest — niech decyzję podejmie API.
+    if (getAccessToken() && !getRefreshToken()) return true;
+
+    const result = await this.refreshAccessToken();
+    if (result === 'ok') return true;
+    if (result === 'expired') this.handleSessionExpired();
+    return false;
+  }
+
+  storeTokens(data) {
+    storageSet(ACCESS_KEY, data.access_token);
+    if (data.refresh_token) storageSet(REFRESH_KEY, data.refresh_token);
+    const seconds = Number(data.expires_in) > 0 ? Number(data.expires_in) : 3600;
+    storageSet(EXPIRES_KEY, String(Date.now() + seconds * 1000));
+  }
+
+  clearTokens() {
+    storageRemove(ACCESS_KEY);
+    storageRemove(REFRESH_KEY);
+    storageRemove(EXPIRES_KEY);
+  }
+
+  /** Sesja wygasła na dobre (refresh odrzucony) — czyścimy stan i UI. */
+  handleSessionExpired() {
+    if (!this.user && !getAccessToken() && !getRefreshToken()) return;
+
+    this.clearTokens();
+    this.user = null;
+    this.saldo = 0;
+    this.inventory = [];
+    this.freeCaseReadyAt = null;
+    clearInterval(this.freeCaseTimer);
+    this.freeCaseTimer = null;
+
+    this.renderSessionState();
+    this.renderRods();
+    this.renderHistoryTable([]);
+    this.closeModal('profile-modal');
+    showToast('Sesja wygasła — zaloguj się ponownie.', 'error');
+  }
+
+  /** Logowanie po powrocie z przekierowania OAuth: /?code=... */
+  async completeOAuthRedirect(code) {
+    try {
+      await this.exchangeCode(code);
+      await this.loadMe();
+      showToast(`Witaj, ${this.user?.login || 'graczu'}!`, 'success');
+      SoundFx.coin();
+    } catch (err) {
+      const message = this.loginErrorMessage(err.kod || err.message);
+      this.setAuthError(message);
+      showToast(message, 'error');
+      this.switchAuthTab('login');
+      this.openModal('auth-modal');
+    }
+  }
+
 
