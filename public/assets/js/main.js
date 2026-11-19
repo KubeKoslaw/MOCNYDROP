@@ -534,4 +534,141 @@ class MocnyDropApp {
     }
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Sesja                                                               */
+  /* ------------------------------------------------------------------ */
+
+  async loadMe() {
+    try {
+      const data = await this.api.fetch('me.php');
+      this.user = data.user;
+      this.saldo = data.saldo ?? data.user?.saldo ?? 0;
+      this.renderSessionState();
+      await Promise.allSettled([
+        this.loadInventory(),
+        this.loadHistory(),
+        this.loadFreeCase(),
+      ]);
+    } catch (err) {
+      if (err.status === 401) return; // auto-refresh / handleSessionExpired już zadziałały
+      showToast(err.message, 'error');
+    }
+  }
+
+  renderSessionState() {
+    const isLogged = Boolean(this.user);
+    const authBox = document.getElementById('nav-auth-box');
+    const guestBox = document.getElementById('nav-guest-box');
+
+    if (isLogged) {
+      if (guestBox) guestBox.style.display = 'none';
+      if (authBox) authBox.style.display = 'flex';
+
+      const saldoEl = document.getElementById('nav-saldo-val');
+      const loginEl = document.getElementById('nav-user-login');
+      const roleEl = document.getElementById('nav-user-role');
+      if (saldoEl) saldoEl.textContent = formatMoney(this.saldo);
+      if (loginEl) loginEl.textContent = this.user.login;
+      if (roleEl) {
+        const role = String(this.user.rola || 'user').toLowerCase();
+        roleEl.textContent = role;
+        roleEl.classList.toggle('admin', role === 'admin');
+      }
+    } else {
+      if (guestBox) guestBox.style.display = 'flex';
+      if (authBox) authBox.style.display = 'none';
+      this.renderFreeCase();
+    }
+  }
+
+  async login(login, password) {
+    this.setAuthBusy(true);
+    this.clearAuthError();
+    try {
+      await this.beginOAuth(login, password);
+      await this.loadMe();
+      this.closeModal('auth-modal');
+      this.resetAuthForms();
+      showToast(`Witaj, ${this.user?.login || login}!`, 'success');
+      SoundFx.coin();
+    } catch (err) {
+      const message = err.message || this.loginErrorMessage(err.kod || '');
+      this.setAuthError(message);
+      showToast(message, 'error');
+      SoundFx.loss();
+    } finally {
+      this.setAuthBusy(false);
+    }
+  }
+
+  async register(login, email, password) {
+    try {
+      const data = await this.api.fetch('register.php', {
+        method: 'POST',
+        body: { login, email, password },
+        auth: false,
+      });
+      showToast(data.message || 'Konto utworzone.', 'success');
+      SoundFx.fanfare();
+      await this.login(login, password);
+    } catch (err) {
+      this.setAuthError(err.message);
+      showToast(err.message, 'error');
+    }
+  }
+
+  async registerDemo() {
+    const suffix = Math.random().toString(36).slice(2, 8);
+    const demoLogin = `gracz_${suffix}`;
+    this.setAuthBusy(true);
+    try {
+      await this.register(demoLogin, `${demoLogin}@mocnydrop.local`, 'demo12345');
+    } finally {
+      this.setAuthBusy(false);
+    }
+  }
+
+  async logout(userInitiated = true) {
+    if (getAccessToken() && userInitiated) {
+      try { await this.api.fetch('logout.php', { method: 'POST' }); } catch {}
+    }
+
+    this.clearTokens();
+    this.user = null;
+    this.saldo = 0;
+    this.inventory = [];
+    this.freeCaseReadyAt = null;
+    clearInterval(this.freeCaseTimer);
+    this.freeCaseTimer = null;
+
+    this.renderSessionState();
+    this.renderRods();
+    this.renderHistoryTable([]);
+    this.closeModal('profile-modal');
+
+    if (userInitiated) {
+      showToast('Wylogowano.', 'info');
+    }
+  }
+
+  requireLogin(message) {
+    if (this.user) return true;
+    showToast(message, 'info');
+    this.switchAuthTab('login');
+    this.openModal('auth-modal');
+    return false;
+  }
+
+  setSaldo(value) {
+    this.saldo = Number(value ?? 0);
+    this.renderSessionState();
+  }
+
+  async refreshPlayerData() {
+    await Promise.allSettled([
+      this.loadInventory(),
+      this.loadHistory(),
+    ]);
+  }
+
 
