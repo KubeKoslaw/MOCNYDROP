@@ -61,9 +61,9 @@ async function tokenRequest(body) {
     throw err;
   }
 
-  if (!response.ok || data.success === false) {
-    const err = new Error(data.error || `Błąd serwera (HTTP ${response.status})`);
-    err.kod = data.kod || 'error';
+  if (!response.ok || !data || data.success === false) {
+    const err = new Error(data?.error || `Błąd serwera (HTTP ${response.status})`);
+    err.kod = data?.kod || 'error';
     err.status = response.status;
     throw err;
   }
@@ -239,7 +239,7 @@ class ApiClient {
       throw err;
     }
 
-    const unauthorized = response.status === 401 || data.kod === 'unauthorized';
+    const unauthorized = response.status === 401 || data?.kod === 'unauthorized';
 
     if (unauthorized && options.auth !== false) {
       if (allowRefresh && getRefreshToken()) {
@@ -255,9 +255,9 @@ class ApiClient {
       }
     }
 
-    if (!response.ok || data.success === false) {
-      const err = new Error(data.error || `Błąd serwera (HTTP ${response.status})`);
-      err.kod = data.kod || 'error';
+    if (!response.ok || !data || data.success === false) {
+      const err = new Error(data?.error || `Błąd serwera (HTTP ${response.status})`);
+      err.kod = data?.kod || 'error';
       err.status = response.status;
       throw err;
     }
@@ -629,8 +629,10 @@ class MocnyDropApp {
   }
 
   async logout(userInitiated = true) {
-    if (getAccessToken() && userInitiated) {
-      try { await this.api.fetch('logout.php', { method: 'POST' }); } catch {}
+    // Wywołanie musi polecieć także z samym refresh tokenem — inaczej serwer
+    // nie unieważni sesji (ApiClient odświeży access token przed retry).
+    if ((getAccessToken() || getRefreshToken()) && userInitiated) {
+      try { await this.api.fetch('logout.php', { method: 'POST' }); } catch { /* i tak czyścimy lokalnie */ }
     }
 
     this.clearTokens();
