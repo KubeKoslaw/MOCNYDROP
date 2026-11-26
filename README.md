@@ -14,6 +14,26 @@ Strona z elementami hazardu z nagrodami o różnych wartościach, oparta na wirt
 - MariaDB 10.6+; do testów SQLite i generowania instalatora SQL także `pdo_sqlite`
 - Dowolne IDE wspierające powyższe języki programowania *(Rekomendowane: VSCode, VSCodium, Apache NetBeans, PhpStorm itp.)*
 
+## Testy
+
+Testy backendu to PHPUnit (PHP 8.2+), każdy test dostaje własną bazę SQLite w pamięci
+(`Database::openMemory()` — schemat, rzadkości i ustawienia z `database/schema.sql`).
+
+```bash
+# jednorazowo: zależności (tworzy vendor/)
+composer install
+
+# testy backendu (PHPUnit)
+composer test
+# albo bezpośrednio
+php vendor/bin/phpunit
+
+# kontrakt animacji łowiska (Node)
+node tests/check-fishing.mjs
+```
+
+Bez zainstalowanego globalnie Composera: `php -d extension=zip composer.phar install`
+(na Windows warto mieć włączone rozszerzenie `zip`).
 
 
 ## Zespół
