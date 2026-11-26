@@ -4,6 +4,16 @@
  * v2: nowe fazy/czasy dopisuje się tutaj; wygląd opisuje CSS (`[data-phase]`).
  */
 
+/**
+ * Adres API (względny — strona żyje w katalogu głównym projektu) i klucz,
+ * pod którym main.js trzyma access token w localStorage. Muszą być zgodne
+ * z `main.js`; `<fishing-scene token-key="...">` może je nadpisać.
+ */
+export const API_BASE = 'api/';
+export const ACCESS_KEY = 'mocnydrop_access_token';
+/** Refresh token zapisuje wyłącznie main.js (scena go nie używa). */
+export const REFRESH_KEY = 'mocnydrop_refresh_token';
+
 export const PHASES = Object.freeze({
   IDLE: 'idle',
   REQUESTING: 'requesting',

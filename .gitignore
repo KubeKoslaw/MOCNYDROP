@@ -4,3 +4,8 @@ database/*.sqlite-journal
 database/*.sqlite-wal
 database/*.sqlite-shm
 database/*.db
+
+#Zależności PHP (PHPUnit) — instaluje `composer install`
+/vendor/
+/composer.phar
+/.phpunit.cache/

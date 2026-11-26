@@ -27,12 +27,16 @@ jobs:
         with:
           php-version: '8.2'
           extensions: mbstring, pdo_sqlite
+          tools: composer:v2
           coverage: none
 
       - name: Node 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Composer install
+        run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Lint PHP
         run: |
@@ -69,9 +73,8 @@ jobs:
           echo "Schemat OK: {$tabele} tabel\n";
           PHP
 
-      - name: Testy backendu (jeśli są)
-        run: |
-          if [ -f tests/run.php ]; then php tests/run.php; else echo 'Brak tests/run.php — pomijam.'; fi
+      - name: Testy backendu (PHPUnit)
+        run: php vendor/bin/phpunit --no-coverage
 
       - name: Testy JS / kontrakt animacji (jeśli są)
         run: |

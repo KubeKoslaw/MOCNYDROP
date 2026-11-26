@@ -1,5 +1,4 @@
-import { API_BASE, ACCESS_KEY } from './config.js';
-import { getAccessToken, getRefreshToken } from './contract.js';
+import { API_BASE, ACCESS_KEY, REFRESH_KEY } from './config.js';
 
 export const TOKEN_KEY = ACCESS_KEY;
 
@@ -19,6 +18,9 @@ export function readToken(key = TOKEN_KEY) {
     return null;
   }
 }
+
+export function getAccessToken() { return readToken(TOKEN_KEY); }
+export function getRefreshToken() { return readToken(REFRESH_KEY); }
 
 export function createApi(options = {}) {
   const baseUrl = options.baseUrl === undefined ? API_BASE : String(options.baseUrl);

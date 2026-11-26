@@ -182,10 +182,17 @@ final class UzytkownikTest extends TestCase
         $user = Fixtures::user($this->db, 'wedkarz', 100.0);
         $staryToken = str_repeat('a', 64);
 
+        // Schemat trzyma wyłącznie hashe tokenów (`Token::hashToken()` = sha256).
         $this->db->prepare(
-            'INSERT INTO oauth_tokeny (user_id, token, refresh_token, expires_at, refresh_expires_at)
+            'INSERT INTO oauth_tokeny (user_id, token_hash, refresh_token_hash, expires_at, refresh_expires_at)
              VALUES (?, ?, ?, ?, ?)'
-        )->execute([$user['id'], $staryToken, str_repeat('b', 64), '2000-01-01 00:00:00', '2099-01-01 00:00:00']);
+        )->execute([
+            $user['id'],
+            hash('sha256', $staryToken),
+            hash('sha256', str_repeat('b', 64)),
+            '2000-01-01 00:00:00',
+            '2099-01-01 00:00:00',
+        ]);
 
         $this->assertNull(Token::uwierzytelnij($staryToken, $this->db), 'Token z przeszłą datą ważności musi być odrzucony');
     }
